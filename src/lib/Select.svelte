@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  // import { onMount } from "svelte";
   let {
     loaded,
-    files = $bindable()
+    files = $bindable(),
+    files_dem = $bindable()
   } = $props();
   let drag = $state(-1)
 
-  onMount(() => {
-    // files.push("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json");
-  })
+  // onMount(() => {
+  //   // files.push("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json");
+  // })
 </script>
 
 <div class="menu">
@@ -32,6 +33,7 @@
     <div>
       <label class="title" for="height">Height (raster-dem)</label>
       <input
+        bind:files={files_dem}
         id="height"
         type="file"
         ondragenter={() => (drag = 1)}
@@ -86,6 +88,7 @@
   input[type=file].dragged {
     border-color: CanvasText;
     border-style: solid;
+    border-color: lime;
   }
   div.menu {
     display: flex;
