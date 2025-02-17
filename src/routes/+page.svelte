@@ -5,52 +5,47 @@
   import LocalPMTilesProtocol from '$lib/LocalPMTilesProtocol.svelte';
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
+  import { ViewerData } from '$lib/ViewerClasses.svelte';
   let loaded = $state(false);
 
-  let files: FileList | [] = $state([]);  // FileList, but not, but yes
-  let pmtiles = $derived.by( () => {
-    if (files.length) {
-      return new PMTiles( new FileSource(files[0]));
-    }
-    return undefined
-  }) as PMTiles;
-  let url = $derived(`pmtiles://${pmtiles?.source?.getKey()}`)
+  let Viewer1 = $state(new ViewerData());
 
-  let files_dem: FileList | [] = $state([]);
-  let pmtiles_dem = $derived.by( () => {
-    if (files_dem.length) {
-      return new PMTiles( new FileSource(files_dem[0]));
-    }
-    return undefined
-  }) as PMTiles;
-  let url_dem = $derived(`pmtiles://${pmtiles_dem?.source?.getKey()}`)
+  $inspect(Viewer1).with(console.trace)
 
-  let pmtiles_all = $derived(
-    [
-      pmtiles,
-      pmtiles_dem
-    ]
-  ) as PMTiles[];
+  // let files: FileList | [] = $state([]);  // FileList, but not, but yes
+  // let pmtiles = $derived.by( () => {
+  //   if (files.length) {
+  //     return new PMTiles( new FileSource(files[0]));
+  //   }
+  //   return undefined
+  // }) as PMTiles;
 
-  $inspect(pmtiles_all).with(console.trace)
+  // let files_dem: FileList | [] = $state([]);
+  // let pmtiles_dem = $derived.by( () => {
+  //   if (files_dem.length) {
+  //     return new PMTiles( new FileSource(files_dem[0]));
+  //   }
+  //   return undefined
+  // }) as PMTiles;
 
-  // let key = $derived(pmtiles?.source?.getKey())
-  // let url = $derived(`pmtiles://${key}`)
-
-  // let key = "https://pmtiles.io/stamen_toner(raster)CC-BY+ODbL_z3.pmtiles"
-  // let tiles = $derived([`pmtiles://${key}/{z}/{x}/{y}`])
+  // let pmtiles_all = $derived(
+  //   [
+  //     pmtiles,
+  //     pmtiles_dem
+  //   ]
+  // ) as PMTiles[];
 </script>
 
 <div class="main">
   {#if loaded}
 
-    <Viewer pmtiles_raster={pmtiles} />
-  
     <!-- <LocalPMTilesProtocol
       pmtiles={pmtiles_all}
-    />
+    /> -->
 
-    <MapLibre
+    <Viewer data={Viewer1} />
+
+    <!-- <MapLibre
       inlineStyle="height: 100%; margin: 0px;"
       hash={true}
       renderWorldCopies={false}
@@ -106,8 +101,8 @@
   {:else}
     <Select
       loaded={() => loaded = !loaded}
-      bind:files={files}
-      bind:files_dem={files_dem}
+      bind:files={Viewer1.raster.files}
+      bind:files_dem={Viewer1.raster_dem.files}
     />
   {/if}
 </div>
