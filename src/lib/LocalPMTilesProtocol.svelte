@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Protocol as MapLibreProtocol } from 'svelte-maplibre-gl';
-	import { Protocol, PMTiles } from 'pmtiles';
+  import { Protocol as MapLibreProtocol } from 'svelte-maplibre-gl';
+  import { Protocol, PMTiles } from 'pmtiles';
 
   let {
     scheme = 'pmtiles',

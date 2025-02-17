@@ -1,8 +1,10 @@
 <script lang="ts">
   import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain, TerrainControl } from 'svelte-maplibre-gl';
+  // import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import { FileSource, PMTiles } from 'pmtiles';
-  import LocalPmTilesProtocol from '$lib/LocalPMTilesProtocol.svelte';
+  import LocalPMTilesProtocol from '$lib/LocalPMTilesProtocol.svelte';
   import Select from '$lib/Select.svelte';
+  import Viewer from '$lib/Viewer.svelte';
   let loaded = $state(false);
 
   let files: FileList | [] = $state([]);  // FileList, but not, but yes
@@ -41,8 +43,10 @@
 
 <div class="main">
   {#if loaded}
+
+    <Viewer pmtiles_raster={pmtiles} />
   
-    <LocalPmTilesProtocol
+    <!-- <LocalPMTilesProtocol
       pmtiles={pmtiles_all}
     />
 
@@ -58,7 +62,7 @@
       >
         <RasterLayer
           layout={{
-            'visibility': "none"
+            // 'visibility': "none"
           }}
           paint={{
             'raster-resampling': 'nearest',
@@ -98,7 +102,7 @@
           }}
         />
       </RasterDEMTileSource>
-    </MapLibre>
+    </MapLibre> -->
   {:else}
     <Select
       loaded={() => loaded = !loaded}
@@ -115,6 +119,6 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    background-color: gray;
+    /* background-color: gray; */
   }
 </style>
