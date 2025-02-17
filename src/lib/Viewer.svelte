@@ -10,6 +10,7 @@
   } from 'svelte-maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
+    import { onMount } from 'svelte';
 
   let {
     data
@@ -33,13 +34,21 @@
       raster_overlay_metadata
     }
   }
+
+  onMount(() => {
+    console.log("MOUNT RUSHLESS")
+    console.log(data)
+  })
 </script>
 
 
 {#await getHeaderMetadata()}
   <p>Loading...</p>
 {:then hm}
-  <table>
+  <!-- {hm.raster_header}
+  {hm.raster_dem_header}
+  {hm.raster_overlay_header} -->
+  <!-- <table>
     <tbody>
       {#if hm.raster_metadata}
         {#each Object.entries(hm.raster_metadata) as [key, value]}
@@ -50,16 +59,16 @@
         {/each}
       {/if}
     </tbody>
-  </table>
-  <!-- <MapLibre
-    inlineStyle="height: 100%; height: 100%; margin: 0px;"
+  </table> -->
+  <MapLibre
+    inlineStyle="height: 100%; width: 100%; margin: 0px;"
     hash={true}
     renderWorldCopies={false}
     maxPitch={87}
     aroundCenter={false}
   >
     <RasterTileSource
-      url={url}
+      url={data?.raster.url}
     >
       <RasterLayer
         layout={{
@@ -73,7 +82,7 @@
     </RasterTileSource>
     <RasterDEMTileSource
       id="terrain"
-      url={url_dem}
+      url={data?.raster_dem.url}
       encoding="custom"
       baseShift={0}
       redFactor={256*256}
@@ -85,7 +94,7 @@
     </RasterDEMTileSource>
     <RasterDEMTileSource
       id="hillshade"
-      url={url_dem}
+      url={data?.raster_dem.url}
       encoding="custom"
       baseShift={0}
       redFactor={256*256}
@@ -103,5 +112,5 @@
         }}
       />
     </RasterDEMTileSource>
-  </MapLibre> -->
+  </MapLibre>
 {/await}

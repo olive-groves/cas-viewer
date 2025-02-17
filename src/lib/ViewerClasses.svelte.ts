@@ -9,13 +9,19 @@ export class SourceLayer {
 
     constructor(files?: FileList) {
         if (files) {
-        this.files = files;
+            this.files = files;
         }
     }
 
     set files(files: FileList) {
         this.#files = files
-        this.pmtiles = new PMTiles(new FileSource(files[0]))
+        if (files.length) {
+            this.pmtiles = new PMTiles(new FileSource(files[0]))
+        }
+    }
+
+    get files() {
+        return this.#files
     }
 
     get header() {

@@ -3,7 +3,8 @@
   let {
     loaded,
     files = $bindable(),
-    files_dem = $bindable()
+    files_dem = $bindable(),
+    files_overlay = $bindable()
   } = $props();
   let drag = $state(-1)
 
@@ -20,7 +21,7 @@
     <div>
       <label class="title" for="rgb">RGB (raster)</label>
       <input
-        bind:files
+        bind:files={files}
         id="rgb"
         type="file"
         ondragenter={() => (drag = 0)}
@@ -46,6 +47,7 @@
     <div>
       <label class="title" for="nan">NaNs (raster)</label>
       <input
+        bind:files={files_overlay}
         id="nan"
         type="file"
         ondragenter={() => (drag = 2)}

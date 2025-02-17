@@ -8,17 +8,47 @@
   import { ViewerData } from '$lib/ViewerClasses.svelte';
   let loaded = $state(false);
 
-  let Viewer1 = $state(new ViewerData());
+  // let Viewer1 = $state(new ViewerData());
 
-  $inspect(Viewer1).with(console.trace)
-
-  // let files: FileList | [] = $state([]);  // FileList, but not, but yes
-  // let pmtiles = $derived.by( () => {
-  //   if (files.length) {
-  //     return new PMTiles( new FileSource(files[0]));
+  let n = $state(2);
+  // let viewers = $derived.by(() => {
+  //   let viewers = [];
+  //   for (let i = 0; i < n; i++) {
+  //     viewers.push(new ViewerData())
   //   }
-  //   return undefined
-  // }) as PMTiles;
+  //   return viewers
+  // })
+  let viewers = $state([
+    new ViewerData(),
+    new ViewerData()
+  ])
+
+  let all_pmtiles = $derived.by(() => {
+    let all_pmtiles = [];
+    for (let i = 0; i < n; i++) {
+      if (viewers[i].raster.files.length) {
+        all_pmtiles.push(viewers[i].raster.pmtiles);
+      }
+      if (viewers[i].raster_dem.files.length) {
+        all_pmtiles.push(viewers[i].raster_dem.pmtiles);
+      }
+    }
+    return all_pmtiles;
+  })
+
+  // $inspect(all_pmtiles).with(console.trace)
+  $inspect(viewers[0].raster.url).with(console.trace)
+
+  // $effect(() => {
+  //   // if (viewers[0].raster.files.length) {
+  //   //   console.log("EFFECT")
+  //   // }
+  //   for (let i = 0; i < n; i++) {
+  //     console.log(i)
+  //     all_pmtiles.push(viewers[i].raster.files[0])
+  //     $inspect(viewers[i].raster.files).with(console.trace)
+  //   }
+  // })
 
   // let files_dem: FileList | [] = $state([]);
   // let pmtiles_dem = $derived.by( () => {
@@ -39,78 +69,28 @@
 <div class="main">
   {#if loaded}
 
-    <!-- <LocalPMTilesProtocol
-      pmtiles={pmtiles_all}
-    /> -->
-
-    <Viewer data={Viewer1} />
-
-    <!-- <MapLibre
-      inlineStyle="height: 100%; margin: 0px;"
-      hash={true}
-      renderWorldCopies={false}
-      maxPitch={87}
-      aroundCenter={false}
-    >
-      <RasterTileSource
-        url={url}
-      >
-        <RasterLayer
-          layout={{
-            // 'visibility': "none"
-          }}
-          paint={{
-            'raster-resampling': 'nearest',
-            "raster-contrast": 0.2 // set -1 for mask effect with hillshade
-          }}
-        />
-      </RasterTileSource>
-      <RasterDEMTileSource
-        id="terrain"
-        url={url_dem}
-        encoding="custom"
-        baseShift={0}
-        redFactor={256*256}
-        greenFactor={256}
-        blueFactor={1}
-      >
-        <TerrainControl position="top-right" />
-        <Terrain exaggeration={10} />
-      </RasterDEMTileSource>
-      <RasterDEMTileSource
-        id="hillshade"
-        url={url_dem}
-        encoding="custom"
-        baseShift={0}
-        redFactor={256*256}
-        greenFactor={256}
-        blueFactor={1}
-      >
-        <HillshadeLayer
-          paint={{
-            'hillshade-exaggeration': 1.0,
-            'hillshade-shadow-color': "#000000",
-            'hillshade-accent-color': "#000000",
-            'hillshade-highlight-color': "#ffffff",
-            'hillshade-illumination-anchor': 'map',
-            'hillshade-illumination-direction': 0.0
-          }}
-        />
-      </RasterDEMTileSource>
-    </MapLibre> -->
-  {:else}
-    <Select
-      loaded={() => loaded = !loaded}
-      bind:files={Viewer1.raster.files}
-      bind:files_dem={Viewer1.raster_dem.files}
+    <LocalPMTilesProtocol
+      pmtiles={all_pmtiles}
     />
+
+    <Viewer data={viewers[0]} />
+  {:else}
+    {#each viewers as viewer, i}
+      <p style="text-align: center">{i}</p>
+      <Select
+        loaded={() => loaded = !loaded}
+        bind:files={viewers[i].raster.files}
+        bind:files_dem={viewers[i].raster_dem.files}
+        bind:files_overlay={viewers[i].raster_overlay.files}
+      />
+    {/each}
   {/if}
 </div>
 
 <style>
   .main {
     display: flex;
-    flex-flow: column;
+    flex-flow: row;
     height: 100%;
     margin: 0;
     padding: 0;
