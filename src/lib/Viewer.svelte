@@ -10,12 +10,13 @@
   } from 'svelte-maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
-    import { onMount } from 'svelte';
 
   let {
-    data
+    data,
+    mapProps = $bindable()
   }: {
     data?: ViewerData,
+    mapProps?: {}
   } = $props();
 
   async function getHeaderMetadata() {
@@ -34,11 +35,6 @@
       raster_overlay_metadata
     }
   }
-
-  onMount(() => {
-    console.log("MOUNT RUSHLESS")
-    console.log(data)
-  })
 </script>
 
 
@@ -66,6 +62,12 @@
     renderWorldCopies={false}
     maxPitch={87}
     aroundCenter={false}
+    bind:center={mapProps.center}
+    bind:zoom={mapProps.zoom}
+    bind:bearing={mapProps.bearing}
+    bind:pitch={mapProps.pitch}
+    bind:roll={mapProps.roll}
+    bind:elevation={mapProps.elevation}
   >
     <RasterTileSource
       url={data?.raster.url}

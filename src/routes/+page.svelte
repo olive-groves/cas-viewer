@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain, TerrainControl } from 'svelte-maplibre-gl';
-  // import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
-  import { FileSource, PMTiles } from 'pmtiles';
-  import LocalPMTilesProtocol from '$lib/LocalPMTilesProtocol.svelte';
+  import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
@@ -39,6 +36,9 @@
   // $inspect(all_pmtiles).with(console.trace)
   $inspect(all_pmtiles).with(console.trace)
 
+  let mapProps = $state({
+  });
+
   // let files_dem: FileList | [] = $state([]);
   // let pmtiles_dem = $derived.by( () => {
   //   if (files_dem.length) {
@@ -57,7 +57,7 @@
 
 
 {#if loaded.some((x) => x === true)}
-  <LocalPMTilesProtocol pmtiles={all_pmtiles} />
+  <PMTilesProtocol pmtiles={all_pmtiles} />
 {/if}
 
 <div class="main">
@@ -65,9 +65,10 @@
   {#each viewers as _, i} 
     {#if loaded[i]}
       <Viewer
-      --height="100%"
-      --width="100%"
+        --height="100%"
+        --width="100%"
         data={viewers[i]}
+        bind:mapProps
       />
     {:else}
       <Select
