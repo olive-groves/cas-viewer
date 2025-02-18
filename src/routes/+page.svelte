@@ -6,22 +6,19 @@
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
-  let loaded = $state(false);
-
-  // let Viewer1 = $state(new ViewerData());
+  let loaded = $state([
+    false,
+    false
+  ]);
 
   let n = $state(2);
-  // let viewers = $derived.by(() => {
-  //   let viewers = [];
-  //   for (let i = 0; i < n; i++) {
-  //     viewers.push(new ViewerData())
-  //   }
-  //   return viewers
-  // })
-  let viewers = $state([
-    new ViewerData(),
-    new ViewerData()
-  ])
+  let viewers = $derived.by(() => {  // n viewers
+    let viewers = [];
+    for (let i = 0; i < n; i++) {
+      viewers.push(new ViewerData())
+    }
+    return viewers
+  })
 
   let all_pmtiles = $derived.by(() => {
     let all_pmtiles = [];
@@ -32,23 +29,15 @@
       if (viewers[i].raster_dem.files.length) {
         all_pmtiles.push(viewers[i].raster_dem.pmtiles);
       }
+      if (viewers[i].raster_overlay.files.length) {
+        all_pmtiles.push(viewers[i].raster_overlay.pmtiles);
+      }
     }
     return all_pmtiles;
   })
 
   // $inspect(all_pmtiles).with(console.trace)
-  $inspect(viewers[0].raster.url).with(console.trace)
-
-  // $effect(() => {
-  //   // if (viewers[0].raster.files.length) {
-  //   //   console.log("EFFECT")
-  //   // }
-  //   for (let i = 0; i < n; i++) {
-  //     console.log(i)
-  //     all_pmtiles.push(viewers[i].raster.files[0])
-  //     $inspect(viewers[i].raster.files).with(console.trace)
-  //   }
-  // })
+  $inspect(all_pmtiles).with(console.trace)
 
   // let files_dem: FileList | [] = $state([]);
   // let pmtiles_dem = $derived.by( () => {
@@ -66,25 +55,30 @@
   // ) as PMTiles[];
 </script>
 
+
+{#if loaded.some((x) => x === true)}
+  <LocalPMTilesProtocol pmtiles={all_pmtiles} />
+{/if}
+
 <div class="main">
-  {#if loaded}
-
-    <LocalPMTilesProtocol
-      pmtiles={all_pmtiles}
-    />
-
-    <Viewer data={viewers[0]} />
-  {:else}
-    {#each viewers as viewer, i}
-      <p style="text-align: center">{i}</p>
+  <!-- Index viewers[i] to trigger reactive state -->
+  {#each viewers as _, i} 
+    {#if loaded[i]}
+      <Viewer
+      --height="100%"
+      --width="100%"
+        data={viewers[i]}
+      />
+    {:else}
       <Select
-        loaded={() => loaded = !loaded}
+        --width="300px"
+        loaded={() => loaded[i] = !loaded[i]}
         bind:files={viewers[i].raster.files}
         bind:files_dem={viewers[i].raster_dem.files}
         bind:files_overlay={viewers[i].raster_overlay.files}
       />
+      {/if}
     {/each}
-  {/if}
 </div>
 
 <style>
@@ -94,6 +88,7 @@
     height: 100%;
     margin: 0;
     padding: 0;
+    justify-content: space-evenly;
     /* background-color: gray; */
   }
 </style>

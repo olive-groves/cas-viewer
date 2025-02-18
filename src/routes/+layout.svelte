@@ -4,9 +4,8 @@
 
 <nav style:margin="0" style:padding="0.3em">
   <h1>Viewer</h1>
-  <a href="/">start</a>
-  <a href="/about">map</a>
-  <button class="restart" onclick={() => window.location.reload()}>reload</button>
+  <a href="/test">test</a>
+  <button class="restart" onclick={() => {window.location.reload(); window.location.href = '/';}}>reset</button>
 </nav>
 
 <style>

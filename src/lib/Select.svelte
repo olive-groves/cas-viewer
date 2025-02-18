@@ -14,7 +14,7 @@
 </script>
 
 <div class="menu">
-  <h2>PMTiles CAS Viewer</h2>
+  <h2>PMTiles Viewer</h2>
 
   <form>
     <!-- Separate label from input to disable pointer events -->
@@ -98,6 +98,6 @@
     justify-content: center;
     gap: 1em;
     padding: 1em;
-    width: 300px;
+    width: var(--width, 300px);
   }
 </style>

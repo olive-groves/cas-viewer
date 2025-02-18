@@ -61,7 +61,7 @@
     </tbody>
   </table> -->
   <MapLibre
-    inlineStyle="height: 100%; width: 100%; margin: 0px;"
+    inlineStyle="height: var(--height); width: var(--width); margin: 0px; background-color: gray;"
     hash={true}
     renderWorldCopies={false}
     maxPitch={87}
@@ -75,8 +75,8 @@
           // 'visibility': "none"
         }}
         paint={{
-          'raster-resampling': 'nearest',
-          "raster-contrast": 0.2 // set -1 for mask effect with hillshade
+          'raster-resampling': 'nearest'
+          // "raster-contrast": 0.2 // set -1 for mask effect with hillshade
         }}
       />
     </RasterTileSource>
@@ -105,12 +105,24 @@
         paint={{
           'hillshade-exaggeration': 1.0,
           'hillshade-shadow-color': "#000000",
-          'hillshade-accent-color': "#000000",
-          'hillshade-highlight-color': "#ffffff",
+          'hillshade-accent-color': "#00000080",
+          'hillshade-highlight-color': "#ffffff00",
           'hillshade-illumination-anchor': 'map',
           'hillshade-illumination-direction': 0.0
         }}
       />
     </RasterDEMTileSource>
+    <RasterTileSource
+      url={data?.raster_overlay.url}
+    >
+      <RasterLayer
+        layout={{
+          // 'visibility': "none"
+        }}
+        paint={{
+          'raster-resampling': 'nearest'
+        }}
+      />
+    </RasterTileSource>
   </MapLibre>
 {/await}
