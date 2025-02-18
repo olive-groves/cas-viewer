@@ -4,8 +4,6 @@ export class SourceLayer {
     #files: FileList | [] = $state([]);
     pmtiles: PMTiles | undefined = $state();
     url: string | undefined = $derived(`pmtiles://${this.pmtiles?.source?.getKey()}`)
-    #header: object = $state({});
-    #metadata: object = $state({});
 
     constructor(files?: FileList) {
         if (files) {
@@ -25,11 +23,11 @@ export class SourceLayer {
     }
 
     get header() {
-        return this.pmtiles?.getHeader()
+        return this?.pmtiles?.getHeader()
     }
 
     get metadata() {
-        return this.pmtiles?.getMetadata()
+        return this?.pmtiles?.getMetadata()
     }
 }
 

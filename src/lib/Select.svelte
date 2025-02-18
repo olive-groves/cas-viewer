@@ -7,10 +7,6 @@
     files_overlay = $bindable()
   } = $props();
   let drag = $state(-1)
-
-  // onMount(() => {
-  //   // files.push("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json");
-  // })
 </script>
 
 <div class="menu">

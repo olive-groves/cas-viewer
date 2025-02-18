@@ -19,7 +19,7 @@
     mapProps?: {}
   } = $props();
 
-  async function getHeaderMetadata() {
+  const getHeaderMetadata = async () => {
     const raster_header = await data?.raster.header 
     const raster_metadata = await data?.raster.metadata 
     const raster_dem_header = await data?.raster_dem.header 
@@ -36,7 +36,6 @@
     }
   }
 </script>
-
 
 {#await getHeaderMetadata()}
   <p>Loading...</p>
@@ -57,7 +56,7 @@
     </tbody>
   </table> -->
   <MapLibre
-    inlineStyle="height: var(--height); width: var(--width); margin: 0px; background-color: gray;"
+    inlineStyle="height: var(--height); width: var(--width); margin: 0; padding: 0;"
     hash={true}
     renderWorldCopies={false}
     maxPitch={87}
