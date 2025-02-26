@@ -1,7 +1,7 @@
 import { FileSource, PMTiles } from 'pmtiles';
 
 export class SourceLayer {
-    #files: FileList | [] = $state([]);
+    #files = $state([]);
     pmtiles: PMTiles | undefined = $state();
     url: string | undefined = $derived(`pmtiles://${this.pmtiles?.source?.getKey()}`)
 

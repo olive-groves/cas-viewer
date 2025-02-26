@@ -8,12 +8,13 @@
   import { ViewerData } from '$lib/ViewerClasses.svelte';
 
   
-  let n = $state(2);  // n viewers
-  
-  let loaded = $state([
-    false,
-    false
-  ]);
+  let n = $state(3);  // n viewers
+
+  let loaded: Array<boolean> = $state([]);
+
+  for (let i = 0; i < n; i++) {
+    loaded.push(false);
+  };
 
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];
@@ -63,6 +64,14 @@
 					break;
 			case "[":
 					lens.i.target += 1;
+					event.preventDefault();
+					break;
+			case "l":
+					mode = "Lens";
+					event.preventDefault();
+					break;
+			case "s":
+					mode = "Side by side";
 					event.preventDefault();
 					break;
 		}
@@ -126,7 +135,7 @@
           bind:mapProps
           --grid-row-start={1}
           --grid-column-start={1}
-          --clippath={((mode === 'Lens') && ( loaded.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(80/100)*(i-lens.i.current)}px ${lens.y}px)`}
+          --clippath={((mode === 'Lens') && ( loaded.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
         />
       {:else}
         <Select
@@ -166,7 +175,7 @@
     padding: 0;
   }
   @container main (max-aspect-ratio: 1 / 1) {
-    .viewers {
+    .viewers-flex {
       flex-direction: column;
     }
   }
