@@ -1,14 +1,74 @@
 <script lang="ts">
+  import { cubicInOut } from 'svelte/easing';
+  import { Tween } from 'svelte/motion';
+
   import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
+
+  
+  let n = $state(2);  // n viewers
+  
   let loaded = $state([
     false,
     false
   ]);
 
-  let n = $state(2);
+  const MODES = ['Side by side', 'Lens'] as const;
+  type Modes = (typeof MODES)[number];
+	let mode: Modes = $state('Lens')
+
+  let lens =$state(
+		{
+			diameter: new Tween(200, {
+				duration: 100,
+				easing: cubicInOut
+			}),
+			scaler: 1.2,
+			clientX: 0,
+			clientY: 0,
+			containerX: 0,
+			containerY: 0,
+			i: new Tween(1, {
+				duration: 100,
+				easing: cubicInOut
+			})
+		}
+	)
+
+  $effect(() => {
+		lens.x = lens.clientX - lens.containerX;
+		lens.y = lens.clientY - lens.containerY;
+	});
+
+  function recordBoundingClientRect(node, obj) {
+		obj.containerX = node.getBoundingClientRect().left;
+		obj.containerY = node.getBoundingClientRect().top;
+	}
+	
+	function on_key_up(event) {
+		switch (event.key) {
+			case "'":
+					lens.diameter.target = Math.round(lens.diameter.current * lens.scaler);
+					event.preventDefault();
+					break;
+			case ";":
+					lens.diameter.target = Math.round(lens.diameter.current / lens.scaler);
+					event.preventDefault();
+					break;
+			case "]":
+					lens.i.target -= 1;
+					event.preventDefault();
+					break;
+			case "[":
+					lens.i.target += 1;
+					event.preventDefault();
+					break;
+		}
+	}
+
+
   let viewers = $derived.by(() => {  // n viewers
     let viewers = [];
     for (let i = 0; i < n; i++) {
@@ -33,26 +93,10 @@
     return all_pmtiles;
   })
 
-  // $inspect(all_pmtiles).with(console.trace)
   $inspect(viewers[0].raster.pmtiles).with(console.trace)
 
   let mapProps = $state({
   });
-
-  // let files_dem: FileList | [] = $state([]);
-  // let pmtiles_dem = $derived.by( () => {
-  //   if (files_dem.length) {
-  //     return new PMTiles( new FileSource(files_dem[0]));
-  //   }
-  //   return undefined
-  // }) as PMTiles;
-
-  // let pmtiles_all = $derived(
-  //   [
-  //     pmtiles,
-  //     pmtiles_dem
-  //   ]
-  // ) as PMTiles[];
 </script>
 
 
@@ -60,8 +104,18 @@
   <PMTilesProtocol pmtiles={all_pmtiles} />
 {/if}
 
+
+<svelte:window
+	onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
+	on:keyup={on_key_up} 
+	/>
+
+
 <div class="main">
-  <div class={loaded.every((x) => x === true) ? "viewers" : "selectors"}>
+  <div
+    class={[((mode === 'Lens') && ( loaded.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]} 
+    use:recordBoundingClientRect={lens}
+  >
     <!-- Index viewers[i] to trigger reactive state -->
     {#each viewers as _, i} 
       {#if loaded[i]}
@@ -70,6 +124,9 @@
           --width="100%"
           data={viewers[i]}
           bind:mapProps
+          --grid-row-start={1}
+          --grid-column-start={1}
+          --clippath={((mode === 'Lens') && ( loaded.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(80/100)*(i-lens.i.current)}px ${lens.y}px)`}
         />
       {:else}
         <Select
@@ -91,7 +148,7 @@
     margin: 0;
     padding: 0;
   }
-  .selectors {
+  .viewers-flex {
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row;
@@ -100,22 +157,11 @@
     padding: 0;
     justify-content: space-evenly;
     align-items: center;
-    background-color: darkslategray;
   }
-  /* .viewers {
-    display: flex;
-    flex-wrap: nowrap;
-    flex-direction: row;
+  .viewers-grid {
+    display: grid;
+    grid-template-columns: 1fr;
     height: 100%;
-    margin: 0;
-    padding: 0;
-    justify-content: space-evenly;
-    align-items: center;
-  } */
-  .viewers {
-    position: absolute;
-    height: 50%;
-    width: 50%;
     margin: 0;
     padding: 0;
   }

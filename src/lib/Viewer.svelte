@@ -56,7 +56,16 @@
     </tbody>
   </table> -->
   <MapLibre
-    inlineStyle="height: var(--height); width: var(--width); margin: 0; padding: 0;"
+    inlineStyle="
+      height: var(--height);
+      width: var(--width);
+      grid-row-start: var(--grid-row-start);
+      grid-column-start: var(--grid-column-start);
+      margin: 0;
+      padding: 0;
+      position: var(--position, relative);
+      clip-path: var(--clippath, none);
+    "
     hash={true}
     renderWorldCopies={false}
     maxPitch={87}
