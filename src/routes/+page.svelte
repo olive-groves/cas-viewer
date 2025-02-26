@@ -10,12 +10,6 @@
   
   let n = $state(3);  // n viewers
 
-  let loaded: Array<boolean> = $state([]);
-
-  for (let i = 0; i < n; i++) {
-    loaded.push(false);
-  };
-
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];
 	let mode: Modes = $state('Lens')
@@ -86,6 +80,8 @@
     return viewers
   })
 
+  let loaded_conv = $derived(viewers.map((v) => v.loaded)) 
+
   let all_pmtiles = $derived.by(() => {
     let all_pmtiles = [];
     for (let i = 0; i < n; i++) {
@@ -102,14 +98,12 @@
     return all_pmtiles;
   })
 
-  $inspect(viewers[0].raster.pmtiles).with(console.trace)
-
   let mapProps = $state({
   });
 </script>
 
 
-{#if loaded.some((x) => x === true)}
+{#if loaded_conv.some((x) => x === true)}
   <PMTilesProtocol pmtiles={all_pmtiles} />
 {/if}
 
@@ -122,12 +116,12 @@
 
 <div class="main">
   <div
-    class={[((mode === 'Lens') && ( loaded.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]} 
+    class={[((mode === 'Lens') && ( loaded_conv.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]} 
     use:recordBoundingClientRect={lens}
   >
     <!-- Index viewers[i] to trigger reactive state -->
-    {#each viewers as _, i} 
-      {#if loaded[i]}
+    {#each viewers as viewer, i} 
+      {#if viewer.loaded}
         <Viewer
           --height="100%"
           --width="100%"
@@ -135,12 +129,12 @@
           bind:mapProps
           --grid-row-start={1}
           --grid-column-start={1}
-          --clippath={((mode === 'Lens') && ( loaded.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
+          --clippath={((mode === 'Lens') && ( loaded_conv.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
         />
       {:else}
         <Select
           --width="300px"
-          loaded={() => loaded[i] = !loaded[i]}
+          loaded={() => viewer.loaded = !viewer.loaded}
           bind:files={viewers[i].raster.files}
           bind:files_dem={viewers[i].raster_dem.files}
           bind:files_overlay={viewers[i].raster_overlay.files}

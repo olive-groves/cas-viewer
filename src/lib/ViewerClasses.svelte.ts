@@ -35,6 +35,7 @@ export class ViewerData {
     raster: SourceLayer = $state(new SourceLayer());
     raster_dem: SourceLayer = $state(new SourceLayer());
     raster_overlay: SourceLayer = $state(new SourceLayer());
+    loaded = $state(false);
 
     // constructor(raster, raster_dem, raster_overlay) {
     //     this.raster = raster;
