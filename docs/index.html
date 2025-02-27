@@ -1,10 +1,63 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CAS Viewer</title>
-  </head>
-  <body>
-    <p>Coming soon :)</p>
-  </body>
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Viewer 0.6.0</title>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.png" />
+		<style>
+			html, body {
+				background-color: color-mix(in srgb, Canvas, CanvasText 2.5%);
+				color: color-mix(in srgb, CanvasText, Canvas 15%);
+				color-scheme: dark;
+				height: 100%;
+				display: flex;
+				flex-flow: column;
+				margin: 0;
+				padding: 0;
+			}
+		</style>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<link href="./_app/immutable/assets/0.DBE3wViy.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/2.LeFHNGBf.css" rel="stylesheet">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.Dre16MiG.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/CLiSVy8o.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/bpzMgHyU.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/D9UleubV.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.0ZyB9XU5.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/Dr4Fh6ho.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/gPzIt8b8.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/D-rTD1zK.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/Bg9peqaP.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.COsJqzDz.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/DGCYO2xW.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.D4uPXA_m.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/Bz_5M5Oj.js">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[--><!----><nav style="margin: 0; padding: 0.3em;" class="svelte-192ax2e"><h1 class="svelte-192ax2e">PMTiles Multi Viewer</h1> <a href="/test" class="svelte-192ax2e">test</a> <button class="restart svelte-192ax2e">reset</button></nav> <!----><!--[!--><!--]--> <div class="main svelte-1hoy4oy"><div class="viewers-flex svelte-1hoy4oy"><!--[--><div class="viewer-add-remove svelte-1hoy4oy"><button class="svelte-1hoy4oy">–</button></div><!--]--> <!--[--><!--[!--><svelte-css-wrapper style="display: contents; --width: 300px;"><div class="menu svelte-xhgsxv"><form class="svelte-xhgsxv"><div><label class="title svelte-xhgsxv" for="rgb">RGB (raster)</label> <input id="rgb" type="file" class=" svelte-xhgsxv"></div> <div><label class="title svelte-xhgsxv" for="height">Height (raster-dem)</label> <input id="height" type="file" class=" svelte-xhgsxv"></div> <div><label class="title svelte-xhgsxv" for="nan">NaNs (raster)</label> <input id="nan" type="file" class=" svelte-xhgsxv"></div></form> <button>Load</button></div><!----></svelte-css-wrapper><!--]--><!--[!--><svelte-css-wrapper style="display: contents; --width: 300px;"><div class="menu svelte-xhgsxv"><form class="svelte-xhgsxv"><div><label class="title svelte-xhgsxv" for="rgb">RGB (raster)</label> <input id="rgb" type="file" class=" svelte-xhgsxv"></div> <div><label class="title svelte-xhgsxv" for="height">Height (raster-dem)</label> <input id="height" type="file" class=" svelte-xhgsxv"></div> <div><label class="title svelte-xhgsxv" for="nan">NaNs (raster)</label> <input id="nan" type="file" class=" svelte-xhgsxv"></div></form> <button>Load</button></div><!----></svelte-css-wrapper><!--]--><!--]--> <!--[--><div class="viewer-add-remove svelte-1hoy4oy"><button class="svelte-1hoy4oy">+</button></div><!--]--></div></div><!----><!----><!----><!--]--> <!--[!--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_1poh23i = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.Dre16MiG.js"),
+						import("./_app/immutable/entry/app.0ZyB9XU5.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2],
+							data: [null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
 </html>
