@@ -55,84 +55,94 @@
       {/if}
     </tbody>
   </table> -->
-  <MapLibre
-    inlineStyle="
-      height: var(--height);
-      width: var(--width);
-      grid-row-start: var(--grid-row-start);
-      grid-column-start: var(--grid-column-start);
-      margin: 0;
-      padding: 0;
-      position: var(--position, relative);
-      clip-path: var(--clippath, none);
-    "
-    hash={true}
-    renderWorldCopies={false}
-    maxPitch={87}
-    aroundCenter={false}
-    bind:center={mapProps.center}
-    bind:zoom={mapProps.zoom}
-    bind:bearing={mapProps.bearing}
-    bind:pitch={mapProps.pitch}
-    bind:roll={mapProps.roll}
-    bind:elevation={mapProps.elevation}
-  >
-    <RasterTileSource
-      url={data?.raster.url}
+  <div class="container">
+    <MapLibre
+      inlineStyle="
+        height: var(--map-height, 100%);
+        width: var(--map-width, 100%);
+      "
+      hash={true}
+      renderWorldCopies={false}
+      maxPitch={87}
+      aroundCenter={false}
+      bind:center={mapProps.center}
+      bind:zoom={mapProps.zoom}
+      bind:bearing={mapProps.bearing}
+      bind:pitch={mapProps.pitch}
+      bind:roll={mapProps.roll}
+      bind:elevation={mapProps.elevation}
     >
-      <RasterLayer
-        layout={{
-          // 'visibility': "none"
-        }}
-        paint={{
-          'raster-resampling': 'nearest'
-          // "raster-contrast": 0.2 // set -1 for mask effect with hillshade
-        }}
-      />
-    </RasterTileSource>
-    <RasterDEMTileSource
-      id="terrain"
-      url={data?.raster_dem.url}
-      encoding="custom"
-      baseShift={0}
-      redFactor={256*256}
-      greenFactor={256}
-      blueFactor={1}
-    >
-      <TerrainControl position="top-right" />
-      <Terrain exaggeration={10} />
-    </RasterDEMTileSource>
-    <RasterDEMTileSource
-      id="hillshade"
-      url={data?.raster_dem.url}
-      encoding="custom"
-      baseShift={0}
-      redFactor={256*256}
-      greenFactor={256}
-      blueFactor={1}
-    >
-      <HillshadeLayer
-        paint={{
-          'hillshade-exaggeration': 1.0,
-          'hillshade-shadow-color': "#000000",
-          'hillshade-accent-color': "#00000080",
-          'hillshade-highlight-color': "#ffffff00",
-          'hillshade-illumination-anchor': 'map',
-          'hillshade-illumination-direction': 0.0
-        }}
-      />
-    </RasterDEMTileSource>
-    <RasterTileSource
-      url={data?.raster_overlay.url}
-    >
-      <RasterLayer
-        layout={{
-          // 'visibility': "none"
-        }}
-        paint={{
-          'raster-resampling': 'nearest'
-        }}
-      />
-    </RasterTileSource>
-  </MapLibre>
+      <RasterTileSource
+        url={data?.raster.url}
+      >
+        <RasterLayer
+          layout={{
+            // 'visibility': "none"
+          }}
+          paint={{
+            'raster-resampling': 'nearest'
+            // "raster-contrast": 0.2 // set -1 for mask effect with hillshade
+          }}
+        />
+      </RasterTileSource>
+      <RasterDEMTileSource
+        id="terrain"
+        url={data?.raster_dem.url}
+        encoding="custom"
+        baseShift={0}
+        redFactor={256*256}
+        greenFactor={256}
+        blueFactor={1}
+      >
+        <TerrainControl position="top-right" />
+        <Terrain exaggeration={10} />
+      </RasterDEMTileSource>
+      <RasterDEMTileSource
+        id="hillshade"
+        url={data?.raster_dem.url}
+        encoding="custom"
+        baseShift={0}
+        redFactor={256*256}
+        greenFactor={256}
+        blueFactor={1}
+      >
+        <HillshadeLayer
+          paint={{
+            'hillshade-exaggeration': 1.0,
+            'hillshade-shadow-color': "#000000",
+            'hillshade-accent-color': "#00000080",
+            'hillshade-highlight-color': "#ffffff00",
+            'hillshade-illumination-anchor': 'map',
+            'hillshade-illumination-direction': 0.0
+          }}
+        />
+      </RasterDEMTileSource>
+      <RasterTileSource
+        url={data?.raster_overlay.url}
+      >
+        <RasterLayer
+          layout={{
+            // 'visibility': "none"
+          }}
+          paint={{
+            'raster-resampling': 'nearest'
+          }}
+        />
+      </RasterTileSource>
+    </MapLibre>
+  </div>
 {/await}
+
+<style>
+  .container {
+    /* background-color: gray; */
+    height: var(--height);
+    width: var(--width);
+    grid-row-start: var(--grid-row-start);
+    grid-column-start: var(--grid-column-start);
+    margin: 0;
+    padding: 0;
+    position: var(--position, relative);
+    clip-path: var(--clippath, none);
+  }
+</style>

@@ -10,8 +10,6 @@
 </script>
 
 <div class="menu">
-  <h2>PMTiles Viewer</h2>
-
   <form>
     <!-- Separate label from input to disable pointer events -->
     <div>

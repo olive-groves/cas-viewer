@@ -8,7 +8,7 @@
   import { ViewerData } from '$lib/ViewerClasses.svelte';
 
   
-  let n = $state(3);  // n viewers
+  let n = $state(2);  // n viewers
 
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];
@@ -119,6 +119,11 @@
     class={[((mode === 'Lens') && ( loaded_conv.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]} 
     use:recordBoundingClientRect={lens}
   >
+    {#if loaded_conv.some((x) => x === false)}
+      <div class="viewer-add-remove">
+        <button onclick={(e) => n -= 1}>–</button>
+      </div>
+    {/if}
     <!-- Index viewers[i] to trigger reactive state -->
     {#each viewers as viewer, i} 
       {#if viewer.loaded}
@@ -139,8 +144,13 @@
           bind:files_dem={viewers[i].raster_dem.files}
           bind:files_overlay={viewers[i].raster_overlay.files}
         />
-        {/if}
-      {/each}
+      {/if}
+    {/each}
+    {#if loaded_conv.some((x) => x === false)}
+      <div class="viewer-add-remove">
+        <button onclick={(e) => n += 1}>+</button>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -167,6 +177,15 @@
     height: 100%;
     margin: 0;
     padding: 0;
+  }
+  .viewer-add-remove {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+  }
+  .viewer-add-remove button {
+    display: block;
+    font-size: 2rem;
   }
   @container main (max-aspect-ratio: 1 / 1) {
     .viewers-flex {

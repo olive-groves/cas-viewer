@@ -3,7 +3,7 @@
 </script>
 
 <nav style:margin="0" style:padding="0.3em">
-  <h1>Viewer</h1>
+  <h1>PMTiles Multi Viewer</h1>
   <a href="/test">test</a>
   <button class="restart" onclick={() => {window.location.reload(); window.location.href = '/';}}>reset</button>
 </nav>
