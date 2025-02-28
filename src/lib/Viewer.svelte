@@ -19,6 +19,23 @@
     mapProps?: {}
   } = $props();
 
+  let map = $state();
+
+  let controls = $state({
+    rgb: {
+      brightness_max: 1.0,
+      brightness_min: 0.0,
+      contrast: 0.0
+    },
+    overlay: {
+      visibility: true
+    }
+  })
+
+  let hillshade_exaggeration = $state(0.7);
+
+  let overlay_visibilty = $derived(controls.overlay.visibility ? "visible" : "none")
+
   const getHeaderMetadata = async () => {
     const raster_header = await data?.raster.header 
     const raster_metadata = await data?.raster.metadata 
@@ -57,9 +74,13 @@
   </table> -->
   <div class="container">
     <MapLibre
+      bind:map={map}
+      autoloadGlobalCss={false}
       inlineStyle="
-        height: var(--map-height, 100%);
-        width: var(--map-width, 100%);
+        height: 100%;
+        width: 100%;
+        grid-row-start: 1;
+        grid-column-start: 1;
       "
       hash={true}
       renderWorldCopies={false}
@@ -80,8 +101,10 @@
             // 'visibility': "none"
           }}
           paint={{
-            'raster-resampling': 'nearest'
-            // "raster-contrast": 0.2 // set -1 for mask effect with hillshade
+            'raster-resampling': 'nearest',
+            "raster-brightness-max": controls.rgb.brightness_max,
+            "raster-brightness-min": controls.rgb.brightness_min,
+            "raster-contrast": controls.rgb.contrast
           }}
         />
       </RasterTileSource>
@@ -108,10 +131,10 @@
       >
         <HillshadeLayer
           paint={{
-            'hillshade-exaggeration': 1.0,
+            'hillshade-exaggeration': hillshade_exaggeration,
             'hillshade-shadow-color': "#000000",
             'hillshade-accent-color': "#00000080",
-            'hillshade-highlight-color': "#ffffff00",
+            'hillshade-highlight-color': "#ffffffff",
             'hillshade-illumination-anchor': 'map',
             'hillshade-illumination-direction': 0.0
           }}
@@ -122,7 +145,7 @@
       >
         <RasterLayer
           layout={{
-            // 'visibility': "none"
+            'visibility': overlay_visibilty
           }}
           paint={{
             'raster-resampling': 'nearest'
@@ -130,12 +153,51 @@
         />
       </RasterTileSource>
     </MapLibre>
+    <div
+      class="controls"
+    >
+      <label>
+        <input type="checkbox" bind:checked={controls.overlay.visibility}>
+        NaN
+      </label>
+      <label>
+        <input type="range" min=0 max=1 step=0.1 bind:value={controls.rgb.brightness_max}>
+        Highlights
+      </label>
+      <label>
+        <input type="range" min=0  max=1 step=0.1 bind:value={controls.rgb.brightness_min}>
+        Shadows
+      </label>
+      <label>
+        <input type="range" min=-1 max=1 step=0.1 bind:value={controls.rgb.contrast}>
+        Contrast
+      </label>
+      <label>
+        <input type="range" min=0 max=1 step=0.1 bind:value={hillshade_exaggeration}>
+        Hillshade ({hillshade_exaggeration.toFixed(2)})
+      </label>
+    </div>
   </div>
 {/await}
 
 <style>
+  .controls * {
+    pointer-events: auto;
+  }
+  .controls {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    pointer-events: none;
+    /* justify-content: end; */
+    z-index: 1;
+    grid-row-start: 1;
+    grid-column-start: 1;
+  }
   .container {
-    /* background-color: gray; */
+    display: grid;
+    grid-template-columns: 1fr;
+    background-color: gray;
     height: var(--height);
     width: var(--width);
     grid-row-start: var(--grid-row-start);

@@ -1,5 +1,4 @@
 <script lang="ts">
-  // import { onMount } from "svelte";
   let {
     loaded,
     files = $bindable(),
@@ -11,7 +10,7 @@
 
 <div class="menu">
   <form>
-    <!-- Separate label from input to disable pointer events -->
+    <!-- Separate the label from the input to disable pointer events -->
     <div>
       <label class="title" for="rgb">RGB (raster)</label>
       <input
@@ -21,8 +20,8 @@
         ondragenter={() => (drag = 0)}
         ondragover={() => (drag = 0)}
         ondragleave={() => (drag = -1)}
-        ondrop={() => (drag = 0)}
-        class="{drag === 0 ? 'dragged' : ''}"
+        ondrop={() => (drag = -1)}
+        class={[drag === 0 ? 'dragged' : (files?.length && 'dropped')]}
       />
     </div>
     <div>
@@ -34,8 +33,8 @@
         ondragenter={() => (drag = 1)}
         ondragover={() => (drag = 1)}
         ondragleave={() => (drag = -1)}
-        ondrop={() => (drag = 1)}
-        class="{drag === 1 ? 'dragged' : ''}"
+        ondrop={() => (drag = -1)}
+        class={[drag === 1 ? 'dragged' : (files_dem?.length && 'dropped')]}
       />
     </div>
     <div>
@@ -47,8 +46,8 @@
         ondragenter={() => (drag = 2)}
         ondragover={() => (drag = 2)}
         ondragleave={() => (drag = -1)}
-        ondrop={() => (drag = 2)}
-        class="{drag === 2 ? 'dragged' : ''}"
+        ondrop={() => (drag = -1)}
+        class={[drag === 2 ? 'dragged' : (files_overlay?.length && 'dropped')]}
       />
     </div>
   </form>
@@ -84,7 +83,12 @@
   input[type=file].dragged {
     border-color: CanvasText;
     border-style: solid;
-    border-color: lime;
+    border-color: rgb(0, 205, 255);
+  }
+  input[type=file].dropped {
+    border-color: CanvasText;
+    border-style: solid;
+    border-color: rgb(0, 203, 0);
   }
   div.menu {
     display: flex;
