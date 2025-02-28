@@ -27,12 +27,44 @@
       brightness_min: 0.0,
       contrast: 0.0
     },
+    hillshade: {
+      exaggeration: 0.7,
+      interval: 1
+    },
     overlay: {
       visibility: true
     }
   })
 
-  let hillshade_exaggeration = $state(0.7);
+
+  // Paint props with terrain on are not immediately reflected
+  // Reload here to do so
+  $effect(() => {
+    controls.rgb.brightness_max;
+    controls.rgb.brightness_min;
+    controls.rgb.contrast;
+    controls.hillshade.exaggeration;
+    setTimeout(() => {
+        map?.terrain?.sourceCache.freeRtt();
+        map?.terrain?.sourceCache.sourceCache.reload();
+    }, 200);
+  })
+
+  $effect(() => {
+    if (map) {
+      const style = map.getStyle()
+      const interval = controls.hillshade.interval;
+      
+      console.log(style)
+  
+      if (style?.sources?.hillshade) {
+        style.sources.hillshade.redFactor = 256 * 256 * interval;
+        style.sources.hillshade.greenFactor = 256 * interval;
+        style.sources.hillshade.blueFactor = 1 * interval;
+        map.setStyle(style)
+      }
+    }
+  })
 
   let overlay_visibilty = $derived(controls.overlay.visibility ? "visible" : "none")
 
@@ -125,13 +157,13 @@
         url={data?.raster_dem.url}
         encoding="custom"
         baseShift={0}
-        redFactor={256*256}
-        greenFactor={256}
-        blueFactor={1}
+        redFactor={256*256*controls.hillshade.interval}
+        greenFactor={256*controls.hillshade.interval}
+        blueFactor={1*controls.hillshade.interval}
       >
         <HillshadeLayer
           paint={{
-            'hillshade-exaggeration': hillshade_exaggeration,
+            'hillshade-exaggeration': controls.hillshade.exaggeration,
             'hillshade-shadow-color': "#000000",
             'hillshade-accent-color': "#00000080",
             'hillshade-highlight-color': "#ffffffff",
@@ -161,20 +193,24 @@
         NaN
       </label>
       <label>
-        <input type="range" min=0 max=1 step=0.1 bind:value={controls.rgb.brightness_max}>
+        <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max}>
         Highlights
       </label>
       <label>
-        <input type="range" min=0  max=1 step=0.1 bind:value={controls.rgb.brightness_min}>
+        <input type="range" min=0  max=1 step=0.01 bind:value={controls.rgb.brightness_min}>
         Shadows
       </label>
       <label>
-        <input type="range" min=-1 max=1 step=0.1 bind:value={controls.rgb.contrast}>
+        <input type="range" min=-1 max=1 step=0.01 bind:value={controls.rgb.contrast}>
         Contrast
       </label>
       <label>
-        <input type="range" min=0 max=1 step=0.1 bind:value={hillshade_exaggeration}>
-        Hillshade ({hillshade_exaggeration.toFixed(2)})
+        <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration}>
+        Hillshade ({controls.hillshade.exaggeration.toFixed(2)})
+      </label>
+      <label>
+        <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.interval}>
+        Hillshade overdrive ({controls.hillshade.interval.toFixed(0)})
       </label>
     </div>
   </div>
