@@ -12,6 +12,18 @@
 
   import { ViewerData } from './ViewerClasses.svelte';
 
+  let raking = $state(false);
+
+  function updateRaking(event) {
+		const rect = event.target?.getBoundingClientRect()
+    pointer.containerWidth = rect.width
+    pointer.containerHeight = rect.height
+    pointer.containerLeft = rect.left
+    pointer.containerTop = rect.top
+    pointer.clientX = event.clientX;
+    pointer.clientY = event.clientY;
+	}
+
   let {
     data,
     mapProps = $bindable()
@@ -173,13 +185,7 @@
     bind:clientWidth={pointer.containerWidth}
     bind:clientHeight={pointer.containerHeight}
     onpointermove={(e) => {
-      const rect = e.target?.getBoundingClientRect()
-      pointer.containerWidth = rect.width
-      pointer.containerHeight = rect.height
-      pointer.containerLeft = rect.left
-      pointer.containerTop = rect.top
-      pointer.clientX = e.clientX;
-      pointer.clientY = e.clientY;
+      if (raking) updateRaking(e)
     }}
   >
     <MapLibre
@@ -312,13 +318,11 @@
           class="circle"
           style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
           onpointermove={(e) => {
-            const rect = e.target?.getBoundingClientRect()
-            pointer.containerWidth = rect.width
-            pointer.containerHeight = rect.height
-            pointer.containerLeft = rect.left
-            pointer.containerTop = rect.top
-            pointer.clientX = e.clientX;
-            pointer.clientY = e.clientY;
+            if (raking) updateRaking(e)
+          }}
+          onpointerup={(e) => {
+            raking = !raking;
+            if (raking) updateRaking(e)
           }}
         >
         </figure>
