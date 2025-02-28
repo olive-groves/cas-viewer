@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    BackgroundLayer,
     HillshadeLayer,
     MapLibre,
     RasterDEMTileSource,
@@ -29,12 +30,16 @@
     },
     hillshade: {
       exaggeration: 0.7,
-      interval: 1
+      interval: 1,
+      background: data?.raster.url ? 0 : 1,
+      lightness: 50
     },
     overlay: {
       visibility: true
     }
   })
+
+  $inspect(data?.raster.url).with(console.trace)
 
 
   // Paint props with terrain on are not immediately reflected
@@ -44,6 +49,8 @@
     controls.rgb.brightness_min;
     controls.rgb.contrast;
     controls.hillshade.exaggeration;
+    controls.hillshade.background;
+    controls.hillshade.lightness;
     setTimeout(() => {
         map?.terrain?.sourceCache.freeRtt();
         map?.terrain?.sourceCache.sourceCache.reload();
@@ -54,9 +61,6 @@
     if (map) {
       const style = map.getStyle()
       const interval = controls.hillshade.interval;
-      
-      console.log(style)
-  
       if (style?.sources?.hillshade) {
         style.sources.hillshade.redFactor = 256 * 256 * interval;
         style.sources.hillshade.greenFactor = 256 * interval;
@@ -161,6 +165,12 @@
         greenFactor={256*controls.hillshade.interval}
         blueFactor={1*controls.hillshade.interval}
       >
+        <BackgroundLayer
+          paint={{
+            'background-opacity': controls.hillshade.background,
+            'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
+          }}
+        />
         <HillshadeLayer
           paint={{
             'hillshade-exaggeration': controls.hillshade.exaggeration,
@@ -188,52 +198,80 @@
     <div
       class="controls"
     >
-      <label>
-        <input type="checkbox" bind:checked={controls.overlay.visibility}>
-        NaN
-      </label>
-      <label>
-        <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max}>
-        Highlights
-      </label>
-      <label>
-        <input type="range" min=0  max=1 step=0.01 bind:value={controls.rgb.brightness_min}>
-        Shadows
-      </label>
-      <label>
-        <input type="range" min=-1 max=1 step=0.01 bind:value={controls.rgb.contrast}>
-        Contrast
-      </label>
-      <label>
-        <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration}>
-        Hillshade ({controls.hillshade.exaggeration.toFixed(2)})
-      </label>
-      <label>
-        <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.interval}>
-        Hillshade overdrive ({controls.hillshade.interval.toFixed(0)})
-      </label>
+      <div class="container">
+        <h3>NaN</h3>
+        <label>
+          <input type="checkbox" bind:checked={controls.overlay.visibility}>
+          Show
+        </label>
+        <h3>RGB</h3>
+        <label>
+          <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max}>
+          Highlights
+        </label>
+        <label>
+          <input type="range" min=0  max=1 step=0.01 bind:value={controls.rgb.brightness_min}>
+          Shadows
+        </label>
+        <label>
+          <input type="range" min=-1 max=1 step=0.01 bind:value={controls.rgb.contrast}>
+          Contrast
+        </label>
+        <h3>Hillshade</h3>
+        <label>
+          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration}>
+          Exaggeration ({controls.hillshade.exaggeration.toFixed(2)})
+        </label>
+        <label>
+          <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval}>
+          Overdrive ({controls.hillshade.interval.toFixed(0)})
+        </label>
+        <label>
+          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background}>
+          Background opacity ({controls.hillshade.background.toFixed(2)})
+        </label>
+        <label>
+          <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness}>
+          Background lightness ({controls.hillshade.lightness.toFixed(0)})
+        </label>
+      </div>
     </div>
   </div>
 {/await}
 
 <style>
-  .controls * {
-    pointer-events: auto;
+  .controls h3 {
+    margin-bottom: 0;
+    font-weight: normal;
   }
-  .controls {
+  .controls .container {
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
+    width: 400px;
+  }
+  .controls .container * {
+    pointer-events: auto;
+  }
+  .controls label, h3 {
+    white-space: nowrap;
+    filter: drop-shadow(0px 0px 2px #000000);
+  }
+  .controls {
+    filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
     pointer-events: none;
-    /* justify-content: end; */
-    z-index: 1;
+    z-index: calc(var(--z-index) + 1);
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    flex-wrap: nowrap;
     grid-row-start: 1;
     grid-column-start: 1;
   }
   .container {
     display: grid;
+    z-index: var(--z-index);
     grid-template-columns: 1fr;
-    background-color: gray;
     height: var(--height);
     width: var(--width);
     grid-row-start: var(--grid-row-start);

@@ -3,7 +3,7 @@ import { FileSource, PMTiles } from 'pmtiles';
 export class SourceLayer {
     #files = $state();
     pmtiles: PMTiles | undefined = $state();
-    url: string | undefined = $derived(`pmtiles://${this.pmtiles?.source?.getKey()}`)
+    url: string | undefined = $derived(this.pmtiles?.source ? `pmtiles://${this.pmtiles.source?.getKey()}` : undefined)
 
     constructor(files?) {
         if (files) {

@@ -1,4 +1,7 @@
 <script lang="ts">
+  import '$lib/maplibre-gl.css'
+  
+    // import { base } from "$app/paths";
     let { children } = $props()
 </script>
 
@@ -6,6 +9,8 @@
   <h1>PMTiles Multi Viewer</h1>
   <a href="/test">test</a>
   <button class="restart" onclick={() => {window.location.reload(); window.location.href = '/';}}>reset</button>
+  <!-- <a href="{base}/test">test</a> -->
+  <!-- <button class="restart" onclick={() => {window.location.reload(); window.location.href = `${base}/`;}}>reset</button> -->
 </nav>
 
 <style>

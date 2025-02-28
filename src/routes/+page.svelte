@@ -132,6 +132,7 @@
           --width="100%"
           data={viewers[i]}
           bind:mapProps
+          --z-index={i + 1}
           --grid-row-start={1}
           --grid-column-start={1}
           --clippath={((mode === 'Lens') && ( loaded_conv.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
