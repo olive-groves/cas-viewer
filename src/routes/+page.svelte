@@ -121,7 +121,7 @@
   >
     {#if loaded_conv.some((x) => x === false)}
       <div class="viewer-add-remove">
-        <button onclick={(e) => n -= 1}>–</button>
+        <button onclick={(e) => n -= 1} disabled={n <= 1}>–</button>
       </div>
     {/if}
     <!-- Index viewers[i] to trigger reactive state -->
@@ -132,7 +132,6 @@
           --width="100%"
           data={viewers[i]}
           bind:mapProps
-          --z-index={i + 1}
           --grid-row-start={1}
           --grid-column-start={1}
           --clippath={((mode === 'Lens') && ( loaded_conv.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
@@ -147,6 +146,9 @@
         />
       {/if}
     {/each}
+    <div class="overlay" style="grid-row-start: 1; grid-column-start: 1">
+      <button>Hello</button>
+    </div>
     {#if loaded_conv.some((x) => x === false)}
       <div class="viewer-add-remove">
         <button onclick={(e) => n += 1}>+</button>
@@ -169,7 +171,7 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    justify-content: space-evenly;
+    justify-content: space-between;
     align-items: center;
   }
   .viewers-grid {
@@ -186,6 +188,8 @@
   }
   .viewer-add-remove button {
     display: block;
+    width: 50px;
+    height: 50px;
     font-size: 2rem;
   }
   @container main (max-aspect-ratio: 1 / 1) {

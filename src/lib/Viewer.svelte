@@ -188,92 +188,93 @@
       if (raking) updateRaking(e)
     }}
   >
-    <MapLibre
-      bind:map={map}
-      autoloadGlobalCss={false}
-      inlineStyle="
-        height: 100%;
-        width: 100%;
-        grid-row-start: 1;
-        grid-column-start: 1;
-      "
-      hash={true}
-      renderWorldCopies={false}
-      maxPitch={87}
-      aroundCenter={false}
-      bind:center={mapProps.center}
-      bind:zoom={mapProps.zoom}
-      bind:bearing={mapProps.bearing}
-      bind:pitch={mapProps.pitch}
-      bind:roll={mapProps.roll}
-      bind:elevation={mapProps.elevation}
-    >
-      <RasterTileSource
-        url={data?.raster.url}
+    <div class="map">
+      <MapLibre
+        bind:map={map}
+        autoloadGlobalCss={false}
+        inlineStyle="height: 100%; width: 100%;"
+        hash={true}
+        renderWorldCopies={false}
+        maxPitch={87}
+        aroundCenter={false}
+        bind:center={mapProps.center}
+        bind:zoom={mapProps.zoom}
+        bind:bearing={mapProps.bearing}
+        bind:pitch={mapProps.pitch}
+        bind:roll={mapProps.roll}
+        bind:elevation={mapProps.elevation}
       >
-        <RasterLayer
-          layout={{
-            // 'visibility': "none"
-          }}
-          paint={{
-            'raster-resampling': 'nearest',
-            "raster-brightness-max": controls.rgb.brightness_max,
-            "raster-brightness-min": controls.rgb.brightness_min,
-            "raster-contrast": controls.rgb.contrast
-          }}
-        />
-      </RasterTileSource>
-      <RasterDEMTileSource
-        id="terrain"
-        url={data?.raster_dem.url}
-        encoding="custom"
-        baseShift={0}
-        redFactor={256*256}
-        greenFactor={256}
-        blueFactor={1}
-      >
-        <TerrainControl position="top-right" />
-        <Terrain exaggeration={10} />
-      </RasterDEMTileSource>
-      <RasterDEMTileSource
-        id="hillshade"
-        url={data?.raster_dem.url}
-        encoding="custom"
-        baseShift={0}
-        redFactor={256*256*controls.hillshade.interval}
-        greenFactor={256*controls.hillshade.interval}
-        blueFactor={1*controls.hillshade.interval}
-      >
-        <BackgroundLayer
-          paint={{
-            'background-opacity': controls.hillshade.background,
-            'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
-          }}
-        />
-        <HillshadeLayer
-          paint={{
-            'hillshade-exaggeration': 1.0,
-            'hillshade-shadow-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
-            'hillshade-accent-color': "rgba(0, 0, 0, 0)",
-            'hillshade-highlight-color': `rgba(255, 255, 255, ${Math.min(2*Math.max(controls.hillshade.exaggeration, 0), 1)})`,
-            'hillshade-illumination-anchor': 'map',
-            'hillshade-illumination-direction': controls.hillshade.angle
-          }}
-        />
-      </RasterDEMTileSource>
-      <RasterTileSource
-        url={data?.raster_overlay.url}
-      >
-        <RasterLayer
-          layout={{
-            'visibility': overlay_visibilty
-          }}
-          paint={{
-            'raster-resampling': 'nearest'
-          }}
-        />
-      </RasterTileSource>
-    </MapLibre>
+        <RasterTileSource
+          url={data?.raster.url}
+          tileSize={256}
+        >
+          <RasterLayer
+            layout={{
+              // 'visibility': "none"
+            }}
+            paint={{
+              'raster-resampling': 'nearest',
+              "raster-brightness-max": controls.rgb.brightness_max,
+              "raster-brightness-min": controls.rgb.brightness_min,
+              "raster-contrast": controls.rgb.contrast
+            }}
+          />
+        </RasterTileSource>
+        <RasterDEMTileSource
+          id="terrain"
+          url={data?.raster_dem.url}
+          encoding="custom"
+          baseShift={0}
+          redFactor={256*256}
+          greenFactor={256}
+          blueFactor={1}
+          tileSize={256}
+        >
+          <TerrainControl position="top-right" />
+          <Terrain exaggeration={10} />
+        </RasterDEMTileSource>
+        <RasterDEMTileSource
+          id="hillshade"
+          url={data?.raster_dem.url}
+          encoding="custom"
+          baseShift={0}
+          redFactor={256*256*controls.hillshade.interval}
+          greenFactor={256*controls.hillshade.interval}
+          blueFactor={1*controls.hillshade.interval}
+          tileSize={256}
+        >
+          <BackgroundLayer
+            paint={{
+              'background-opacity': controls.hillshade.background,
+              'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
+            }}
+          />
+          <HillshadeLayer
+            paint={{
+              'hillshade-exaggeration': 1.0,
+              'hillshade-shadow-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
+              'hillshade-accent-color': "rgba(0, 0, 0, 0)",
+              'hillshade-highlight-color': `rgba(255, 255, 255, ${Math.min(2*Math.max(controls.hillshade.exaggeration, 0), 1)})`,
+              'hillshade-illumination-anchor': 'map',
+              'hillshade-illumination-direction': controls.hillshade.angle
+            }}
+          />
+        </RasterDEMTileSource>
+        <RasterTileSource
+          url={data?.raster_overlay.url}
+          tileSize={256}
+        >
+          <RasterLayer
+            layout={{
+              'visibility': overlay_visibilty
+            }}
+            paint={{
+              'raster-resampling': 'nearest'
+            }}
+          />
+        </RasterTileSource>
+      </MapLibre>
+    </div>
     <div
       class="controls-container"
     >
@@ -359,7 +360,6 @@
   .controls-container {
     filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
     pointer-events: none;
-    z-index: calc(var(--z-index) + 1);
     display: flex;
     flex-direction: row;
     align-items: start;
@@ -368,9 +368,14 @@
     grid-column-start: 1;
     overflow: hidden;
   }
+  .map {
+    height: 100%;
+    width: 100%;
+    grid-row-start: 1;
+    grid-column-start: 1;
+  }
   .container {
     display: grid;
-    z-index: var(--z-index);
     grid-template-columns: 1fr;
     height: var(--height);
     width: var(--width);
