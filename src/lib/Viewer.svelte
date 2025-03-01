@@ -11,8 +11,59 @@
   } from 'svelte-maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
+  
+  let {
+    data,
+    mapProps = $bindable({
+      center: [0, 0],
+      zoom: 0,
+      bearing: 0,
+      pitch: 0,
+      roll: 0,
+      elevation: 0
+    }),
+    pointer = $bindable({
+      x: 0,
+      y: 0,
+      clientX: 0,
+      clientY: 0,
+      containerLeft: 0,
+      containerTop: 0,
+      containerWidth: 0,
+      containerHeight: 0,
+      roundedPercentX: 0,
+      roundedPercentY: 0
+    })
+  }: {
+    data?: ViewerData,
+    mapProps?: {},
+    pointer?: {}
+  } = $props();
+
+  let map = $state();
 
   let raking = $state(false);
+
+  // let pointer = $state({
+  //   x: 0,
+  //   y: 0,
+  //   clientX: 0,
+  //   clientY: 0,
+  //   containerLeft: 0,
+  //   containerTop: 0,
+  //   containerWidth: 0,
+  //   containerHeight: 0,
+  //   roundedPercentX: 0,
+  //   roundedPercentY: 0,
+  // })
+
+  $effect(() => {
+		pointer.x = pointer.clientX - pointer.containerLeft;
+		pointer.y = pointer.clientY - pointer.containerTop;
+	});
+
+  let radialX = $derived(pointer.x/pointer.containerWidth*100);
+  let radialY = $derived(pointer.y/pointer.containerHeight*100);
 
   function updateRaking(event) {
 		const rect = event.target?.getBoundingClientRect()
@@ -23,16 +74,6 @@
     pointer.clientX = event.clientX;
     pointer.clientY = event.clientY;
 	}
-
-  let {
-    data,
-    mapProps = $bindable()
-  }: {
-    data?: ViewerData,
-    mapProps?: {}
-  } = $props();
-
-  let map = $state();
 
   let controls = $state({
     rgb: {
@@ -94,27 +135,6 @@
   })
 
   let overlay_visibilty = $derived(controls.overlay.visibility ? "visible" : "none")
-
-  let pointer = $state({
-    x: 0,
-    y: 0,
-    clientX: 0,
-    clientY: 0,
-    containerLeft: 0,
-    containerTop: 0,
-    containerWidth: 0,
-    containerHeight: 0,
-    roundedPercentX: 0,
-    roundedPercentY: 0,
-  })
-
-  $effect(() => {
-		pointer.x = pointer.clientX - pointer.containerLeft;
-		pointer.y = pointer.clientY - pointer.containerTop;
-	});
-
-  let radialX = $derived(pointer.x/pointer.containerWidth*100);
-  let radialY = $derived(pointer.y/pointer.containerHeight*100);
 
   $effect(() => {
     //
@@ -204,86 +224,86 @@
         bind:roll={mapProps.roll}
         bind:elevation={mapProps.elevation}
       >
-        <RasterTileSource
-          url={data?.raster.url}
-          tileSize={256}
-        >
-          <RasterLayer
-            layout={{
-              // 'visibility': "none"
-            }}
-            paint={{
-              'raster-resampling': 'nearest',
-              "raster-brightness-max": controls.rgb.brightness_max,
-              "raster-brightness-min": controls.rgb.brightness_min,
-              "raster-contrast": controls.rgb.contrast
-            }}
-          />
-        </RasterTileSource>
-        <RasterDEMTileSource
-          id="terrain"
-          url={data?.raster_dem.url}
-          encoding="custom"
-          baseShift={0}
-          redFactor={256*256}
-          greenFactor={256}
-          blueFactor={1}
-          tileSize={256}
-        >
-          <TerrainControl position="top-right" />
-          <Terrain exaggeration={10} />
-        </RasterDEMTileSource>
-        <RasterDEMTileSource
-          id="hillshade"
-          url={data?.raster_dem.url}
-          encoding="custom"
-          baseShift={0}
-          redFactor={256*256*controls.hillshade.interval}
-          greenFactor={256*controls.hillshade.interval}
-          blueFactor={1*controls.hillshade.interval}
-          tileSize={256}
-        >
-          <BackgroundLayer
-            paint={{
-              'background-opacity': controls.hillshade.background,
-              'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
-            }}
-          />
-          <HillshadeLayer
-            paint={{
-              'hillshade-exaggeration': 1.0,
-              'hillshade-shadow-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
-              'hillshade-accent-color': "rgba(0, 0, 0, 0)",
-              'hillshade-highlight-color': `rgba(255, 255, 255, ${Math.min(2*Math.max(controls.hillshade.exaggeration, 0), 1)})`,
-              'hillshade-illumination-anchor': 'map',
-              'hillshade-illumination-direction': controls.hillshade.angle
-            }}
-          />
-        </RasterDEMTileSource>
-        <RasterTileSource
-          url={data?.raster_overlay.url}
-          tileSize={256}
-        >
-          <RasterLayer
-            layout={{
-              'visibility': overlay_visibilty
-            }}
-            paint={{
-              'raster-resampling': 'nearest'
-            }}
-          />
-        </RasterTileSource>
+        {#if data?.raster.url}
+          <RasterTileSource
+            url={data?.raster.url}
+            tileSize={256}
+          >
+            <RasterLayer
+              layout={{
+                // 'visibility': "none"
+              }}
+              paint={{
+                'raster-resampling': 'nearest',
+                "raster-brightness-max": controls.rgb.brightness_max,
+                "raster-brightness-min": controls.rgb.brightness_min,
+                "raster-contrast": controls.rgb.contrast
+              }}
+            />
+          </RasterTileSource>
+        {/if}
+        {#if data?.raster_dem.url}
+          <RasterDEMTileSource
+            id="terrain"
+            url={data?.raster_dem.url}
+            encoding="custom"
+            baseShift={0}
+            redFactor={256*256}
+            greenFactor={256}
+            blueFactor={1}
+          >
+            <TerrainControl position="top-right" />
+            <Terrain exaggeration={10} />
+          </RasterDEMTileSource>
+          <RasterDEMTileSource
+            id="hillshade"
+            url={data?.raster_dem.url}
+            encoding="custom"
+            baseShift={0}
+            redFactor={256*256*controls.hillshade.interval}
+            greenFactor={256*controls.hillshade.interval}
+            blueFactor={1*controls.hillshade.interval}
+            tileSize={256}
+          >
+            <BackgroundLayer
+              paint={{
+                'background-opacity': controls.hillshade.background,
+                'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
+              }}
+            />
+            <HillshadeLayer
+              paint={{
+                'hillshade-exaggeration': 1.0,
+                'hillshade-shadow-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
+                'hillshade-accent-color': "rgba(0, 0, 0, 0)",
+                'hillshade-highlight-color': `rgba(255, 255, 255, ${Math.min(2*Math.max(controls.hillshade.exaggeration, 0), 1)})`,
+                'hillshade-illumination-anchor': 'map',
+                'hillshade-illumination-direction': controls.hillshade.angle
+              }}
+            />
+          </RasterDEMTileSource>
+        {/if}
+        {#if data?.raster_overlay.url}
+          <RasterTileSource
+            url={data?.raster_overlay.url}
+            tileSize={256}
+          >
+            <RasterLayer
+              layout={{
+                'visibility': overlay_visibilty
+              }}
+              paint={{
+                'raster-resampling': 'nearest'
+              }}
+            />
+          </RasterTileSource>
+        {/if}
       </MapLibre>
     </div>
     <div
       class="controls-container"
     >
       <div class="controls">
-        <h3>NaN</h3>
-        <label>
-          <input type="checkbox" bind:checked={controls.overlay.visibility}>
-          Show
-        </label>
         <h3>RGB</h3>
         <label>
           <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max}>
@@ -299,22 +319,21 @@
         </label>
         <h3>Hillshade</h3>
         <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration}>
-          Exaggeration ({controls.hillshade.exaggeration.toFixed(2)})
+          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
+          Intensity ({controls.hillshade.exaggeration.toFixed(2)})
         </label>
         <label>
-          <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval}>
-          Overdrive ({controls.hillshade.interval.toFixed(0)})
+          <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
+          Multiplier ({controls.hillshade.interval.toFixed(0)})
         </label>
         <label>
           <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background}>
           Background opacity ({controls.hillshade.background.toFixed(2)})
         </label>
         <label>
-          <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness}>
+          <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness} ondblclick={() => controls.hillshade.lightness = 50}>
           Background lightness ({controls.hillshade.lightness.toFixed(0)})
         </label>
-        <p>theta {controls.hillshade.angle}</p>
         <figure
           class="circle"
           style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
@@ -325,8 +344,14 @@
             raking = !raking;
             if (raking) updateRaking(e)
           }}
+          ondblclick={() => {pointer.x = 0; pointer.y = 0}}
         >
         </figure>
+        <h3>NaN</h3>
+        <label>
+          <input type="checkbox" bind:checked={controls.overlay.visibility}>
+          Show
+        </label>
       </div>
     </div>
   </div>

@@ -98,7 +98,18 @@
     return all_pmtiles;
   })
 
-  let mapProps = $state({
+  let mapProps = $state({});
+  let pointer = $state({
+    x: 0,
+    y: 0,
+    clientX: 0,
+    clientY: 0,
+    containerLeft: 0,
+    containerTop: 0,
+    containerWidth: 0,
+    containerHeight: 0,
+    roundedPercentX: 0,
+    roundedPercentY: 0
   });
 </script>
 
@@ -132,6 +143,7 @@
           --width="100%"
           data={viewers[i]}
           bind:mapProps
+          bind:pointer
           --grid-row-start={1}
           --grid-column-start={1}
           --clippath={((mode === 'Lens') && ( loaded_conv.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
