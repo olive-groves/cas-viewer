@@ -1,6 +1,7 @@
 <script lang="ts">
   let {
     loaded,
+    header = 'Viewer',
     files = $bindable(),
     files_dem = $bindable(),
     files_overlay = $bindable()
@@ -9,6 +10,7 @@
 </script>
 
 <div class="menu">
+  <h2>{header}</h2>
   <form>
     <!-- Separate the label from the input to disable pointer events -->
     <div>

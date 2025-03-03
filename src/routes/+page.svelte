@@ -6,7 +6,6 @@
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
-
   
   let n = $state(1);  // n viewers
 
@@ -152,6 +151,7 @@
         <Select
           --width="300px"
           loaded={() => viewer.loaded = !viewer.loaded}
+          header={(n === 1 ? `Viewer` : (`Viewer ${i + 1}`) + ((n > 0 && i === 0) ? ' (Main)' : ' (Lens)'))}
           bind:files={viewers[i].raster.files}
           bind:files_dem={viewers[i].raster_dem.files}
           bind:files_overlay={viewers[i].raster_overlay.files}
@@ -164,9 +164,13 @@
       </div>
     {/if}
   </div>
-  <div class="viewers-controls">
-    <button>Hello</button>
-  </div>
+  {#if n > 1 && loaded_conv.every((x) => x === true)}
+    <div class="viewers-controls">
+      <div class="mode">
+        <button onclick={mode = mode === "Lens" ? "Side by side" : "Lens"}>{mode === "Lens" ? "Side by side" : "Lens"}</button>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -182,7 +186,14 @@
       grid-row-start: 1;
       grid-column-start: 1;
   }
+  .mode {
+    display: flex;
+    justify-content: center;
+  }
   .viewers-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
     pointer-events: none;
     z-index: 1;
   }

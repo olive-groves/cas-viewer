@@ -4,6 +4,7 @@
     BackgroundLayer,
     HillshadeLayer,
     MapLibre,
+    NavigationControl,
     RasterDEMTileSource,
     RasterLayer,
     RasterTileSource,
@@ -12,6 +13,8 @@
   } from 'svelte-maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
+
+  import Minimap from '$lib/mapboxgl-minimap.js';
   
   let {
     data,
@@ -44,19 +47,6 @@
   let map = $state();
 
   let raking = $state(false);
-
-  // let pointer = $state({
-  //   x: 0,
-  //   y: 0,
-  //   clientX: 0,
-  //   clientY: 0,
-  //   containerLeft: 0,
-  //   containerTop: 0,
-  //   containerWidth: 0,
-  //   containerHeight: 0,
-  //   roundedPercentX: 0,
-  //   roundedPercentY: 0,
-  // })
 
   $effect(() => {
 		pointer.x = pointer.clientX - pointer.containerLeft;
@@ -122,7 +112,6 @@
       map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
-
 
   $effect(() => {
     if (map) {
@@ -214,6 +203,60 @@
     <div class="map">
       <MapLibre
         bind:map={map}
+        onload={
+        map.addControl(new Minimap({
+            zoom: -2,
+            renderWorldCopies: false,
+            width: "180px",
+            height: "180px",
+            lineColor: "#fff",
+            fillColor: "#fff",
+            style: {
+              version: 8,
+              sources: {
+                ...(data?.raster.url && {
+                  rgb: {
+                    type: "raster",
+                    url: data?.raster.url,
+                    tileSize: 256
+                  }
+                }),
+                ...(data?.raster_dem.url && {
+                  hillshade: {
+                    type: "raster-dem",
+                    url: data?.raster_dem.url,
+                    tileSize: 256,
+                    encoding: "custom",
+                    baseShift: 0,
+                    redFactor: 256*256*2,
+                    greenFactor: 256*2,
+                    blueFactor: 2
+                  }
+                })
+              },
+              layers: [
+                ... data?.raster.url ? [{
+                  'id': 'raster',
+                  'type': 'raster',
+                  'source': 'rgb',
+                  'paint': {
+                      'raster-resampling': 'linear',
+                      'raster-opacity': 0.7,
+                      'raster-saturation': 0
+                  }
+                }] : [],
+                ... data?.raster_dem.url ? [{
+                  'id': 'hillshade',
+                  'type': 'hillshade',
+                  'source': 'hillshade',
+                  'paint': {
+                      'hillshade-exaggeration': 1.0
+                  }
+                }] : [],
+              ]
+            }
+          }), 'top-right')
+        }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
         attributionControl={false}
@@ -271,7 +314,7 @@
             greenFactor={256}
             blueFactor={1}
           >
-            <TerrainControl position="top-right" />
+            <TerrainControl position="bottom-right" />
             <Terrain exaggeration={10} />
           </RasterDEMTileSource>
           <RasterDEMTileSource
@@ -318,6 +361,7 @@
             />
           </RasterTileSource>
         {/if}
+        <NavigationControl position="bottom-right" visualizePitch={true} visualizeRoll={true} />
       </MapLibre>
     </div>
     <div
