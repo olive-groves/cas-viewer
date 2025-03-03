@@ -7,7 +7,7 @@
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
   
-  let n = $state(1);  // n viewers
+  let n = $state(2);  // n viewers
 
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];
@@ -151,7 +151,7 @@
         <Select
           --width="300px"
           loaded={() => viewer.loaded = !viewer.loaded}
-          header={(n === 1 ? `Viewer` : (`Viewer ${i + 1}`) + ((n > 0 && i === 0) ? ' (Main)' : ' (Lens)'))}
+          header={(n === 1 ? `Viewer` : (`Viewer ${i + 1}`) + ((n > 0 && i === 0) ? ' · Main' : ' · Lens'))}
           bind:files={viewers[i].raster.files}
           bind:files_dem={viewers[i].raster_dem.files}
           bind:files_overlay={viewers[i].raster_overlay.files}
