@@ -10,7 +10,7 @@
 </script>
 
 <div class="menu">
-  <h2>{header}</h2>
+  <h2>{@html header}</h2>
   <form>
     <!-- Separate the label from the input to disable pointer events -->
     <div>
