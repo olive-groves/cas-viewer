@@ -72,7 +72,8 @@
     rgb: {
       brightness_max: 1.0,
       brightness_min: 0.0,
-      contrast: 0.0
+      contrast: 0.0,
+      opacity: 1.0
     },
     hillshade: {
       angle: 315,
@@ -111,6 +112,7 @@
     controls.rgb.brightness_max;
     controls.rgb.brightness_min;
     controls.rgb.contrast;
+    controls.rgb.opacity;
     controls.overlay.hue;
     controls.overlay.lightness;
     controls.overlay.opacity;
@@ -319,7 +321,8 @@
                 'raster-resampling': 'nearest',
                 "raster-brightness-max": controls.rgb.brightness_max,
                 "raster-brightness-min": controls.rgb.brightness_min,
-                "raster-contrast": controls.rgb.contrast
+                "raster-contrast": controls.rgb.contrast,
+                "raster-opacity": controls.rgb.opacity
               }}
             />
           </RasterTileSource>
@@ -391,16 +394,13 @@
       class="controls-container"
     >
       <div class="controls">
-        <div>
-          <strong>Controls</strong>
-          <label style="style: inline"><input type="checkbox" name="controls" value="RGB" bind:group={visible_controls} disabled={!data?.raster.url}/>RGB</label>
-          <label style="style: inline"><input type="checkbox" name="controls" value="Terrain" bind:group={visible_controls} disabled={!data?.raster_dem.url}/>Terrain</label>
-          <label style="style: inline"><input type="checkbox" name="controls" value="Hillshade" bind:group={visible_controls} disabled={!data?.raster_dem.url}/>Hillshade</label>
-          <label style="style: inline"><input type="checkbox" name="controls" value="NaN" bind:group={visible_controls} disabled={!data?.raster_overlay.url}/>NaN</label>
-        </div>
 
+        <label><input type="checkbox" name="controls" value="RGB" bind:group={visible_controls} disabled={!data?.raster.url}/><span>RGB</span></label>
         {#if visible_controls.includes("RGB")}
-          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>RGB</h3>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.opacity} ondblclick={() => controls.rgb.opacity = 1}>
+            Opacity ({controls.rgb.brightness_max.toFixed(2)})
+          </label>
           <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max} ondblclick={() => controls.rgb.brightness_max = 1}>
             Highlights ({controls.rgb.brightness_max.toFixed(2)})
@@ -415,23 +415,23 @@
           </label>
         {/if}
 
+        <label><input type="checkbox" name="controls" value="Terrain" bind:group={visible_controls} disabled={!data?.raster_dem.url}/><span>Terrain</span></label>
         {#if visible_controls.includes("Terrain")}
-          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>Terrain</h3>
           <label>
             <input type="range" min=1 max=100 step=1 bind:value={controls.terrain.exaggeration} ondblclick={() => controls.terrain.exaggeration = 1}>
-            Exaggeration ({controls.terrain.exaggeration.toFixed(0)})
+            Exaggeration ({controls.terrain.exaggeration.toFixed(0)}x)
           </label>
         {/if}
 
+        <label><input type="checkbox" name="controls" value="Hillshade" bind:group={visible_controls} disabled={!data?.raster_dem.url}/><span>Hillshade</span></label>
         {#if visible_controls.includes("Hillshade")}
-          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>Hillshade</h3>
           <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
             Intensity ({controls.hillshade.exaggeration.toFixed(2)})
           </label>
           <label>
             <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
-            Multiplier ({controls.hillshade.interval.toFixed(0)})
+            Multiplier ({controls.hillshade.interval.toFixed(0)}x)
           </label>
           <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background} ondblclick={() => controls.hillshade.background = 0}>
@@ -456,8 +456,8 @@
           </figure>
         {/if}
 
+        <label><input type="checkbox" name="controls" value="NaN" bind:group={visible_controls} disabled={!data?.raster_overlay.url}/><span>NaN</span></label>
         {#if visible_controls.includes("NaN")}
-          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>NaN</h3>
           <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={controls.overlay.opacity} ondblclick={() => controls.overlay.opacity = 1}>
             Opacity ({controls.overlay.opacity.toFixed(2)})
@@ -485,9 +485,11 @@
     width: 100px;
     margin: 20px;
   }
-  .controls h3 {
-    margin-bottom: 0;
-    font-weight: normal;
+  .controls label {
+    margin-top: 1px;
+  }
+  .controls input:disabled + span {
+    color: gray;
   }
   .controls {
     display: flex;
@@ -498,7 +500,7 @@
   .controls * {
     pointer-events: auto;
   }
-  .controls label, h3 {
+  .controls label {
     filter: drop-shadow(0px 0px 2px #000000);
   }
   .controls-container {
