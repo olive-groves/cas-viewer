@@ -15,6 +15,8 @@
   import { ViewerData } from './ViewerClasses.svelte';
 
   import Minimap from '$lib/mapboxgl-minimap.js';
+
+  let visible_controls = $state([]);
   
   let {
     data,
@@ -120,7 +122,7 @@
     }, 200);
   })
 
-  let timeout;  // Some paint props shouldn't be spammed, so we clear the timeout for those
+  let timeout: ReturnType<typeof setTimeout>;  // Some paint props shouldn't be spammed, so we clear the timeout for those
   $effect(() => {
     controls.hillshade.exaggeration;
     controls.hillshade.angle;
@@ -145,8 +147,6 @@
       }
     }
   })
-
-  let overlay_visibilty = $derived(controls.overlay.visibility ? "visible" : "none")
 
   $effect(() => {
     //
@@ -391,67 +391,86 @@
       class="controls-container"
     >
       <div class="controls">
-        <h3>RGB</h3>
-        <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max} ondblclick={() => controls.rgb.brightness_max = 1}>
-          Highlights ({controls.rgb.brightness_max.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=0  max=1 step=0.01 bind:value={controls.rgb.brightness_min} ondblclick={() => controls.rgb.brightness_min = 0}>
-          Shadows ({controls.rgb.brightness_min.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.contrast} ondblclick={() => controls.rgb.contrast = 0}>
-          Contrast ({controls.rgb.contrast.toFixed(2)})
-        </label>
-        <h3>Terrain</h3>
-        <label>
-          <input type="range" min=1 max=100 step=1 bind:value={controls.terrain.exaggeration} ondblclick={() => controls.terrain.exaggeration = 1}>
-          Exaggeration ({controls.terrain.exaggeration.toFixed(0)})
-        </label>
-        <h3>Hillshade</h3>
-        <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
-          Intensity ({controls.hillshade.exaggeration.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
-          Multiplier ({controls.hillshade.interval.toFixed(0)})
-        </label>
-        <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background} ondblclick={() => controls.hillshade.background = 0}>
-          Background opacity ({controls.hillshade.background.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness} ondblclick={() => controls.hillshade.lightness = 50}>
-          Background lightness ({controls.hillshade.lightness.toFixed(0)})
-        </label>
-        <figure
-          class="circle"
-          style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
-          onpointermove={(e) => {
-            if (raking) updateRaking(e)
-          }}
-          onpointerup={(e) => {
-            raking = !raking;
-            if (raking) updateRaking(e)
-          }}
-          ondblclick={() => {pointer.x = 0; pointer.y = 0}}
-        >
-        </figure>
-        <h3>NaN</h3>
-        <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.overlay.opacity} ondblclick={() => controls.overlay.opacity = 1}>
-          Opacity ({controls.overlay.opacity.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=0 max=1 step=0.01 bind:value={controls.overlay.lightness} ondblclick={() => controls.overlay.lightness = 0.5}>
-          Lightness ({controls.overlay.lightness.toFixed(2)})
-        </label>
-        <label>
-          <input type="range" min=0 max=360 step=5 bind:value={controls.overlay.hue} ondblclick={() => controls.overlay.hue = 0}>
-          Hue ({controls.overlay.hue.toFixed(0)}°)
-        </label>
+        <div>
+          <strong>Controls</strong>
+          <label style="style: inline"><input type="checkbox" name="controls" value="RGB" bind:group={visible_controls} disabled={!data?.raster.url}/>RGB</label>
+          <label style="style: inline"><input type="checkbox" name="controls" value="Terrain" bind:group={visible_controls} disabled={!data?.raster_dem.url}/>Terrain</label>
+          <label style="style: inline"><input type="checkbox" name="controls" value="Hillshade" bind:group={visible_controls} disabled={!data?.raster_dem.url}/>Hillshade</label>
+          <label style="style: inline"><input type="checkbox" name="controls" value="NaN" bind:group={visible_controls} disabled={!data?.raster_overlay.url}/>NaN</label>
+        </div>
+
+        {#if visible_controls.includes("RGB")}
+          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>RGB</h3>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.rgb.brightness_max} ondblclick={() => controls.rgb.brightness_max = 1}>
+            Highlights ({controls.rgb.brightness_max.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0  max=1 step=0.01 bind:value={controls.rgb.brightness_min} ondblclick={() => controls.rgb.brightness_min = 0}>
+            Shadows ({controls.rgb.brightness_min.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.contrast} ondblclick={() => controls.rgb.contrast = 0}>
+            Contrast ({controls.rgb.contrast.toFixed(2)})
+          </label>
+        {/if}
+
+        {#if visible_controls.includes("Terrain")}
+          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>Terrain</h3>
+          <label>
+            <input type="range" min=1 max=100 step=1 bind:value={controls.terrain.exaggeration} ondblclick={() => controls.terrain.exaggeration = 1}>
+            Exaggeration ({controls.terrain.exaggeration.toFixed(0)})
+          </label>
+        {/if}
+
+        {#if visible_controls.includes("Hillshade")}
+          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>Hillshade</h3>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
+            Intensity ({controls.hillshade.exaggeration.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
+            Multiplier ({controls.hillshade.interval.toFixed(0)})
+          </label>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background} ondblclick={() => controls.hillshade.background = 0}>
+            Background opacity ({controls.hillshade.background.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness} ondblclick={() => controls.hillshade.lightness = 50}>
+            Background lightness ({controls.hillshade.lightness.toFixed(0)})
+          </label>
+          <figure
+            class="circle"
+            style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
+            onpointermove={(e) => {
+              if (raking) updateRaking(e)
+            }}
+            onpointerup={(e) => {
+              raking = !raking;
+              if (raking) updateRaking(e)
+            }}
+            ondblclick={() => {pointer.x = 0; pointer.y = 0}}
+          >
+          </figure>
+        {/if}
+
+        {#if visible_controls.includes("NaN")}
+          <h3 style={visible_controls.length <= 1 ? "display: none" : ""}>NaN</h3>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.overlay.opacity} ondblclick={() => controls.overlay.opacity = 1}>
+            Opacity ({controls.overlay.opacity.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.overlay.lightness} ondblclick={() => controls.overlay.lightness = 0.5}>
+            Lightness ({controls.overlay.lightness.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=360 step=5 bind:value={controls.overlay.hue} ondblclick={() => controls.overlay.hue = 0}>
+            Hue ({controls.overlay.hue.toFixed(0)}°)
+          </label>
+        {/if}
       </div>
     </div>
   </div>
