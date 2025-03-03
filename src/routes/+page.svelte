@@ -158,23 +158,36 @@
         />
       {/if}
     {/each}
-    <div class="overlay" style="grid-row-start: 1; grid-column-start: 1">
-      <button>Hello</button>
-    </div>
     {#if loaded_conv.some((x) => x === false)}
       <div class="viewer-add-remove">
         <button onclick={(e) => n += 1}>+</button>
       </div>
     {/if}
   </div>
+  <div class="viewers-controls">
+    <button>Hello</button>
+  </div>
 </div>
 
 <style>
   .main {
+    display: grid;
+    grid-template-columns: 1fr;
     container: main / size;
     height: 100%;
     margin: 0;
     padding: 0;
+  }
+  .viewers-flex, .viewers-grid, .viewers-controls {
+      grid-row-start: 1;
+      grid-column-start: 1;
+  }
+  .viewers-controls {
+    pointer-events: none;
+    z-index: 1;
+  }
+  .viewers-controls * {
+    pointer-events: auto;
   }
   .viewers-flex {
     display: flex;
@@ -187,6 +200,8 @@
     align-items: center;
   }
   .viewers-grid {
+    grid-row-start: 1;
+    grid-column-start: 1;
     display: grid;
     grid-template-columns: 1fr;
     height: 100%;

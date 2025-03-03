@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    AttributionControl,
     BackgroundLayer,
     HillshadeLayer,
     MapLibre,
@@ -89,7 +90,8 @@
       lightness: 50
     },
     overlay: {
-      visibility: true
+      visibility: true,
+      hue: 0
     }
   })
 
@@ -99,6 +101,7 @@
     controls.rgb.brightness_max;
     controls.rgb.brightness_min;
     controls.rgb.contrast;
+    controls.overlay.hue;
     controls.hillshade.background;
     controls.hillshade.lightness;
     setTimeout(() => {
@@ -213,6 +216,7 @@
         bind:map={map}
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
+        attributionControl={false}
         hash={true}
         renderWorldCopies={false}
         maxPitch={87}
@@ -224,6 +228,21 @@
         bind:roll={mapProps.roll}
         bind:elevation={mapProps.elevation}
       >
+      {#if hm.raster_metadata}
+        <AttributionControl
+          compact={true}
+          customAttribution={
+            `${hm.raster_metadata.attribution} ${hm.raster_metadata.scanDateTime}`
+          }
+        />
+      {:else if hm.raster_dem_metadata}
+        <AttributionControl
+          compact={true}
+          customAttribution={
+            `${hm.raster_dem_metadata.attribution} ${hm.raster_dem_metadata.scanDateTime}`
+          }
+        />
+      {/if}
         {#if data?.raster.url}
           <RasterTileSource
             url={data?.raster.url}
@@ -293,7 +312,8 @@
                 'visibility': overlay_visibilty
               }}
               paint={{
-                'raster-resampling': 'nearest'
+                'raster-resampling': 'nearest',
+                'raster-hue-rotate': controls.overlay.hue
               }}
             />
           </RasterTileSource>
@@ -351,6 +371,10 @@
         <label>
           <input type="checkbox" bind:checked={controls.overlay.visibility}>
           Show
+        </label>
+        <label>
+          <input type="range" min=0 max=360 step=5 bind:value={controls.overlay.hue}>
+          Hue shift ({controls.overlay.hue}°)
         </label>
       </div>
     </div>
