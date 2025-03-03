@@ -78,9 +78,12 @@
     hillshade: {
       angle: 315,
       exaggeration: 0.7,
+      shadow_opacity: 1.0,
+      accent_opacity: 1.0,
+      highlight_opacity: 1.0,
       interval: 1,
       background: data?.raster.url ? 0 : 1,
-      lightness: 50
+      lightness: 0.5
     },
     terrain: {
       exaggeration: 1 
@@ -116,7 +119,6 @@
     controls.overlay.hue;
     controls.overlay.lightness;
     controls.overlay.opacity;
-    controls.hillshade.background;
     controls.hillshade.lightness;
     setTimeout(() => {
       map?.terrain?.sourceCache.freeRtt();
@@ -127,6 +129,10 @@
   let timeout: ReturnType<typeof setTimeout>;  // Some paint props shouldn't be spammed, so we clear the timeout for those
   $effect(() => {
     controls.hillshade.exaggeration;
+    controls.hillshade.shadow_opacity;
+    controls.hillshade.accent_opacity;
+    controls.hillshade.highlight_opacity;
+    controls.hillshade.background;
     controls.hillshade.angle;
     if (timeout) {
       clearTimeout(timeout)
@@ -284,7 +290,7 @@
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
-        maxPitch={87}
+        maxPitch={83}
         aroundCenter={false}
         bind:center={mapProps.center}
         bind:zoom={mapProps.zoom}
@@ -353,18 +359,18 @@
             <BackgroundLayer
               paint={{
                 'background-opacity': controls.hillshade.background,
-                'background-color': `hsl(0, 0%, ${controls.hillshade.lightness}%)`
+                'background-color': `hsl(0, 0%, ${100*controls.hillshade.lightness}%)`
               }}
             />
             <HillshadeLayer
               paint={{
-                'hillshade-exaggeration': 1.0,
-                'hillshade-shadow-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
-                'hillshade-accent-color': `rgba(0, 0, 0, ${Math.min(Math.max(2*controls.hillshade.exaggeration, 0), 1)})`,
-                'hillshade-highlight-color': `rgba(255, 255, 255, ${Math.min(2*Math.max(controls.hillshade.exaggeration, 0), 1)})`,
-                // 'hillshade-shadow-color': `rgba(0, 0, 0, 0)`,
-                // 'hillshade-accent-color': "rgba(255, 0, 255, 1)",
-                // 'hillshade-highlight-color': `rgba(255, 255, 255, 0)`,
+                'hillshade-exaggeration': controls.hillshade.exaggeration,
+                'hillshade-shadow-color': `rgba(0, 0, 0, ${controls.hillshade.shadow_opacity})`,
+                'hillshade-accent-color': `rgba(0, 0, 0, ${controls.hillshade.accent_opacity})`,
+                'hillshade-highlight-color': `rgba(255, 255, 255, ${controls.hillshade.highlight_opacity})`,
+                // 'hillshade-shadow-color': `hsla(0, 0%, ${100*(controls.hillshade.lightness * controls.hillshade.shadow_opacity)}%, 1.0)`,
+                // 'hillshade-accent-color': `hsla(0, 0%, ${100*(controls.hillshade.lightness * controls.hillshade.accent_opacity)}%, 1.0)`,
+                // 'hillshade-highlight-color': `hsla(0, 0%, ${100*(controls.hillshade.lightness + (1 - controls.hillshade.lightness) * controls.hillshade.highlight_opacity)}%, 1.0)`,
                 'hillshade-illumination-anchor': 'map',
                 'hillshade-illumination-direction': controls.hillshade.angle
               }}
@@ -434,12 +440,24 @@
             Multiplier ({controls.hillshade.interval.toFixed(0)}x)
           </label>
           <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.shadow_opacity} ondblclick={() => controls.hillshade.shadow_opacity = 1}>
+            Shadow opacity ({controls.hillshade.shadow_opacity.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.accent_opacity} ondblclick={() => controls.hillshade.accent_opacity = 1}>
+            Accent opacity ({controls.hillshade.accent_opacity.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.highlight_opacity} ondblclick={() => controls.hillshade.highlight_opacity = 1}>
+            Highlight opacity ({controls.hillshade.highlight_opacity.toFixed(2)})
+          </label>
+          <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.background} ondblclick={() => controls.hillshade.background = 0}>
             Background opacity ({controls.hillshade.background.toFixed(2)})
           </label>
           <label>
-            <input type="range" min=0 max=100 step=1 bind:value={controls.hillshade.lightness} ondblclick={() => controls.hillshade.lightness = 50}>
-            Background lightness ({controls.hillshade.lightness.toFixed(0)})
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.lightness} ondblclick={() => controls.hillshade.lightness = 0.5}>
+            Background lightness ({controls.hillshade.lightness.toFixed(2)})
           </label>
           <figure
             class="circle"
