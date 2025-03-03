@@ -98,7 +98,18 @@
     return all_pmtiles;
   })
 
-  let mapProps = $state({
+  let mapProps = $state({});
+  let pointer = $state({
+    x: 0,
+    y: 0,
+    clientX: 0,
+    clientY: 0,
+    containerLeft: 0,
+    containerTop: 0,
+    containerWidth: 0,
+    containerHeight: 0,
+    roundedPercentX: 0,
+    roundedPercentY: 0
   });
 </script>
 
@@ -121,7 +132,7 @@
   >
     {#if loaded_conv.some((x) => x === false)}
       <div class="viewer-add-remove">
-        <button onclick={(e) => n -= 1}>–</button>
+        <button onclick={(e) => n -= 1} disabled={n <= 1}>–</button>
       </div>
     {/if}
     <!-- Index viewers[i] to trigger reactive state -->
@@ -132,7 +143,7 @@
           --width="100%"
           data={viewers[i]}
           bind:mapProps
-          --z-index={i + 1}
+          bind:pointer
           --grid-row-start={1}
           --grid-column-start={1}
           --clippath={((mode === 'Lens') && ( loaded_conv.every((x) => x === true) ) && (i)) && `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
@@ -153,14 +164,30 @@
       </div>
     {/if}
   </div>
+  <div class="viewers-controls">
+    <button>Hello</button>
+  </div>
 </div>
 
 <style>
   .main {
+    display: grid;
+    grid-template-columns: 1fr;
     container: main / size;
     height: 100%;
     margin: 0;
     padding: 0;
+  }
+  .viewers-flex, .viewers-grid, .viewers-controls {
+      grid-row-start: 1;
+      grid-column-start: 1;
+  }
+  .viewers-controls {
+    pointer-events: none;
+    z-index: 1;
+  }
+  .viewers-controls * {
+    pointer-events: auto;
   }
   .viewers-flex {
     display: flex;
@@ -169,10 +196,12 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    justify-content: space-evenly;
+    justify-content: space-between;
     align-items: center;
   }
   .viewers-grid {
+    grid-row-start: 1;
+    grid-column-start: 1;
     display: grid;
     grid-template-columns: 1fr;
     height: 100%;
@@ -186,6 +215,8 @@
   }
   .viewer-add-remove button {
     display: block;
+    width: 50px;
+    height: 50px;
     font-size: 2rem;
   }
   @container main (max-aspect-ratio: 1 / 1) {
