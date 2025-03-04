@@ -509,6 +509,9 @@
   .controls input:disabled + span {
     color: gray;
   }
+  .controls input[type=checkbox]{
+    accent-color: white;
+  }
   .controls {
     display: flex;
     flex-direction: column;
