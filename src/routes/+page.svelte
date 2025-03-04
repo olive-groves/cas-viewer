@@ -11,7 +11,7 @@
 
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];
-	let mode: Modes = $state('Lens')
+	let mode: Modes = $state('Side by side')
 
   let lens =$state(
 		{
@@ -167,7 +167,14 @@
   {#if n > 1 && loaded_conv.every((x) => x === true)}
     <div class="viewers-controls">
       <div class="mode">
-        <button onclick={mode = mode === "Lens" ? "Side by side" : "Lens"}>{mode === "Lens" ? "Side by side" : "Lens"}</button>
+        <label>
+          <input type="radio" name="mode" value="Side by side" bind:group={mode}/>
+          Side by side
+        </label>
+        <label>
+          <input type="radio" name="mode" value="Lens" bind:group={mode}/>
+          Lens
+        </label>
       </div>
     </div>
   {/if}
@@ -186,10 +193,6 @@
       grid-row-start: 1;
       grid-column-start: 1;
   }
-  .mode {
-    display: flex;
-    justify-content: center;
-  }
   .viewers-controls {
     display: flex;
     flex-direction: column;
@@ -199,6 +202,16 @@
   }
   .viewers-controls * {
     pointer-events: auto;
+    color: white;
+  }
+  .mode {
+    margin-bottom: 4px;
+  }
+  .viewers-controls label {
+    filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
+  }
+  .viewers-controls input[type=radio]{
+    accent-color: white;
   }
   .viewers-flex {
     display: flex;
