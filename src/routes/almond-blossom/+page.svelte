@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer } from 'svelte-maplibre-gl';
+  import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, NavigationControl } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
   import type { LayerSpecification } from 'maplibre-gl';
