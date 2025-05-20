@@ -7,8 +7,7 @@
 
 <nav style:margin="0" style:padding="0.3em">
   <h1>PMTiles Multi Viewer</h1>
-  <a href="/test-openstreetmap">osm test</a>
-  <a href="/test-cloudflare">cloudflare test</a>
+  <a href="/almond-blossom">Almond Blossom</a>
   <button class="restart" onclick={() => {window.location.reload(); window.location.href = '/';}}>reset</button>
   <!-- <a href="{base}/test-openstreetmap">test</a> -->
   <!-- <button class="restart" onclick={() => {window.location.reload(); window.location.href = `${base}/`;}}>reset</button> -->
