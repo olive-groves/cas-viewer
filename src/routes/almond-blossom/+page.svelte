@@ -36,6 +36,7 @@
     renderWorldCopies={false}
     maxPitch={87}
     aroundCenter={false}
+    hash={true}
   >
     <RasterDEMTileSource
       id="terrain"    
