@@ -38,6 +38,7 @@
     aroundCenter={false}
     hash={true}
   >
+    <NavigationControl position="top-right" visualizePitch={true} />
     <RasterDEMTileSource
       id="terrain"    
       url={`pmtiles://${urls[1]}`}
@@ -48,8 +49,8 @@
       blueFactor={1}
       tileSize={256}
     >
-      <TerrainControl position="top-right" />
-      <Terrain exaggeration={10} />
+      <Terrain exaggeration={15} />
+      <TerrainControl position="top-right" exaggeration={15} />
     </RasterDEMTileSource>
     <RasterTileSource
       url={`pmtiles://${urls[0]}`}
