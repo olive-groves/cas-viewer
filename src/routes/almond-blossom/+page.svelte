@@ -53,6 +53,7 @@
       <TerrainControl position="top-right" exaggeration={15} />
     </RasterDEMTileSource>
     <RasterTileSource
+      attribution="<a href='https://harmbelt.nl/'>Harm Belt · <em>Almond Blossom<em></a>"
       url={`pmtiles://${urls[0]}`}
       tileSize={256}
     >
