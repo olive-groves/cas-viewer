@@ -1,6 +1,16 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, NavigationControl } from 'svelte-maplibre-gl';
+  import {
+    MapLibre,
+    RasterTileSource,
+    RasterLayer,
+    RasterDEMTileSource,
+    Terrain,
+    TerrainControl,
+    HillshadeLayer,
+    NavigationControl,
+    FullScreenControl
+  } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
   import type { LayerSpecification } from 'maplibre-gl';
@@ -41,7 +51,8 @@
     aroundCenter={false}
     hash={true}
   >
-    <NavigationControl position="top-right" visualizePitch={true} />
+  <FullScreenControl position="bottom-right" container={document.querySelector("main")}/>
+  <NavigationControl position="bottom-right" visualizePitch={true} />
     <RasterDEMTileSource
       id="terrain"    
       url={`pmtiles://${urls[1]}`}
