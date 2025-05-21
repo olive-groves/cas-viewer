@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { fade } from 'svelte/transition';
   import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, NavigationControl } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
   import type { LayerSpecification } from 'maplibre-gl';
+
+  let disclaimer_visible = $state(true)
 
   let urls: string[] = [
     "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_rgb.pmtiles",
@@ -26,12 +29,12 @@
 <PMTilesProtocol />
 
 <!-- Use the pmtiles:// protocol -->
+<div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none;">
 {#await getHeaderMetadata()}
-  <div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%;">
-    <p>Loading</p>
-  </div>
+    <em>Loading</em>
 {:then headers_metadatas}
   <MapLibre
+    onload={setTimeout(() => disclaimer_visible = false, 5000)}
     inlineStyle="height: 100%; width: 100%;"
     renderWorldCopies={false}
     maxPitch={87}
@@ -85,4 +88,10 @@
       />
     </RasterDEMTileSource>
   </MapLibre>
+  {#if disclaimer_visible}
+    <em style="position: absolute; pointer-events: none;" transition:fade>
+      Prototype
+    </em>
+  {/if}
 {/await}
+</div>
