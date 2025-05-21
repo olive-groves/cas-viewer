@@ -39,7 +39,7 @@
 <PMTilesProtocol />
 
 <!-- Use the pmtiles:// protocol -->
-<div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none;">
+<div id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none;">
 {#await getHeaderMetadata()}
     <em>Loading</em>
 {:then headers_metadatas}
@@ -51,7 +51,7 @@
     aroundCenter={false}
     hash={true}
   >
-  <FullScreenControl position="bottom-right" container={document.querySelector("main")}/>
+  <FullScreenControl position="bottom-right" container={document.getElementById("main")}/>
   <NavigationControl position="top-right" visualizePitch={true} />
     <RasterDEMTileSource
       id="terrain"    
