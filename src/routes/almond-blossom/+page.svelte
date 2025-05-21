@@ -52,7 +52,7 @@
     hash={true}
   >
   <FullScreenControl position="bottom-right" container={document.querySelector("main")}/>
-  <NavigationControl position="bottom-right" visualizePitch={true} />
+  <NavigationControl position="top-right" visualizePitch={true} />
     <RasterDEMTileSource
       id="terrain"    
       url={`pmtiles://${urls[1]}`}
@@ -100,8 +100,8 @@
     </RasterDEMTileSource>
   </MapLibre>
   {#if disclaimer_visible}
-    <em style="position: absolute; pointer-events: none;" transition:fade>
-      Prototype
+    <em style="position: absolute; pointer-events: none; font-size: 2em;" transition:fade>
+      In development
     </em>
   {/if}
 {/await}
