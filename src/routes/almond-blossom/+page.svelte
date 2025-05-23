@@ -31,20 +31,8 @@
       essential: true, speed: 0.7, curve: 1.2
     },
     {
-      zoom: 6.13, center: [ 117.398, 44.091 ], bearing: 0, pitch: 67,
+      zoom: 7.22, center: [ 125.781, 38.123 ], bearing: -41.6, pitch: 76,
       essential: true, speed: 0.7, curve: 1.2
-    },
-    {
-      zoom: 6.77,
-      center: [
-        108.492,
-        46.25
-      ],
-      bearing: -38,
-      pitch: 74,
-      essential: true,
-      speed: 0.7,
-      curve: 1.2
     },
     {
       zoom: 0,
