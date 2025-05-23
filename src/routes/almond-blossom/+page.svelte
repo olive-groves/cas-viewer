@@ -27,28 +27,28 @@
 
   let destinations: FlyToOptions[] = [
     {
-      zoom: 6.26, center: [-57.856, 45.741], 
+      zoom: 6.49, center: [-56.799, 45.464], bearing: -31.2, pitch: 40,
+      essential: true, speed: 0.7, curve: 0.7
+    },
+    {
+      zoom: 4.5, center: [ 89, 43.85 ], bearing: 0, pitch: 0,
+      essential: true, speed: 1.0, curve: 1.0
+    },
+    {
+      zoom: 5, center: [ 131.442, -19.814 ], bearing: 0, pitch: 10,
       essential: true, speed: 0.7, curve: 1.2
     },
     {
-      zoom: 7.22, center: [ 125.781, 38.123 ], bearing: -41.6, pitch: 76,
+      zoom: 7.22, center: [ 124.891, 37.843 ], bearing: -5.6, pitch: 76,
       essential: true, speed: 0.7, curve: 1.2
     },
     {
-      zoom: 0,
-      center: [
-        0,
-        0
-      ],
-      bearing: 0,
-      pitch: 0,
-      essential: true,
-      speed: 1,
-      curve: 1
+      zoom: 0, center: [ 0, 0 ], bearing: 0, pitch: 0,
+      essential: true, speed: 10, curve: 0.1
     }
   ]
 
-  let i_destination = $state(destinations.length - 2);
+  let i_destination = $state(destinations.length - 1);
 
   function setNewDestination() {
     i_destination += 1;
@@ -111,8 +111,6 @@
     if (!colorVisible && !hillshadeVisible) hillshadeVisible = true
   }
 
-  let center = $state({ lng: 0.0, lat: 0.0 });
-
   let urls: string[] = [
     "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles",
     "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles"
@@ -145,7 +143,6 @@
     bind:map={map}
     onload={() => {
       setTimeout(() => disclaimerVisible = false, 5000);
-      setNewDestination();
       flyToRandom(destination);
     }
     }
@@ -155,10 +152,10 @@
     aroundCenter={false}
     hash={true}
     attributionControl={false}
-    zoom={destinations[2].zoom}
-    center={destinations[2].center}
-    pitch={destinations[2].pitch}
-    bearing={destinations[2].bearing}
+    zoom={destinations.at(-2).zoom}
+    center={destinations.at(-2).center}
+    pitch={destinations.at(-2).pitch}
+    bearing={destinations.at(-2).bearing}
   >
     <AttributionControl position="bottom-left" compact={true} customAttribution={"<a href='https://harmbelt.nl/'>Harm Belt · <em>Almond Blossom<em></a>"} />
     <CustomControl position="top-left">
