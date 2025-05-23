@@ -38,13 +38,13 @@
       zoom: 5, center: [ 131.442, -19.814 ], bearing: 0, pitch: 10,
       essential: true, speed: 0.7, curve: 1.2
     },
-    {
-      zoom: 7.22, center: [ 124.891, 37.843 ], bearing: -5.6, pitch: 76,
+    { // 6.17/37.7/124.368/0/71
+      zoom: 6.17, center: [ 124.368, 37.7 ], bearing: 0, pitch: 71,
       essential: true, speed: 0.7, curve: 1.2
     },
     {
       zoom: 0, center: [ 0, 0 ], bearing: 0, pitch: 0,
-      essential: true, speed: 10, curve: 0.1
+      essential: true, speed: 1, curve: 1
     }
   ]
 
@@ -156,7 +156,7 @@
   <MapLibre
     bind:map={map}
     onload={() => {
-      setTimeout(() => disclaimerVisible = false, 5000);
+      setTimeout(() => disclaimerVisible = false, 4500);
       flyToRandom(destination);
     }
     }
