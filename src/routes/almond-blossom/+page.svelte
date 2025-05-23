@@ -21,46 +21,18 @@
   } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
-  import type { FlyToOptions, LayerSpecification } from 'maplibre-gl';
+  import type { FlyToOptions } from 'maplibre-gl';
 
   let map: maplibregl.Map | undefined = $state()
 
   let destinations: FlyToOptions[] = [
     {
-      zoom: 6.67,
-      center: [
-        -26.11,
-        34.015
-      ],
-      bearing: 44,
-      pitch: 74,
-      essential: true,
-      speed: 0.7,
-      curve: 1.2
+      zoom: 6.26, center: [-57.856, 45.741], 
+      essential: true, speed: 0.7, curve: 1.2
     },
     {
-      zoom: 6.13,
-      center: [
-        117.398,
-        44.091
-      ],
-      bearing: 0,
-      pitch: 67,
-      essential: true,
-      speed: 0.7,
-      curve: 1.2
-    },
-    {
-      zoom: 6.77,
-      center: [
-        108.492,
-        46.25
-      ],
-      bearing: -38,
-      pitch: 74,
-      essential: true,
-      speed: 0.7,
-      curve: 1.2
+      zoom: 7.22, center: [ 125.781, 38.123 ], bearing: -41.6, pitch: 76,
+      essential: true, speed: 0.7, curve: 1.2
     },
     {
       zoom: 0,
@@ -118,11 +90,34 @@
   let hillshadeVisible = $state(true)
   let creditsVisible = $state(false)
 
+  // Certain paint props with terrain on are not immediately reflected
+  // Reload here to do so
+  $effect(() => {
+    colorVisible;
+    hillshadeVisible;
+    setTimeout(() => {
+      map?.terrain?.sourceCache.freeRtt();
+      map?.terrain?.sourceCache.sourceCache.reload();
+    }, 200);
+  })
+  
+  function toggleHillshade() {
+    hillshadeVisible = !hillshadeVisible;
+    if (!hillshadeVisible && !colorVisible) colorVisible = true
+  }
+
+  function toggleColor() {
+    colorVisible = !colorVisible;
+    if (!colorVisible && !hillshadeVisible) hillshadeVisible = true
+  }
+
   let center = $state({ lng: 0.0, lat: 0.0 });
 
   let urls: string[] = [
-    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_rgb.pmtiles",
-    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_height.pmtiles"
+    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles",
+    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles"
+    // "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_rgb.pmtiles",
+    // "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_height.pmtiles"
   ]
   let pmtiles: PMTiles[] = [];
   let headers: {}[] = [];
@@ -172,7 +167,7 @@
           onclick={() => creditsVisible = !creditsVisible}
           style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
         >
-        Credits
+        Libraries
         </button>
       </div>
       {#if creditsVisible}
@@ -208,23 +203,14 @@
       </button>
     </CustomControl>
     <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
-      <!-- <button
-        title={colorVisible ? "Hide RGB" : "Show RGB"}
-        onclick={() => colorVisible = !colorVisible}
-        style:color={colorVisible ? "#1dade2" : "#555"}
-        style:font-size=90%
-        style:font-weight=900
-      >
-        RGB
-      </button> -->
       <button
         title={colorVisible ? "Hide RGB" : "Show RGB"}
-        onclick={() => colorVisible = !colorVisible}>
+        onclick={() => {toggleColor()}}>
         <img alt="RGB icon" src={colorVisible ? rgbIconEnabled : rgbIconDisabled} style="position: relative; width: 80%; margin-bottom: -2px;"/>
       </button>
       <button
         title={hillshadeVisible ? "Hide shading" : "Show shading"}
-        onclick={() => hillshadeVisible = !hillshadeVisible}>
+        onclick={() => {toggleHillshade()}}>
         <img alt="Hillshade icon" src={hillshadeVisible ? hillshadeIconEnabled : hillshadeIconDisabled} style="position: relative; width: 80%; margin-bottom: -2px;"/>
       </button>
     </CustomControl>
@@ -240,7 +226,7 @@
         Fly
         </button>
       </div>
-  </CustomControl>
+    </CustomControl>
     <RasterDEMTileSource
       id="terrain"    
       url={`pmtiles://${urls[1]}`}
@@ -249,12 +235,12 @@
       redFactor={256*256}
       greenFactor={256}
       blueFactor={1}
-      tileSize={256}
+      tileSize={512}
     >
       <BackgroundLayer
         paint={{
           'background-opacity': 1,
-          'background-color': `hsl(0, 0%, ${50}%)`
+          'background-color': `hsl(0, 0%, ${40}%)`
         }}
       />
       {#if terrainVisible}
@@ -263,12 +249,13 @@
     </RasterDEMTileSource>
     <RasterTileSource
       url={`pmtiles://${urls[0]}`}
-      tileSize={256}
+      tileSize={512}
     >
       <RasterLayer
         layout={{visibility: colorVisible ? "visible" : "none"}}
         paint={{
-          'raster-resampling': 'nearest'
+          'raster-resampling': 'nearest',
+          'raster-fade-duration': 0
         }}
       />
     </RasterTileSource>
@@ -280,18 +267,19 @@
       redFactor={256*256}
       greenFactor={256}
       blueFactor={1}
-      tileSize={256}
+      tileSize={512}
     >
       <HillshadeLayer
-        layout={{visibility: hillshadeVisible ? "visible" : "none"}}
         paint={{
-          'hillshade-exaggeration': 1.0,
-          'hillshade-shadow-color': `rgba(0, 0, 0, 1.0)`,
-          'hillshade-accent-color': "rgba(0, 0, 0, 0.5)",
-          'hillshade-highlight-color': `rgba(255, 255, 255, 0.5)`,
+          'hillshade-exaggeration': hillshadeVisible ? (colorVisible ? 0.6 : 0.4) : 0.0,
+          'hillshade-highlight-color': `${colorVisible ? `#ffffff80` : '#cccccc'}`,
+          'hillshade-accent-color': `${colorVisible ? `#000000` : '#000000'}`,
+          'hillshade-shadow-color': `${colorVisible ? `#000000` : '#000000'}`,
+          'hillshade-method': `${colorVisible ? 'igor' : 'basic'}`,
           'hillshade-illumination-anchor': 'map',
-          'hillshade-illumination-direction': 315
-        }}
+          'hillshade-illumination-direction': 315,
+          'hillshade-illumination-altitude': colorVisible ? 40 : 30
+          }}
       />
     </RasterDEMTileSource>
   </MapLibre>
