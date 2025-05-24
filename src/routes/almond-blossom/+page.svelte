@@ -127,7 +127,7 @@
   let urls: string[] = [
     "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles",
     "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles",
-    "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/r8.pmtiles"
+    "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/r8.v2.pmtiles"
     // "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_rgb.pmtiles",
     // "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_height.pmtiles"
   ]
