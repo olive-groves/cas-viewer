@@ -283,6 +283,9 @@
     >
       <RasterLayer
         layout={{visibility: blenderVisible ? "visible" : "none"}}
+        paint={{
+          'raster-resampling': 'nearest'
+        }}
       />
     </RasterTileSource>
     <RasterDEMTileSource
