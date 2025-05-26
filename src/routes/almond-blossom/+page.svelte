@@ -273,8 +273,7 @@
       <RasterLayer
         layout={{visibility: colorVisible ? "visible" : "none"}}
         paint={{
-          'raster-resampling': 'nearest',
-          'raster-fade-duration': 0
+          'raster-resampling': 'nearest'
         }}
       />
     </RasterTileSource>
