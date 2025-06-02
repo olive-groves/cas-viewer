@@ -85,10 +85,10 @@
   }
 
   let disclaimerVisible = $state(true)
-  let colorVisible = $state(true)
+  let colorVisible = $state(false)
   let terrainVisible = $state(true)
-  let hillshadeVisible = $state(true)
-  let blenderVisible = $state(false)
+  let hillshadeVisible = $state(false)
+  let blenderVisible = $state(true)
   let creditsVisible = $state(false)
 
   // Certain paint props with terrain on are not immediately reflected
