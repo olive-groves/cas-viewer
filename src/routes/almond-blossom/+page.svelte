@@ -85,10 +85,10 @@
   }
 
   let disclaimerVisible = $state(true)
-  let colorVisible = $state(true)
+  let colorVisible = $state(false)
   let terrainVisible = $state(true)
-  let hillshadeVisible = $state(true)
-  let blenderVisible = $state(false)
+  let hillshadeVisible = $state(false)
+  let blenderVisible = $state(true)
   let creditsVisible = $state(false)
 
   // Certain paint props with terrain on are not immediately reflected
@@ -273,8 +273,7 @@
       <RasterLayer
         layout={{visibility: colorVisible ? "visible" : "none"}}
         paint={{
-          'raster-resampling': 'nearest',
-          'raster-fade-duration': 0
+          'raster-resampling': 'nearest'
         }}
       />
     </RasterTileSource>
@@ -284,6 +283,9 @@
     >
       <RasterLayer
         layout={{visibility: blenderVisible ? "visible" : "none"}}
+        paint={{
+          'raster-resampling': 'nearest'
+        }}
       />
     </RasterTileSource>
     <RasterDEMTileSource
