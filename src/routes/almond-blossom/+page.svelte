@@ -19,7 +19,7 @@
     AttributionControl,
     BackgroundLayer
   } from 'svelte-maplibre-gl';
-  import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
+  import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
   import type { FlyToOptions } from 'maplibre-gl';
 
