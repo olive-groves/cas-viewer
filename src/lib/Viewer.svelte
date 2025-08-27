@@ -168,6 +168,7 @@
     //————+———————————> +y
     //    |
     //
+    if (raking) {
     const mouseX = pointer.x / pointer.containerWidth;
     const mouseY = pointer.y / pointer.containerHeight;
     const mapCenterX = 0.5;
@@ -181,6 +182,7 @@
 
     pointer.roundedPercentX = Math.abs(deltaX) >= Math.abs(deltaY) ? 100*Math.round(mouseX) : 100*mouseX;
     pointer.roundedPercentY = Math.abs(deltaY) >= Math.abs(deltaX) ? 100*Math.round(mouseY) : 100*mouseY;
+    }
   })
 
   const getHeaderMetadata = async () => {
