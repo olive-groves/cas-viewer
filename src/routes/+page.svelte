@@ -2,7 +2,7 @@
   import { cubicInOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
 
-  import { PMTilesProtocol } from 'svelte-maplibre-gl/pmtiles';
+  import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';

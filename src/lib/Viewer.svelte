@@ -3,6 +3,7 @@
     AttributionControl,
     BackgroundLayer,
     HillshadeLayer,
+    ColorReliefLayer,
     MapLibre,
     NavigationControl,
     RasterDEMTileSource,
@@ -82,8 +83,16 @@
       accent_opacity: 1.0,
       highlight_opacity: 1.0,
       interval: 1,
-      background: data?.raster.url ? 0 : 1,
+      background: data?.raster.url ? 0 : 0,
       lightness: 0.5
+    },
+    pseudocolor: {
+      interval: 1,
+      opacity: data?.raster.url ? 0 : 1,
+      min_low: 1,
+      low: 1,
+      high: 2,
+      max_high: 2
     },
     terrain: {
       exaggeration: 1 
@@ -96,6 +105,10 @@
       brightness_max: 1,
       brightness_min: 0
     }
+  })
+
+  $effect(() => {
+    controls.pseudocolor.high = controls.pseudocolor.max_high
   })
 
   $effect(() => {
@@ -128,6 +141,9 @@
 
   let timeout: ReturnType<typeof setTimeout>;  // Some paint props shouldn't be spammed, so we clear the timeout for those
   $effect(() => {
+    controls.pseudocolor.opacity;
+    controls.pseudocolor.low;
+    controls.pseudocolor.high;
     controls.hillshade.exaggeration;
     controls.hillshade.shadow_opacity;
     controls.hillshade.accent_opacity;
@@ -168,19 +184,21 @@
     //————+———————————> +y
     //    |
     //
-    const mouseX = pointer.x / pointer.containerWidth;
-    const mouseY = pointer.y / pointer.containerHeight;
-    const mapCenterX = 0.5;
-    const mapCenterY = 0.5;
-    const deltaX = mouseX - mapCenterX;
-    const deltaY = mouseY - mapCenterY;
-    controls.hillshade.exaggeration = Math.min(Math.max(4 * Math.hypot(deltaX, deltaY), 0), 1)
-    const angle = Math.atan2(-deltaX, deltaY);  // Considered in a clockwise angle coordinate system where 0 degrees is pointing upwards
-    const angleDegrees = angle * (180.0 / Math.PI);
-    controls.hillshade.angle = Math.floor((angleDegrees + 180) % 360);  // Shift angle into range [0, 360) to match the input range for hillshade direction
-
-    pointer.roundedPercentX = Math.abs(deltaX) >= Math.abs(deltaY) ? 100*Math.round(mouseX) : 100*mouseX;
-    pointer.roundedPercentY = Math.abs(deltaY) >= Math.abs(deltaX) ? 100*Math.round(mouseY) : 100*mouseY;
+    if (raking) {
+      const mouseX = pointer.x / pointer.containerWidth;
+      const mouseY = pointer.y / pointer.containerHeight;
+      const mapCenterX = 0.5;
+      const mapCenterY = 0.5;
+      const deltaX = mouseX - mapCenterX;
+      const deltaY = mouseY - mapCenterY;
+      controls.hillshade.exaggeration = Math.min(Math.max(4 * Math.hypot(deltaX, deltaY), 0), 1)
+      const angle = Math.atan2(-deltaX, deltaY);  // Considered in a clockwise angle coordinate system where 0 degrees is pointing upwards
+      const angleDegrees = angle * (180.0 / Math.PI);
+      controls.hillshade.angle = Math.floor((angleDegrees + 180) % 360);  // Shift angle into range [0, 360) to match the input range for hillshade direction
+  
+      pointer.roundedPercentX = Math.abs(deltaX) >= Math.abs(deltaY) ? 100*Math.round(mouseX) : 100*mouseX;
+      pointer.roundedPercentY = Math.abs(deltaY) >= Math.abs(deltaX) ? 100*Math.round(mouseY) : 100*mouseY;
+    }
   })
 
   const getHeaderMetadata = async () => {
@@ -189,7 +207,8 @@
     const raster_dem_header = await data?.raster_dem.header 
     const raster_dem_metadata = await data?.raster_dem.metadata 
     const raster_overlay_header = await data?.raster.header 
-    const raster_overlay_metadata = await data?.raster.metadata 
+    const raster_overlay_metadata = await data?.raster.metadata
+    controls.pseudocolor.max_high = raster_dem_metadata?.maximum
     return {
       raster_header,
       raster_metadata,
@@ -347,6 +366,32 @@
             <Terrain exaggeration={controls.terrain.exaggeration} />
           </RasterDEMTileSource>
           <RasterDEMTileSource
+            id="pseudocolor"
+            url={data?.raster_dem.url}
+            encoding="custom"
+            baseShift={0}
+            redFactor={256*256*controls.pseudocolor.interval}
+            greenFactor={256*controls.pseudocolor.interval}
+            blueFactor={1*controls.pseudocolor.interval}
+            tileSize={256}
+          >
+            <ColorReliefLayer
+              paint={{
+                'color-relief-opacity': controls.pseudocolor.opacity,
+                'color-relief-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['elevation'],
+                  0, 'magenta',
+                  0.5, 'black',
+                  controls.pseudocolor.low, 'black',  // low
+                  controls.pseudocolor.high, 'white',  // high
+                ]
+                // 'color-relief-color': COLOR_MAPS[colorMap]
+              }}
+            />
+          </RasterDEMTileSource>
+          <RasterDEMTileSource
             id="hillshade"
             url={data?.raster_dem.url}
             encoding="custom"
@@ -426,6 +471,22 @@
           <label>
             <input type="range" min=1 max=100 step=1 bind:value={controls.terrain.exaggeration} ondblclick={() => controls.terrain.exaggeration = 1}>
             Exaggeration ({controls.terrain.exaggeration.toFixed(0)}x)
+          </label>
+        {/if}
+
+        <label><input type="checkbox" name="controls" value="Pseudocolor" bind:group={visible_controls} disabled={!data?.raster_dem.url}/><span>Pseudocolor</span></label>
+        {#if visible_controls.includes("Pseudocolor")}
+          <label>
+            <input type="range" min=0 max=1 step=0.01 bind:value={controls.pseudocolor.opacity} ondblclick={() => controls.pseudocolor.opacity = 1}>
+            Opacity ({controls.pseudocolor.opacity.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min={controls.pseudocolor.min_low} max={controls.pseudocolor.high - 100} step=100 bind:value={controls.pseudocolor.low} ondblclick={() => controls.pseudocolor.low = controls.pseudocolor.min_low}>
+            Low ({(controls.pseudocolor.low * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(0)} mm)
+          </label>
+          <label>
+            <input type="range" min={controls.pseudocolor.low + 100} max={controls.pseudocolor.max_high} step=100 bind:value={controls.pseudocolor.high} ondblclick={() => controls.pseudocolor.high = controls.pseudocolor.max_high}>
+            High ({(controls.pseudocolor.high * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(0)} mm)
           </label>
         {/if}
 
