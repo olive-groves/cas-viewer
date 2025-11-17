@@ -99,8 +99,8 @@
     colorVisible;
     hillshadeVisible;
     setTimeout(() => {
-      map?.terrain?.sourceCache.freeRtt();
-      map?.terrain?.sourceCache.sourceCache.reload();
+      map?.terrain?.tileManager.freeRtt();
+      // map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
 

@@ -138,8 +138,8 @@
     controls.overlay.opacity;
     controls.hillshade.lightness;
     setTimeout(() => {
-      map?.terrain?.sourceCache.freeRtt();
-      map?.terrain?.sourceCache.sourceCache.reload();
+      map?.terrain?.tileManager.freeRtt();
+      // map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
 
@@ -158,8 +158,8 @@
       clearTimeout(timeout)
     }
     timeout = setTimeout(() => {
-      map?.terrain?.sourceCache.freeRtt();
-      map?.terrain?.sourceCache.sourceCache.reload();
+      map?.terrain?.tileManager.freeRtt();
+      // map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
 
