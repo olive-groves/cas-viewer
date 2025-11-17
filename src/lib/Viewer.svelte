@@ -12,10 +12,14 @@
     Terrain,
     TerrainControl
   } from 'svelte-maplibre-gl';
+  import { Underzoom } from 'maplibre-xy';
+  import maplibregl from 'maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
 
   import Minimap from '$lib/mapboxgl-minimap.js';
+  
+  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 0});
 
   let visible_controls = $state([]);
   
@@ -134,8 +138,8 @@
     controls.overlay.opacity;
     controls.hillshade.lightness;
     setTimeout(() => {
-      map?.terrain?.sourceCache.freeRtt();
-      map?.terrain?.sourceCache.sourceCache.reload();
+      map?.terrain?.tileManager.freeRtt();
+      // map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
 
@@ -154,8 +158,8 @@
       clearTimeout(timeout)
     }
     timeout = setTimeout(() => {
-      map?.terrain?.sourceCache.freeRtt();
-      map?.terrain?.sourceCache.sourceCache.reload();
+      map?.terrain?.tileManager.freeRtt();
+      // map?.terrain?.sourceCache.sourceCache.reload();
     }, 200);
   })
 
@@ -309,6 +313,7 @@
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
+        transformConstrain={myUnderzoom.transformConstrain}
         maxPitch={83}
         aroundCenter={false}
         bind:center={mapProps.center}
