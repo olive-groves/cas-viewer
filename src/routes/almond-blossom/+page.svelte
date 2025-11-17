@@ -21,8 +21,10 @@
   } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
+  import { Underzoom } from 'maplibre-xy';
+  import maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
-
+  
   let map: maplibregl.Map | undefined = $state()
 
   let destinations: FlyToOptions[] = [
@@ -143,6 +145,8 @@
       metadatas
     }
   }
+
+  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1});
 </script>
 
 <!-- Add pmtiles:// Protocol globally -->
@@ -170,6 +174,7 @@
     center={destinations.at(-2).center}
     pitch={destinations.at(-2).pitch}
     bearing={destinations.at(-2).bearing}
+    transformConstrain={myUnderzoom.transformConstrain}
   >
     <AttributionControl position="bottom-left" compact={true} customAttribution={"<a href='https://harmbelt.nl/'>Harm Belt · <em>Almond Blossom<em></a>"} />
     <CustomControl position="top-left">
