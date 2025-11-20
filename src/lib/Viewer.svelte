@@ -16,12 +16,15 @@
   import maplibregl from 'maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
+  import { ColorRelief } from './ColorRelief.svelte.js';
 
   import Minimap from '$lib/mapboxgl-minimap.js';
   
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 0});
 
   let visible_controls = $state([]);
+
+  const colorRelief = new ColorRelief('viridis');
   
   let {
     data,
@@ -112,7 +115,7 @@
   })
 
   $effect(() => {
-    controls.pseudocolor.high = controls.pseudocolor.max_high
+    colorRelief.setBreakpoints.high = colorRelief.setBreakpoints.max;
   })
 
   $effect(() => {
@@ -145,9 +148,9 @@
 
   let timeout: ReturnType<typeof setTimeout>;  // Some paint props shouldn't be spammed, so we clear the timeout for those
   $effect(() => {
-    controls.pseudocolor.opacity;
-    controls.pseudocolor.low;
-    controls.pseudocolor.high;
+    colorRelief.opacity;
+    colorRelief.setBreakpoints.low;
+    colorRelief.setBreakpoints.high;
     controls.hillshade.exaggeration;
     controls.hillshade.shadow_opacity;
     controls.hillshade.accent_opacity;
@@ -212,7 +215,7 @@
     const raster_dem_metadata = await data?.raster_dem.metadata 
     const raster_overlay_header = await data?.raster.header 
     const raster_overlay_metadata = await data?.raster.metadata
-    controls.pseudocolor.max_high = raster_dem_metadata?.maximum
+    colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum
     return {
       raster_header,
       raster_metadata,
@@ -381,6 +384,10 @@
             tileSize={256}
           >
             <ColorReliefLayer
+              layout={colorRelief.layout}
+              paint={colorRelief.paint}
+            />
+            <!-- <ColorReliefLayer
               paint={{
                 'color-relief-opacity': controls.pseudocolor.opacity,
                 'color-relief-color': [
@@ -394,7 +401,7 @@
                 ]
                 // 'color-relief-color': COLOR_MAPS[colorMap]
               }}
-            />
+            /> -->
           </RasterDEMTileSource>
           <RasterDEMTileSource
             id="hillshade"
@@ -482,16 +489,16 @@
         <label><input type="checkbox" name="controls" value="Pseudocolor" bind:group={visible_controls} disabled={!data?.raster_dem.url}/><span>Pseudocolor</span></label>
         {#if visible_controls.includes("Pseudocolor")}
           <label>
-            <input type="range" min=0 max=1 step=0.01 bind:value={controls.pseudocolor.opacity} ondblclick={() => controls.pseudocolor.opacity = 1}>
-            Opacity ({controls.pseudocolor.opacity.toFixed(2)})
+            <input type="range" min=0 max=1 step=0.01 bind:value={colorRelief.opacity} ondblclick={() => colorRelief.opacity = 1}>
+            Opacity ({colorRelief.opacity.toFixed(2)})
           </label>
           <label>
-            <input type="range" min={controls.pseudocolor.min_low} max={controls.pseudocolor.high - 100} step=100 bind:value={controls.pseudocolor.low} ondblclick={() => controls.pseudocolor.low = controls.pseudocolor.min_low}>
-            Low ({(controls.pseudocolor.low * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(0)} mm)
+            <input type="range" min={colorRelief.setBreakpoints.min} max={colorRelief.setBreakpoints.high - colorRelief.setBreakpoints.step} step={colorRelief.setBreakpoints.step} bind:value={colorRelief.setBreakpoints.low} ondblclick={() => colorRelief.setBreakpoints.low = colorRelief.setBreakpoints.min}>
+            Low ({(colorRelief.setBreakpoints.low * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(1)} mm)
           </label>
           <label>
-            <input type="range" min={controls.pseudocolor.low + 100} max={controls.pseudocolor.max_high} step=100 bind:value={controls.pseudocolor.high} ondblclick={() => controls.pseudocolor.high = controls.pseudocolor.max_high}>
-            High ({(controls.pseudocolor.high * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(0)} mm)
+            <input type="range" min={colorRelief.setBreakpoints.low + colorRelief.setBreakpoints.step} max={colorRelief.setBreakpoints.max} step={colorRelief.setBreakpoints.step} bind:value={colorRelief.setBreakpoints.high} ondblclick={() => colorRelief.setBreakpoints.high = colorRelief.setBreakpoints.max}>
+            High ({(colorRelief.setBreakpoints.high * hm.raster_dem_metadata.metersPerInteger * 1000).toFixed(1)} mm)
           </label>
         {/if}
 
