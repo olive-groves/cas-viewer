@@ -92,6 +92,7 @@
   let hillshadeVisible = $state(false)
   let blenderVisible = $state(true)
   let creditsVisible = $state(false)
+  let zoom = $state(destinations.at(-2).zoom)
 
   // Certain paint props with terrain on are not immediately reflected
   // Reload here to do so
@@ -136,6 +137,7 @@
   let pmtiles: PMTiles[] = [];
   let headers: {}[] = [];
   let metadatas: {}[] = [];
+  let maxZoom = $state(5);
   const getHeaderMetadata = async () => {
     pmtiles = urls.map((url) => new PMTiles(url));
     headers = pmtiles.map((p) => p.getHeader())
@@ -159,6 +161,7 @@
 {:then headers_metadatas}
   <MapLibre
     bind:map={map}
+    bind:zoom
     onload={() => {
       setTimeout(() => disclaimerVisible = false, 4500);
       flyToRandom(destination);
@@ -170,7 +173,7 @@
     aroundCenter={false}
     hash={true}
     attributionControl={false}
-    zoom={destinations.at(-2).zoom}
+    maxZoom={maxZoom + 2}
     center={destinations.at(-2).center}
     pitch={destinations.at(-2).pitch}
     bearing={destinations.at(-2).bearing}
@@ -207,6 +210,19 @@
     <FullScreenControl position="bottom-right" container={document.getElementById("main")}/>
     <NavigationControl position="bottom-right" visualizePitch={true} showCompass={true} showZoom={false} />
     <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+      <div>
+        <button
+          title={"Zoom level"}
+          onclick={() => {
+            map?.easeTo({zoom: Math.round(map.getZoom())})
+          }}
+          style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
+          >
+          {(100 * 1 / 2 ** (maxZoom - zoom)).toFixed(1)}%
+        </button>
+      </div>
+    </CustomControl>
+    <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
       <button
         title={terrainVisible ? "Disable 3D" : "Enable 3D"}
         onclick={() => {
@@ -214,7 +230,7 @@
           if (terrainVisible) {setTimeout(() => ease3D(), 200)}
           else {setTimeout(() => ease2D(), 200)}
         }}
-        style:color={terrainVisible ? "#33b5e5" : "#555"}
+        style:color={terrainVisible ? "#1b9fd0" : "#555"}
         style:font-weight=900>
         3D
       </button>

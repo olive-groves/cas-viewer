@@ -10,7 +10,7 @@
     RasterLayer,
     RasterTileSource,
     Terrain,
-    TerrainControl
+    CustomControl
   } from 'svelte-maplibre-gl';
   import { Underzoom } from 'maplibre-xy';
   import maplibregl from 'maplibre-gl';
@@ -24,7 +24,7 @@
 
   let visible_controls = $state([]);
 
-  const colorRelief = new ColorRelief('viridis');
+  const colorRelief = new ColorRelief('viridis16');
   
   let {
     data,
@@ -102,7 +102,8 @@
       max_high: 2
     },
     terrain: {
-      exaggeration: 1 
+      exaggeration: 1,
+      enabled: false
     },
     overlay: {
       visibility: true,
@@ -318,6 +319,7 @@
         renderWorldCopies={false}
         transformConstrain={myUnderzoom.transformConstrain}
         maxPitch={83}
+        maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 2}
         aroundCenter={false}
         bind:center={mapProps.center}
         bind:zoom={mapProps.zoom}
@@ -370,8 +372,9 @@
             greenFactor={256}
             blueFactor={1}
           >
-            <TerrainControl position="bottom-right" />
-            <Terrain exaggeration={controls.terrain.exaggeration} />
+            {#if controls.terrain.enabled}
+              <Terrain exaggeration={controls.terrain.exaggeration} />
+            {/if}
           </RasterDEMTileSource>
           <RasterDEMTileSource
             id="pseudocolor"
@@ -433,6 +436,17 @@
               }}
             />
           </RasterDEMTileSource>
+          <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+            <button
+              title={controls.terrain.enabled ? "Disable 3D" : "Enable 3D"}
+              onclick={() => {
+                controls.terrain.enabled = !controls.terrain.enabled;
+              }}
+              style:color={controls.terrain.enabled ? "#1b9fd0" : "#555"}
+              style:font-weight=900>
+              3D
+            </button>
+          </CustomControl>
         {/if}
         {#if data?.raster_overlay.url}
           <RasterTileSource
@@ -451,6 +465,19 @@
           </RasterTileSource>
         {/if}
         <NavigationControl position="bottom-right" visualizePitch={true} visualizeRoll={true} />
+        <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+          <div>
+            <button
+              title={"Zoom level"}
+              onclick={() => {
+                map?.easeTo({zoom: Math.round(mapProps.zoom)})
+              }}
+              style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
+              >
+              {(100 * 1 / 2 ** ((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) - mapProps.zoom)).toFixed(1)}%
+            </button>
+          </div>
+        </CustomControl>
       </MapLibre>
     </div>
     <div
