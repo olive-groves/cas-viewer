@@ -209,6 +209,16 @@
     </CustomControl>
     <FullScreenControl position="bottom-right" container={document.getElementById("main")}/>
     <NavigationControl position="bottom-right" visualizePitch={true} showCompass={true} showZoom={false} />
+    <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex">
+      <div
+        style={`width: ${( (1 / 2 ** (maxZoom - zoom)) * (2.5 / 1000) / (0.024000000208616257 / 3072) ).toFixed(0)}px`}
+        style:border-bottom={`1px solid #fff`}>
+      </div>
+      <div
+        style:text-align="end">
+        {2.5} mm
+      </div>
+    </CustomControl>
     <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
       <div>
         <button
@@ -216,13 +226,13 @@
           onclick={() => {
             map?.easeTo({zoom: Math.round(map.getZoom())})
           }}
-          style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
+          style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px; font-variant-numeric: tabular-nums;"
           >
           {(100 * 1 / 2 ** (maxZoom - zoom)).toFixed(1)}%
         </button>
       </div>
     </CustomControl>
-    <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+    <CustomControl position="bottom-right">
       <button
         title={terrainVisible ? "Disable 3D" : "Enable 3D"}
         onclick={() => {
@@ -235,7 +245,7 @@
         3D
       </button>
     </CustomControl>
-    <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+    <CustomControl position="bottom-right">
       <button
         title={colorVisible ? "Hide RGB" : "Show RGB"}
         onclick={() => {toggleColor()}}>
@@ -247,7 +257,7 @@
         <img alt="Hillshade icon" src={hillshadeVisible ? hillshadeIconEnabled : hillshadeIconDisabled} style="position: relative; width: 80%; margin-bottom: -2px;"/>
       </button>
     </CustomControl>
-    <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+    <CustomControl position="bottom-right">
       <button
         title={blenderVisible ? "Hide raytracing render" : "Show raytracing render"}
         onclick={() => {toggleBlender()}}>
@@ -341,3 +351,14 @@
   {/if}
 {/await}
 </div>
+
+<style>
+	:global(.maplibregl-ctrl.maplibregl-ctrl-group.maplibregl-ctrl-transparent.maplibregl-ctrl-flex) {
+    display: flex;
+    flex-direction: column;
+		background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    align-items: flex-end;
+	}
+</style>
