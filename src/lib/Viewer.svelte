@@ -103,7 +103,7 @@
     },
     terrain: {
       exaggeration: 1,
-      enabled: false
+      enabled: true
     },
     overlay: {
       visibility: true,
