@@ -319,7 +319,7 @@
         renderWorldCopies={false}
         transformConstrain={myUnderzoom.transformConstrain}
         maxPitch={83}
-        maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 2}
+        maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
         aroundCenter={false}
         bind:center={mapProps.center}
         bind:zoom={mapProps.zoom}
