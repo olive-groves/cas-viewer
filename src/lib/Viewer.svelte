@@ -81,7 +81,9 @@
       brightness_max: 1.0,
       brightness_min: 0.0,
       contrast: 0.0,
-      opacity: 1.0
+      opacity: 1.0,
+      saturation: 0.0,
+      hue: 0,
     },
     hillshade: {
       angle: 315,
@@ -136,6 +138,8 @@
     controls.rgb.brightness_max;
     controls.rgb.brightness_min;
     controls.rgb.contrast;
+    controls.rgb.saturation;
+    controls.rgb.hue;
     controls.rgb.opacity;
     controls.overlay.hue;
     controls.overlay.lightness;
@@ -262,6 +266,7 @@
         map.addControl(new Minimap({
             zoom: -2,
             renderWorldCopies: false,
+            transformConstrain: myUnderzoom.transformConstrain,
             width: "180px",
             height: "180px",
             lineColor: "#fff",
@@ -273,14 +278,14 @@
                   rgb: {
                     type: "raster",
                     url: data?.raster.url,
-                    tileSize: 256
+                    tileSize: 512
                   }
                 }),
                 ...(data?.raster_dem.url && {
                   hillshade: {
                     type: "raster-dem",
                     url: data?.raster_dem.url,
-                    tileSize: 256,
+                    tileSize: 512,
                     encoding: "custom",
                     baseShift: 0,
                     redFactor: 256*256*2,
@@ -357,7 +362,9 @@
                 "raster-brightness-max": controls.rgb.brightness_max,
                 "raster-brightness-min": controls.rgb.brightness_min,
                 "raster-contrast": controls.rgb.contrast,
-                "raster-opacity": controls.rgb.opacity
+                "raster-opacity": controls.rgb.opacity,
+                "raster-saturation": controls.rgb.saturation,
+                "raster-hue-rotate": controls.rgb.hue,
               }}
             />
           </RasterTileSource>
@@ -502,6 +509,14 @@
           <label>
             <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.contrast} ondblclick={() => controls.rgb.contrast = 0}>
             Contrast ({controls.rgb.contrast.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.saturation} ondblclick={() => controls.rgb.saturation = 0}>
+            Saturation ({controls.rgb.saturation.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=360 step=2 bind:value={controls.rgb.hue} ondblclick={() => controls.rgb.hue = 0}>
+            Hue ({controls.rgb.hue.toFixed(0)}°)
           </label>
         {/if}
 
