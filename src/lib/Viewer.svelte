@@ -468,11 +468,11 @@
         <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
           <div>
             <button
-              title={"Zoom level"}
+              title={"Zoom scale"}
               onclick={() => {
                 map?.easeTo({zoom: Math.round(mapProps.zoom)})
               }}
-              style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
+              style={`color: ${((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) < mapProps.zoom) ? "red" : "#333"}; width: fit-content; padding-left: 4px; padding-right: 4px;`}
               >
               {(100 * 1 / 2 ** ((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) - mapProps.zoom)).toFixed(1)}%
             </button>
