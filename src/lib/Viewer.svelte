@@ -21,10 +21,25 @@
   import Minimap from '$lib/mapboxgl-minimap.js';
   
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 0});
+  function identityTransformConstrain(lngLat, zoom) {
+    return {center: lngLat, zoom: zoom ?? 0}
+  };
+
+  const locale = {
+    'NavigationControl.ResetBearing': 'Reset bearing and pitch'
+  };
 
   let visible_controls = $state([]);
 
   const colorRelief = new ColorRelief('viridis16');
+
+  function getAttribution(metadata: Any) {
+    const attribution = metadata?.attribution ?? 'Attribution undefined';
+    const license = metadata?.license ?? 'License undefined';
+    const instrument = metadata?.instrument?.name ?? 'Instrument name undefined';
+    const dateTime = metadata?.instrument?.dateTime ?? metadata.scanDateTime ?? 'Date-time undefined';
+    return `${attribution}, ${license} · ${instrument} ${dateTime}`
+  };
   
   let {
     data,
@@ -81,7 +96,9 @@
       brightness_max: 1.0,
       brightness_min: 0.0,
       contrast: 0.0,
-      opacity: 1.0
+      opacity: 1.0,
+      saturation: 0.0,
+      hue: 0,
     },
     hillshade: {
       angle: 315,
@@ -136,6 +153,8 @@
     controls.rgb.brightness_max;
     controls.rgb.brightness_min;
     controls.rgb.contrast;
+    controls.rgb.saturation;
+    controls.rgb.hue;
     controls.rgb.opacity;
     controls.overlay.hue;
     controls.overlay.lightness;
@@ -214,8 +233,8 @@
     const raster_metadata = await data?.raster.metadata 
     const raster_dem_header = await data?.raster_dem.header 
     const raster_dem_metadata = await data?.raster_dem.metadata 
-    const raster_overlay_header = await data?.raster.header 
-    const raster_overlay_metadata = await data?.raster.metadata
+    const raster_overlay_header = await data?.raster_overlay.header 
+    const raster_overlay_metadata = await data?.raster_overlay.metadata
     colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum
     return {
       raster_header,
@@ -259,13 +278,22 @@
       <MapLibre
         bind:map={map}
         onload={
-        map.addControl(new Minimap({
-            zoom: -2,
-            renderWorldCopies: false,
+          // () => {}
+          map.addControl(new Minimap({
             width: "180px",
             height: "180px",
             lineColor: "#fff",
             fillColor: "#fff",
+            // dragPan: false,
+            // scrollZoom: false,
+            // boxZoom: false,
+            // dragRotate: false,
+            // keyboard: false,
+            // doubleClickZoom: false,
+            // touchZoomRotate: false,
+            zoom: -2,
+            renderWorldCopies: false,
+            transformConstrain: myUnderzoom.transformConstrain,
             style: {
               version: 8,
               sources: {
@@ -273,14 +301,14 @@
                   rgb: {
                     type: "raster",
                     url: data?.raster.url,
-                    tileSize: 256
+                    tileSize: 512
                   }
                 }),
                 ...(data?.raster_dem.url && {
                   hillshade: {
                     type: "raster-dem",
                     url: data?.raster_dem.url,
-                    tileSize: 256,
+                    tileSize: 512,
                     encoding: "custom",
                     baseShift: 0,
                     redFactor: 256*256*2,
@@ -310,16 +338,17 @@
                 }] : [],
               ]
             }
-          }), 'top-right')
+            }), 'top-right')
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
+        locale={locale}
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
-        transformConstrain={myUnderzoom.transformConstrain}
+        transformConstrain={identityTransformConstrain}
         maxPitch={83}
-        maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 2}
+        maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
         aroundCenter={false}
         bind:center={mapProps.center}
         bind:zoom={mapProps.zoom}
@@ -331,16 +360,17 @@
       {#if hm.raster_metadata}
         <AttributionControl
           compact={true}
-          customAttribution={
-            `${hm.raster_metadata.attribution} ${hm.raster_metadata.scanDateTime}`
-          }
+          customAttribution={getAttribution(hm.raster_metadata)}
         />
       {:else if hm.raster_dem_metadata}
         <AttributionControl
           compact={true}
-          customAttribution={
-            `${hm.raster_dem_metadata.attribution} ${hm.raster_dem_metadata.scanDateTime}`
-          }
+          customAttribution={getAttribution(hm.raster_dem_metadata)}
+        />
+      {:else if hm.raster_overlay_metadata}
+        <AttributionControl
+          compact={true}
+          customAttribution={getAttribution(hm.raster_overlay_metadata)}
         />
       {/if}
         {#if data?.raster.url}
@@ -357,7 +387,9 @@
                 "raster-brightness-max": controls.rgb.brightness_max,
                 "raster-brightness-min": controls.rgb.brightness_min,
                 "raster-contrast": controls.rgb.contrast,
-                "raster-opacity": controls.rgb.opacity
+                "raster-opacity": controls.rgb.opacity,
+                "raster-saturation": controls.rgb.saturation,
+                "raster-hue-rotate": controls.rgb.hue,
               }}
             />
           </RasterTileSource>
@@ -468,11 +500,11 @@
         <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
           <div>
             <button
-              title={"Zoom level"}
+              title={"Zoom scale"}
               onclick={() => {
                 map?.easeTo({zoom: Math.round(mapProps.zoom)})
               }}
-              style="color: #333; width: fit-content; padding-left: 4px; padding-right: 4px;"
+              style={`color: ${((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) < mapProps.zoom) ? "red" : "#333"}; width: fit-content; padding-left: 4px; padding-right: 4px;`}
               >
               {(100 * 1 / 2 ** ((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) - mapProps.zoom)).toFixed(1)}%
             </button>
@@ -502,6 +534,14 @@
           <label>
             <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.contrast} ondblclick={() => controls.rgb.contrast = 0}>
             Contrast ({controls.rgb.contrast.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=-1 max=1 step=0.02 bind:value={controls.rgb.saturation} ondblclick={() => controls.rgb.saturation = 0}>
+            Saturation ({controls.rgb.saturation.toFixed(2)})
+          </label>
+          <label>
+            <input type="range" min=0 max=360 step=2 bind:value={controls.rgb.hue} ondblclick={() => controls.rgb.hue = 0}>
+            Hue ({controls.rgb.hue.toFixed(0)}°)
           </label>
         {/if}
 

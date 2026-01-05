@@ -127,17 +127,18 @@ class Minimap {
 			}
 		});
 
-		// needed for dragging
-		miniMap.addLayer({
-			"id": "trackingRectFill",
-			"type": "fill",
-			"source": "trackingRect",
-			"layout": {},
-			"paint": {
-				"fill-color": opts.fillColor,
-				"fill-opacity": opts.fillOpacity
-			}
-		});
+		// FIXME: Add setting to disable dragging
+		// // needed for dragging
+		// miniMap.addLayer({
+		// 	"id": "trackingRectFill",
+		// 	"type": "fill",
+		// 	"source": "trackingRect",
+		// 	"layout": {},
+		// 	"paint": {
+		// 		"fill-color": opts.fillColor,
+		// 		"fill-opacity": opts.fillOpacity
+		// 	}
+		// });
 
 		this._trackingRect = this._miniMap.getSource("trackingRect");
 
@@ -154,8 +155,8 @@ class Minimap {
 		miniMap.on("touchend", this._mouseUp.bind(this));
 
 		this._miniMapCanvas = miniMap.getCanvasContainer();
-		this._miniMapCanvas.addEventListener("wheel", this._preventDefault);
-		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault);
+		this._miniMapCanvas.addEventListener("wheel", this._preventDefault, {passive: true});
+		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault, {passive: true});
 	}
 
 	_mouseDown( e )
@@ -229,9 +230,21 @@ class Minimap {
 	_setTrackingRectBounds( bounds )
 	{
 		var source = this._trackingRect;
-		var data = source._data;
+		// FIXME: Broken approach to setting bounds on data.
+		// var data = await source.getData();
+		// data.properties.bounds = bounds;
+		const data = {
+			"type": "Feature",
+			"properties": {
+				"name": "trackingRect",
+				"bounds": bounds.toArray()
+			},
+			"geometry": {
+				"type": "Polygon",
+				"coordinates": this._trackingRectCoordinates
+			}
+		}
 
-		data.properties.bounds = bounds;
 		this._convertBoundsToPoints(bounds);
 		source.setData(data);
 	}
