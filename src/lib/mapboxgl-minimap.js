@@ -155,8 +155,8 @@ class Minimap {
 		miniMap.on("touchend", this._mouseUp.bind(this));
 
 		this._miniMapCanvas = miniMap.getCanvasContainer();
-		this._miniMapCanvas.addEventListener("wheel", this._preventDefault);
-		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault);
+		this._miniMapCanvas.addEventListener("wheel", this._preventDefault, {passive: true});
+		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault, {passive: true});
 	}
 
 	_mouseDown( e )
