@@ -229,9 +229,21 @@ class Minimap {
 	_setTrackingRectBounds( bounds )
 	{
 		var source = this._trackingRect;
-		var data = source._data;
+		// FIXME: Broken approach to setting bounds on data.
+		// var data = await source.getData();
+		// data.properties.bounds = bounds;
+		const data = {
+			"type": "Feature",
+			"properties": {
+				"name": "trackingRect",
+				"bounds": bounds.toArray()
+			},
+			"geometry": {
+				"type": "Polygon",
+				"coordinates": this._trackingRectCoordinates
+			}
+		}
 
-		data.properties.bounds = bounds;
 		this._convertBoundsToPoints(bounds);
 		source.setData(data);
 	}
