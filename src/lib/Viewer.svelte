@@ -270,14 +270,22 @@
       <MapLibre
         bind:map={map}
         onload={
-        map.addControl(new Minimap({
-            zoom: -2,
-            renderWorldCopies: false,
-            transformConstrain: myUnderzoom.transformConstrain,
+          // () => {}
+          map.addControl(new Minimap({
             width: "180px",
             height: "180px",
             lineColor: "#fff",
             fillColor: "#fff",
+            // dragPan: false,
+            // scrollZoom: false,
+            // boxZoom: false,
+            // dragRotate: false,
+            // keyboard: false,
+            // doubleClickZoom: false,
+            // touchZoomRotate: false,
+            zoom: -2,
+            renderWorldCopies: false,
+            transformConstrain: myUnderzoom.transformConstrain,
             style: {
               version: 8,
               sources: {
@@ -322,7 +330,7 @@
                 }] : [],
               ]
             }
-          }), 'top-right')
+            }), 'top-right')
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
