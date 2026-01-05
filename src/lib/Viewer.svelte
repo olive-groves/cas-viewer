@@ -32,6 +32,14 @@
   let visible_controls = $state([]);
 
   const colorRelief = new ColorRelief('viridis16');
+
+  function getAttribution(metadata: Any) {
+    const attribution = metadata?.attribution ?? 'Attribution undefined';
+    const license = metadata?.license ?? 'License undefined';
+    const instrument = metadata?.instrument?.name ?? 'Instrument name undefined';
+    const dateTime = metadata?.instrument?.dateTime ?? metadata.scanDateTime ?? 'Date-time undefined';
+    return `${attribution}, ${license} · ${instrument} ${dateTime}`
+  };
   
   let {
     data,
@@ -352,16 +360,17 @@
       {#if hm.raster_metadata}
         <AttributionControl
           compact={true}
-          customAttribution={
-            `${hm.raster_metadata.attribution} ${hm.raster_metadata.scanDateTime}`
-          }
+          customAttribution={getAttribution(hm.raster_metadata)}
         />
       {:else if hm.raster_dem_metadata}
         <AttributionControl
           compact={true}
-          customAttribution={
-            `${hm.raster_dem_metadata.attribution} ${hm.raster_dem_metadata.scanDateTime}`
-          }
+          customAttribution={getAttribution(hm.raster_dem_metadata)}
+        />
+      {:else if hm.raster_overlay_metadata}
+        <AttributionControl
+          compact={true}
+          customAttribution={getAttribution(hm.raster_overlay_metadata)}
         />
       {/if}
         {#if data?.raster.url}
