@@ -25,6 +25,10 @@
     return {center: lngLat, zoom: zoom ?? 0}
   };
 
+  const locale = {
+    'NavigationControl.ResetBearing': 'Reset bearing and pitch'
+  };
+
   let visible_controls = $state([]);
 
   const colorRelief = new ColorRelief('viridis16');
@@ -322,6 +326,7 @@
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
+        locale={locale}
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
