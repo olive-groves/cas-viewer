@@ -218,8 +218,8 @@
     const raster_metadata = await data?.raster.metadata 
     const raster_dem_header = await data?.raster_dem.header 
     const raster_dem_metadata = await data?.raster_dem.metadata 
-    const raster_overlay_header = await data?.raster.header 
-    const raster_overlay_metadata = await data?.raster.metadata
+    const raster_overlay_header = await data?.raster_overlay.header 
+    const raster_overlay_metadata = await data?.raster_overlay.metadata
     colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum
     return {
       raster_header,
