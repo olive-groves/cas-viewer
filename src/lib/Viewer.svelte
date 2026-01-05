@@ -21,6 +21,9 @@
   import Minimap from '$lib/mapboxgl-minimap.js';
   
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 0});
+  function identityTransformConstrain(lngLat, zoom) {
+    return {center: lngLat, zoom: zoom ?? 0}
+  };
 
   let visible_controls = $state([]);
 
@@ -322,7 +325,7 @@
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
-        transformConstrain={myUnderzoom.transformConstrain}
+        transformConstrain={identityTransformConstrain}
         maxPitch={83}
         maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
         aroundCenter={false}
