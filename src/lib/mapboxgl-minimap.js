@@ -127,17 +127,18 @@ class Minimap {
 			}
 		});
 
-		// needed for dragging
-		miniMap.addLayer({
-			"id": "trackingRectFill",
-			"type": "fill",
-			"source": "trackingRect",
-			"layout": {},
-			"paint": {
-				"fill-color": opts.fillColor,
-				"fill-opacity": opts.fillOpacity
-			}
-		});
+		// FIXME: Add setting to disable dragging
+		// // needed for dragging
+		// miniMap.addLayer({
+		// 	"id": "trackingRectFill",
+		// 	"type": "fill",
+		// 	"source": "trackingRect",
+		// 	"layout": {},
+		// 	"paint": {
+		// 		"fill-color": opts.fillColor,
+		// 		"fill-opacity": opts.fillOpacity
+		// 	}
+		// });
 
 		this._trackingRect = this._miniMap.getSource("trackingRect");
 
