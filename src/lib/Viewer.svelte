@@ -20,7 +20,7 @@
 
   import Minimap from '$lib/mapboxgl-minimap.js';
   
-  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 0});
+  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1.0});
   // function identityTransformConstrain(lngLat, zoom) {
   //   return {center: lngLat, zoom: zoom ?? 0}
   // };
