@@ -1,7 +1,7 @@
 // Breakpoints reduced in number improve performance.
 // To parameterize, consider full LUTs with a means to reduce to n=8, n=5, etc.
 // If n larger than LUT.length, floor to the length
-const COLORMAPS = {  // Lowercase key, colors from low to high
+export const COLORMAPS = {  // Lowercase key, colors from low to high
 	viridis: [  // https://hauselin.github.io/colorpalettejs/
 		"#440154","#46327e","#365c8d","#277f8e","#1fa187","#4ac16d","#a0da39","#fde725"
 	],
@@ -18,7 +18,7 @@ const COLORMAPS = {  // Lowercase key, colors from low to high
 		"#000004","#221150","#5f187f","#982d80","#d3436e","#f8765c","#febb81","#fcfdbf"
 	],
 	gray: [
-		"#000", "#fff"
+		"#000000", "#ffffff"
 	],
 	dimgray: [  // CET_L2 https://colorcet.com/gallery.html Peter Kovesi. Good Colour Maps: How to Design Them. arXiv:1509.03700 [cs.GR] 2015
 		"#1c1c1c", "#f1f1f1"
