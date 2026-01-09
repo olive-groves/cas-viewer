@@ -16,7 +16,7 @@
   import maplibregl from 'maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
-  import { ColorRelief } from './ColorRelief.svelte.js';
+  import { ColorRelief, COLORMAPS } from './ColorRelief.svelte.js';
 
   import Minimap from '$lib/mapboxgl-minimap.js';
   
@@ -31,7 +31,12 @@
 
   let visible_controls = $state([]);
 
-  const colorRelief = new ColorRelief('viridis16');
+  let colormap_selected = $state('viridis16');
+  const colorRelief = new ColorRelief();
+  $effect(() => {
+		colorRelief.colormap = colormap_selected;
+	});
+  
 
   function getAttribution(metadata: Any) {
     const attribution = metadata?.attribution ?? 'Attribution undefined';
@@ -555,6 +560,11 @@
 
         <label><input type="checkbox" name="controls" value="Pseudocolor" bind:group={visible_controls} disabled={!data?.raster_dem.url}/><span>Pseudocolor</span></label>
         {#if visible_controls.includes("Pseudocolor")}
+          <select bind:value={colormap_selected} name="colormap" id="colormap-select">
+            {#each Object.entries(COLORMAPS) as [colormap_name, colormap_array]}
+              <option value={colormap_name}>{colormap_name}</option>
+            {/each}
+          </select>
           <label>
             <input type="range" min=0 max=1 step=0.01 bind:value={colorRelief.opacity} ondblclick={() => colorRelief.opacity = 1}>
             Opacity ({colorRelief.opacity.toFixed(2)})
