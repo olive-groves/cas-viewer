@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+
   import {
     AttributionControl,
     BackgroundLayer,
@@ -155,8 +157,8 @@
       interval: 1,
     },
     "hillshade-background": {
-      visibility: true,
-      background: data?.raster.url ? 0 : 0,
+      visibility: false,
+      background: 1.0,
       lightness: 0.5
     },
     pseudocolor: {
@@ -288,7 +290,6 @@
     controls.rgb.visibility = raster_header ? true : false
     colorRelief.colorReliefLayerVisibility = raster_dem_header ? 'visible' : 'none'
     controls.hillshade.visibility = raster_dem_header ? true : false
-    controls['hillshade-background'].visibility = raster_dem_header ? true : false
     controls.overlay.visibility = raster_overlay_header ? true : false
     controls.terrain.enabled = raster_dem_header ? true : false
     return {
@@ -300,6 +301,12 @@
       raster_overlay_metadata
     }
   }
+
+  $effect(() => {
+    if (colorRelief.colorReliefLayerVisibility == 'none' && !controls.rgb.visibility) {
+      controls['hillshade-background'].visibility = true;
+    }
+  })
 </script>
 
 {#await getHeaderMetadata()}
@@ -505,7 +512,7 @@
           >
             <BackgroundLayer
               layout={{
-                'visibility': controls.hillshade.visibility ? 'visible' : 'none',
+                'visibility': controls['hillshade-background'].visibility ? 'visible' : 'none',
               }}
               paint={{
                 'background-opacity': controls['hillshade-background'].background,
@@ -617,6 +624,10 @@
             <summary>Hillshade
             </summary>
               <label>
+                <input type="range" min=0 max=360 step=1 bind:value={controls.hillshade.angle} ondblclick={() => controls.hillshade.angle = 335}>
+                Angle ({controls.hillshade.angle.toFixed(0).padStart(3, '0')}°)
+              </label>
+              <label>
                 <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
                 Intensity ({controls.hillshade.exaggeration.toFixed(2)})
               </label>
@@ -624,7 +635,7 @@
                 <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
                 Multiplier ({controls.hillshade.interval.toFixed(0)}x)
               </label>
-              <label>
+              <!-- <label>
                 <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.shadow_opacity} ondblclick={() => controls.hillshade.shadow_opacity = 1}>
                 Shadow opacity ({controls.hillshade.shadow_opacity.toFixed(2)})
               </label>
@@ -635,15 +646,7 @@
               <label>
                 <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.highlight_opacity} ondblclick={() => controls.hillshade.highlight_opacity = 1}>
                 Highlight opacity ({controls.hillshade.highlight_opacity.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls['hillshade-background'].background} ondblclick={() => controls['hillshade-background'].background = 0}>
-                Background opacity ({controls['hillshade-background'].background.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls['hillshade-background'].lightness} ondblclick={() => controls['hillshade-background'].lightness = 0.5}>
-                Background lightness ({controls['hillshade-background'].lightness.toFixed(2)})
-              </label>
+              </label> -->
               <figure
                 class="circle"
                 style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
@@ -660,59 +663,22 @@
           </details>
         </div>
 
-        <!-- <div class="oneliner">
+        <div class="oneliner">
           <label class=checkbox><input
             type="checkbox"
             name="hillshade-background"
-            bind:checked={controls.hillshade.}
+            bind:checked={controls['hillshade-background'].visibility}
             disabled={!data?.raster_dem.url}
           /></label>
           <details class={[data?.raster_dem.url ? 'enabled' : 'disabled']} name="hillshade">
-            <summary>Hillshade
+            <summary>Hillshade background
             </summary>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.exaggeration} ondblclick={() => controls.hillshade.exaggeration = 1}>
-                Intensity ({controls.hillshade.exaggeration.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=1 max=20 step=1 bind:value={controls.hillshade.interval} ondblclick={() => controls.hillshade.interval = 1}>
-                Multiplier ({controls.hillshade.interval.toFixed(0)}x)
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.shadow_opacity} ondblclick={() => controls.hillshade.shadow_opacity = 1}>
-                Shadow opacity ({controls.hillshade.shadow_opacity.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.accent_opacity} ondblclick={() => controls.hillshade.accent_opacity = 1}>
-                Accent opacity ({controls.hillshade.accent_opacity.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls.hillshade.highlight_opacity} ondblclick={() => controls.hillshade.highlight_opacity = 1}>
-                Highlight opacity ({controls.hillshade.highlight_opacity.toFixed(2)})
-              </label>
-              <label>
-                <input type="range" min=0 max=1 step=0.01 bind:value={controls['hillshade-background'].background} ondblclick={() => controls['hillshade-background'].background = 0}>
-                Background opacity ({controls['hillshade-background'].background.toFixed(2)})
-              </label>
               <label>
                 <input type="range" min=0 max=1 step=0.01 bind:value={controls['hillshade-background'].lightness} ondblclick={() => controls['hillshade-background'].lightness = 0.5}>
                 Background lightness ({controls['hillshade-background'].lightness.toFixed(2)})
               </label>
-              <figure
-                class="circle"
-                style={`background: radial-gradient(circle at ${radialX}px ${radialY}px, rgb(227, 227, 227) 0%, #000000 80%);`}
-                onpointermove={(e) => {
-                  if (raking) updateRaking(e)
-                }}
-                onpointerup={(e) => {
-                  raking = !raking;
-                  if (raking) updateRaking(e)
-                }}
-                ondblclick={() => {pointer.x = 0; pointer.y = 0}}
-              >
-              </figure>
           </details>
-        </div> -->
+        </div>
         
         <div class="oneliner">
           <label class=checkbox><input
@@ -724,6 +690,18 @@
           <details class={[data?.raster_dem.url ? 'enabled' : 'disabled']} name="pseudocolor">
             <summary>Pseudocolor
             </summary>
+            <label>
+              Colormap
+              <select bind:value={colormap_selected} name="colormap" id="colormap-select">
+                {#each Object.entries(COLORMAPS) as [colormap_name, colormap_array]}
+                  <option value={colormap_name}>{colormap_name}</option>
+                {/each}
+              </select>
+            </label>
+            <label>
+              <input type="range" min=0 max=1 step=0.01 bind:value={colorRelief.opacity} ondblclick={() => colorRelief.opacity = 1}>
+              Opacity ({colorRelief.opacity.toFixed(2)})
+            </label>
             <DualRangeInput
               min={colorRelief.setBreakpoints.min}
               max={colorRelief.setBreakpoints.max}
@@ -749,18 +727,6 @@
                 <span>{(colorRelief.setBreakpoints.max * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(0)}</span>
               </div>
             </div>
-            <label>
-              Colormap
-              <select bind:value={colormap_selected} name="colormap" id="colormap-select">
-                {#each Object.entries(COLORMAPS) as [colormap_name, colormap_array]}
-                  <option value={colormap_name}>{colormap_name}</option>
-                {/each}
-              </select>
-            </label>
-            <label>
-              <input type="range" min=0 max=1 step=0.01 bind:value={colorRelief.opacity} ondblclick={() => colorRelief.opacity = 1}>
-              Opacity ({colorRelief.opacity.toFixed(2)})
-            </label>
           </details>
         </div>
 
