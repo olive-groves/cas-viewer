@@ -286,7 +286,7 @@
     const raster_dem_metadata = await data?.raster_dem.metadata 
     const raster_overlay_header = await data?.raster_overlay.header 
     const raster_overlay_metadata = await data?.raster_overlay.metadata
-    colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum
+    colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum ?? 1
     controls.rgb.visibility = raster_header ? true : false
     colorRelief.colorReliefLayerVisibility = raster_dem_header ? 'visible' : 'none'
     controls.hillshade.visibility = raster_dem_header ? true : false
