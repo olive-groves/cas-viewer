@@ -585,6 +585,7 @@
     </div>
     <div
       class=controls-container
+      style:font-size=1.2rem
     >
       <div class=controls>
 
