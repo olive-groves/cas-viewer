@@ -7,7 +7,7 @@
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
   
-  let n = $state(2);  // n viewers
+  let n = $state(1);  // n viewers
 
   const MODES = ['Side by side', 'Lens'] as const;
   type Modes = (typeof MODES)[number];

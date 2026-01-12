@@ -82,4 +82,8 @@
     --dri-track-filled-gradient-mid-color: var(--track-filled-gradient-mid-color, --dri-track-filled-color);
     --dri-track-filled-gradient-end-color: var(--track-filled-gradient-end-color, --dri-track-filled-color);
   }
+  .dual-range-input > input[type=range] {
+    padding-top: var(--padding-top, 0);
+    padding-bottom: var(--padding-bottom, 0)
+  }
 </style>
