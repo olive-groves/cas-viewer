@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition';
+  import { fade, scale } from 'svelte/transition';
   import hillshadeIconEnabled from '$lib/hillshade-enabled.svg'
   import hillshadeIconDisabled from '$lib/hillshade-disabled.svg'
   import rgbIconEnabled from '$lib/rgb-enabled.svg'
@@ -24,6 +24,7 @@
   import { Underzoom } from 'maplibre-xy';
   import maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
+  import { ScaleBarDisplay } from '$lib/ScaleBar.svelte';
   
   let map: maplibregl.Map | undefined = $state()
 
@@ -137,7 +138,6 @@
   let pmtiles: PMTiles[] = [];
   let headers: {}[] = [];
   let metadatas: {}[] = [];
-  let maxZoom = $state(5);
   const getHeaderMetadata = async () => {
     pmtiles = urls.map((url) => new PMTiles(url));
     headers = pmtiles.map((p) => p.getHeader())
@@ -147,8 +147,15 @@
       metadatas
     }
   }
+  let maxZoom = 6;
+  const metersPerPixel = 0.024000000208616257 / 3072;
+  const scaleBarMaxScreenPixels = 200;
+  let metersPerScreenPixel = $derived(2**(maxZoom - zoom) * metersPerPixel);
+  let scaleBarMaxLengthMeters = $derived(scaleBarMaxScreenPixels * metersPerScreenPixel);
+  const scaleBarDisplay = new ScaleBarDisplay(() => scaleBarMaxLengthMeters)
+  let scaleBarLengthPixels = $derived(scaleBarDisplay.length / metersPerScreenPixel)
 
-  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1});
+  const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1, extendScale: 0.1});
 </script>
 
 <!-- Add pmtiles:// Protocol globally -->
@@ -269,19 +276,20 @@
     </CustomControl>
     <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex scale">
       <div
-        style={`width: ${( (1 / 2 ** (maxZoom - zoom)) * (2.5 / 1000) / (0.024000000208616257 / 3072) ).toFixed(0)}px`}
+        style={`width: ${scaleBarLengthPixels.toFixed(0)}px`}
         style:border-top={`1px solid #fff`}
         style:border-bottom={`1px solid #000`}>
       </div>
       <div
         style:text-align="end">
         <div
-          style:color="white"
-          style:font-family="system-ui"
+          style:color=white
+          style:font-family=system-ui
           style:font-weight=600
+          style:background-color=black
           style="text-shadow: 1px 1px 1px rgb(0 0 0 / 100%);"
         >
-          {2.5} mm
+          {scaleBarDisplay.displayLength.value} {scaleBarDisplay.displayLength.unit.symbol}m
         </div>
       </div>
     </CustomControl>
