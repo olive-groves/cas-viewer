@@ -64,8 +64,6 @@
 
 {#if show}
   <div style="display: flex; flex-direction: column;">
-    <div>Hey</div>
-    <div>No wait</div>
     <DualRangeInput
       bind:low
       bind:high
@@ -82,7 +80,7 @@
         <span>{min}</span>
         <span>{low}</span>
       </div>
-      <span>–</span>
+      <span> – </span>
       <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
         <span>{high}</span>
         <span>{max}</span>
