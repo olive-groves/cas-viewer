@@ -164,11 +164,11 @@
     },
     pseudocolor: {
       interval: 1,
-      opacity: data?.raster.url ? 0 : 1,
-      min_low: 1,
-      low: 1,
-      high: 2,
-      max_high: 2
+      // opacity: 1, // See ColorRelief
+      // min_low: 1,
+      // low: 1,
+      // high: 2,
+      // max_high: 2
     },
     terrain: {
       exaggeration: 1,
@@ -297,6 +297,7 @@
     controls.hillshade.visibility = raster_dem_header ? true : false;
     controls.overlay.visibility = raster_overlay_header ? true : false;
     controls.terrain.enabled = raster_dem_header ? true : false;
+    colorRelief.opacity = raster_header ? 0.0 : 1.0;
     maxZoom = raster_metadata?.maxzoom ?? raster_dem_metadata?.maxzoom ?? raster_overlay_metadata?.maxzoom ?? undefined;
     const version = raster_metadata?.metadataVersion ?? raster_dem_metadata?.metadataVersion ?? raster_overlay_metadata?.metadataVersion;
     if (version === "0.4.0") {
@@ -519,21 +520,6 @@
               layout={colorRelief.layout}
               paint={colorRelief.paint}
             />
-            <!-- <ColorReliefLayer
-              paint={{
-                'color-relief-opacity': controls.pseudocolor.opacity,
-                'color-relief-color': [
-                  'interpolate',
-                  ['linear'],
-                  ['elevation'],
-                  0, 'magenta',
-                  0.5, 'black',
-                  controls.pseudocolor.low, 'black',  // low
-                  controls.pseudocolor.high, 'white',  // high
-                ]
-                // 'color-relief-color': COLOR_MAPS[colorMap]
-              }}
-            /> -->
           </RasterDEMTileSource>
           <RasterDEMTileSource
             id="hillshade"
