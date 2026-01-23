@@ -203,7 +203,8 @@
     color: white;
   }
   .mode {
-    margin-bottom: 4px;
+    height: fit-content;
+    margin-top: 4px;
   }
   .viewers-controls label {
     filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
