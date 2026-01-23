@@ -18,8 +18,8 @@
 <div style:display=flex style:align-items=center>
   <div
     style={`width: ${scaleBarLengthPixels.toFixed(0)}px`}
-    style:border-top={`1px solid #fff`}
-    style:border-bottom={`1px solid #000`}>
+    style:border-top={`2px solid #fff`}
+    style:border-bottom={`2px solid #000`}>
   </div>
   <div
     style:text-align="end">
