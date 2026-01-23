@@ -24,7 +24,7 @@
   import { Underzoom } from 'maplibre-xy';
   import maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
-  import { ScaleBarDisplay } from '$lib/ScaleBar.svelte';
+  import ScaleBar from '$lib/ScaleBar.svelte';
   
   let map: maplibregl.Map | undefined = $state()
 
@@ -148,12 +148,10 @@
     }
   }
   let maxZoom = 6;
-  const metersPerPixel = 0.024000000208616257 / 3072;
-  const scaleBarMaxScreenPixels = 200;
-  let metersPerScreenPixel = $derived(2**(maxZoom - zoom) * metersPerPixel);
-  let scaleBarMaxLengthMeters = $derived(scaleBarMaxScreenPixels * metersPerScreenPixel);
-  const scaleBarDisplay = new ScaleBarDisplay(() => scaleBarMaxLengthMeters)
-  let scaleBarLengthPixels = $derived(scaleBarDisplay.length / metersPerScreenPixel)
+
+  // Keyence patch side length is 24 mm, 3072 px
+  const metersPerMaxZoomPixel = 0.024000000208616257 / 3072;
+  let metersPerPixel = $derived(2**(maxZoom - zoom) * metersPerMaxZoomPixel);
 
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1, extendScale: 0.1});
 </script>
@@ -214,6 +212,9 @@
       {/if}
     </CustomControl>
     <FullScreenControl position="top-right" container={document.getElementById("main")}/>
+    <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex scale">
+      <ScaleBar {metersPerPixel} />
+    </CustomControl>
     <NavigationControl position="bottom-right" showCompass={true} visualizePitch={true} visualizeRoll={true} />
     <AttributionControl position="bottom-left" compact={true} customAttribution={"<a href='https://harmbelt.nl/'>Harm Belt · <em>Almond Blossom<em></a>"} />
     <CustomControl position="bottom-left">
@@ -272,25 +273,6 @@
           >
           {(100 * 1 / 2 ** (maxZoom - zoom)).toFixed(1)}%
         </button>
-      </div>
-    </CustomControl>
-    <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex scale">
-      <div
-        style={`width: ${scaleBarLengthPixels.toFixed(0)}px`}
-        style:border-top={`1px solid #fff`}
-        style:border-bottom={`1px solid #000`}>
-      </div>
-      <div
-        style:text-align="end">
-        <div
-          style:color=white
-          style:font-family=system-ui
-          style:font-weight=600
-          style:background-color=black
-          style="text-shadow: 1px 1px 1px rgb(0 0 0 / 100%);"
-        >
-          {scaleBarDisplay.displayLength.value} {scaleBarDisplay.displayLength.unit.symbol}m
-        </div>
       </div>
     </CustomControl>
     <RasterDEMTileSource
@@ -375,6 +357,8 @@
 		background-color: transparent;
     border-color: transparent;
     box-shadow: none;
+    pointer-events: none;
+    user-select: none;
 	}
 	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
     align-items: flex-end;

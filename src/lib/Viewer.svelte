@@ -22,6 +22,7 @@
   import { ColorRelief, COLORMAPS } from './ColorRelief.svelte.js';
 
   import Minimap from '$lib/mapboxgl-minimap.js';
+  import ScaleBar from './ScaleBar.svelte';
   
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1.0});
   // function identityTransformConstrain(lngLat, zoom) {
@@ -279,6 +280,10 @@
     }
   })
 
+  let maxZoom: number | undefined;
+  let metersPerMaxZoomPixel: number | undefined = $state();
+  let metersPerPixel = $derived(2**(maxZoom - mapProps.zoom) * metersPerMaxZoomPixel);
+
   const getHeaderMetadata = async () => {
     const raster_header = await data?.raster.header 
     const raster_metadata = await data?.raster.metadata 
@@ -286,12 +291,14 @@
     const raster_dem_metadata = await data?.raster_dem.metadata 
     const raster_overlay_header = await data?.raster_overlay.header 
     const raster_overlay_metadata = await data?.raster_overlay.metadata
-    colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum ?? 1
-    controls.rgb.visibility = raster_header ? true : false
-    colorRelief.colorReliefLayerVisibility = raster_dem_header ? 'visible' : 'none'
-    controls.hillshade.visibility = raster_dem_header ? true : false
-    controls.overlay.visibility = raster_overlay_header ? true : false
-    controls.terrain.enabled = raster_dem_header ? true : false
+    colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum ?? 1;
+    controls.rgb.visibility = raster_header ? true : false;
+    colorRelief.colorReliefLayerVisibility = raster_dem_header ? 'visible' : 'none';
+    controls.hillshade.visibility = raster_dem_header ? true : false;
+    controls.overlay.visibility = raster_overlay_header ? true : false;
+    controls.terrain.enabled = raster_dem_header ? true : false;
+    maxZoom = raster_metadata?.maxzoom ?? raster_dem_metadata?.maxzoom ?? raster_overlay_metadata?.maxzoom ?? undefined;
+    metersPerMaxZoomPixel = raster_metadata?.spatialResolutionMeters ?? raster_dem_metadata?.spatialResolutionMeters ?? raster_overlay_metadata?.spatialResolutionMeters ?? undefined;
     return {
       raster_header,
       raster_metadata,
@@ -435,6 +442,23 @@
           customAttribution={getAttribution(hm.raster_overlay_metadata)}
         />
       {/if}
+      <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex scale">
+        <ScaleBar {metersPerPixel} />
+      </CustomControl>
+      <NavigationControl position="bottom-right" visualizePitch={true} visualizeRoll={true} />
+      <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
+        <div>
+          <button
+            title={"Zoom scale"}
+            onclick={() => {
+              map?.easeTo({zoom: Math.round(mapProps.zoom)})
+            }}
+            style={`color: ${((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) < mapProps.zoom) ? "red" : "#333"}; width: fit-content; padding-left: 4px; padding-right: 4px;`}
+            >
+            {(100 * 1 / 2 ** ((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) - mapProps.zoom)).toFixed(1)}%
+          </button>
+        </div>
+      </CustomControl>
         {#if data?.raster.url}
           <RasterTileSource
             url={data?.raster.url}
@@ -567,20 +591,6 @@
             />
           </RasterTileSource>
         {/if}
-        <NavigationControl position="bottom-right" visualizePitch={true} visualizeRoll={true} />
-        <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
-          <div>
-            <button
-              title={"Zoom scale"}
-              onclick={() => {
-                map?.easeTo({zoom: Math.round(mapProps.zoom)})
-              }}
-              style={`color: ${((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) < mapProps.zoom) ? "red" : "#333"}; width: fit-content; padding-left: 4px; padding-right: 4px;`}
-              >
-              {(100 * 1 / 2 ** ((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) - mapProps.zoom)).toFixed(1)}%
-            </button>
-          </div>
-        </CustomControl>
       </MapLibre>
     </div>
     <div
@@ -851,17 +861,34 @@
     display: block;
     filter: drop-shadow(0px 0px 2px #000000);
   }
+  .controls {
+    margin-bottom: 10px;
+  }
   .controls-container {
     filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
     pointer-events: none;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: start;
+    justify-content: flex-end;
     flex-wrap: nowrap;
     grid-row-start: 1;
     grid-column-start: 1;
     overflow: hidden;
+    margin-bottom: 4px;
   }
+  :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+    display: flex;
+    flex-direction: column;
+		background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    pointer-events: none;
+    user-select: none;
+	}
+	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+    align-items: flex-end;
+	}
   .map {
     height: 100%;
     width: 100%;
