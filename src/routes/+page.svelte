@@ -195,8 +195,6 @@
   }
   .viewers-controls {
     display: flex;
-    flex-direction: column;
-    justify-content: end;
     pointer-events: none;
     z-index: 1;
   }

@@ -861,12 +861,16 @@
     display: block;
     filter: drop-shadow(0px 0px 2px #000000);
   }
+  .controls {
+    margin-bottom: 10px;
+  }
   .controls-container {
     filter: drop-shadow(0px 0px 2px #000000) drop-shadow(0px 0px 10px #000000) drop-shadow(0px 0px 100px #000000);
     pointer-events: none;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: start;
+    justify-content: flex-end;
     flex-wrap: nowrap;
     grid-row-start: 1;
     grid-column-start: 1;
