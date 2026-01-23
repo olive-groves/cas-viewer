@@ -1,11 +1,9 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  import hillshadeIconEnabled from '$lib/hillshade-enabled.svg'
-  import hillshadeIconDisabled from '$lib/hillshade-disabled.svg'
-  import rgbIconEnabled from '$lib/rgb-enabled.svg'
-  import rgbIconDisabled from '$lib/rgb-disabled.svg'
-  import blenderIconEnabled from '$lib/blender-enabled.svg'
-  import blenderIconDisabled from '$lib/blender-disabled.svg'
+
+  import maplibregl from 'maplibre-gl';
+  import type { FlyToOptions } from 'maplibre-gl';
+  
   import {
     MapLibre,
     RasterTileSource,
@@ -19,11 +17,20 @@
     AttributionControl,
     BackgroundLayer
   } from 'svelte-maplibre-gl';
-  import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
+  
   import { PMTiles } from 'pmtiles';
+  import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
+  
   import { Underzoom } from 'maplibre-xy';
-  import maplibregl from 'maplibre-gl';
-  import type { FlyToOptions } from 'maplibre-gl';
+
+  import hillshadeIconEnabled from '$lib/hillshade-enabled.svg'
+  import hillshadeIconDisabled from '$lib/hillshade-disabled.svg'
+  import rgbIconEnabled from '$lib/rgb-enabled.svg'
+  import rgbIconDisabled from '$lib/rgb-disabled.svg'
+  import blenderIconEnabled from '$lib/blender-enabled.svg'
+  import blenderIconDisabled from '$lib/blender-disabled.svg'
+
+  import ScaleBar from '$lib/ScaleBar.svelte';
   
   let map: maplibregl.Map | undefined = $state()
 
@@ -57,7 +64,10 @@
     if (!colorVisible && !hillshadeVisible) hillshadeVisible = true
   }
 
-  let maxZoom = $state(5);
+  let maxZoom = 6;
+  // Keyence patch side length is 2.4 mm, 3072 px
+  const metersPerMaxZoomPixel = 0.024000000208616257 / 3072;
+  let metersPerPixel = $derived(2**(maxZoom - zoom) * metersPerMaxZoomPixel);
 </script>
 
 <div id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none; background-color: black;">
@@ -145,36 +155,11 @@
         </button>
       </div>
     </CustomControl>
-    <CustomControl position="bottom-right" class="maplibregl-ctrl maplibregl-ctrl-group">
-      <div>
-        <button
-          title={"Zoom level"}
-          onclick={() => {
-            map?.easeTo({zoom: Math.round(map.getZoom())})
-          }}
-          style="font-family: system-ui; color: #333; width: fit-content; padding-left: 4px; padding-right: 4px; font-variant-numeric: tabular-nums;"
-          >
-          {(100 * 1 / 2 ** (maxZoom - zoom)).toFixed(1)}%
-        </button>
-      </div>
-    </CustomControl>
     <CustomControl position="bottom-right" class="maplibregl-ctrl-transparent maplibregl-ctrl-flex scale">
-      <div
-        style={`width: ${( (1 / 2 ** (maxZoom - zoom)) * (2.5 / 1000) / (0.024000000208616257 / 3072) ).toFixed(0)}px`}
-        style:border-top={`1px solid #fff`}
-        style:border-bottom={`1px solid #000`}>
-      </div>
-      <div
-        style:text-align="end">
-        <div
-          style:color="white"
-          style:font-family="system-ui"
-          style:font-weight=600
-          style="text-shadow: 1px 1px 1px rgb(0 0 0 / 100%);"
-        >
-          {2.5} mm
-        </div>
-      </div>
+      <ScaleBar
+        scaleBarMaxPixels={150}
+        {metersPerPixel}
+      />
     </CustomControl>
   </MapLibre>
   {#if disclaimerVisible}
@@ -192,13 +177,12 @@
 		background-color: transparent;
     border-color: transparent;
     box-shadow: none;
+    pointer-events: none;
+    user-select: none;
 	}
 	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
     align-items: flex-end;
 	}
-  :global(.scale) {
-    pointer-events: none;
-  }
 	:global(.maplibregl-ctrl-top-right) {
     display: flex;
     flex-direction: row;

@@ -81,7 +81,7 @@ class ScaleBarBase {
     })
     readonly lengthMaxSci: NumberScientific = $derived(getScientific(this.lengthMax))
 
-    #withinDecade: NonEmptyArray<number> = [1, 2, 5];  // [1, 10), minimum 1 element
+    #withinDecade: NonEmptyArray<number> = [1, 2, 3, 5];  // [1, 10), minimum 1 element
 
     readonly lengthSci: NumberScientific = $derived.by(() => {
         const lengthMaxSci = this.lengthMaxSci;
