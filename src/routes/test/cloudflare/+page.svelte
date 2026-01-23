@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer } from 'svelte-maplibre-gl';
+  import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, ColorReliefLayer } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
-  import type { LayerSpecification } from 'maplibre-gl';
+  import type { LayerSpecification, ExpressionSpecification } from 'maplibre-gl';
 
   let urls: string[] = [
-    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_rgb.pmtiles",
-    "https://pub-71d989b3685545118a21f845c49db6a3.r2.dev/paintings/almond-blossom/20241023_175809_stitched_height.pmtiles"
+    "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles",
+    "https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles"
   ]
   let pmtiles: PMTiles[] = [];
   let headers: {}[] = [];
@@ -15,11 +15,29 @@
     pmtiles = urls.map((url) => new PMTiles(url));
     headers = pmtiles.map((p) => p.getHeader())
     metadatas = pmtiles.map((p) => p.getMetadata())
+    console.log(metadatas)
     return {
       headers,
       metadatas
     }
   }
+
+  let lowBreakpoint: number = $state(1);
+  let highBreakpoint: number = $state(35014);
+  const COLOR_MAPS: Record<string, ExpressionSpecification> = {
+    GRAYSCALE: [
+      'interpolate',
+      ['linear'],
+      ['elevation'],
+      0.999, 'magenta',
+      0.9999, 'black',
+      lowBreakpoint, 'black',
+      highBreakpoint, 'white',
+      1000000, 'white'
+    ]
+  }
+  type ColorMap = keyof typeof COLOR_MAPS;
+  let colorMap: ColorMap = $state('GRAYSCALE');
 </script>
 
 <!-- Add pmtiles:// Protocol globally -->
@@ -31,6 +49,14 @@
     <p>Loading</p>
   </div>
 {:then headers_metadatas}
+  <label>
+    <input type="range" min=0 max=50000 step=10 bind:value={highBreakpoint} ondblclick={() => highBreakpoint = 50000}>
+    High breakpoint ({highBreakpoint.toFixed(0)})
+  </label>
+  <label>
+    <input type="range" min=0 max=50000 step=10 bind:value={lowBreakpoint} ondblclick={() => lowBreakpoint = 0}>
+    Low breakpoint ({lowBreakpoint.toFixed(0)})
+  </label>
   <MapLibre
     inlineStyle="height: 100%; width: 100%;"
     renderWorldCopies={false}
@@ -70,16 +96,32 @@
       blueFactor={1}
       tileSize={256}
     >
-      <HillshadeLayer
+      <ColorReliefLayer
         paint={{
-          'hillshade-exaggeration': 1.0,
+          'color-relief-opacity': 1,
+          'color-relief-color': [
+            'interpolate',
+            ['linear'],
+            ['elevation'],
+            0, 'magenta',
+            0.5, 'black',
+            lowBreakpoint, 'black',
+            highBreakpoint, 'white',
+            1000000, 'white'
+          ]
+          // 'color-relief-color': COLOR_MAPS[colorMap]
+        }}
+      />
+      <!-- <HillshadeLayer
+        paint={{
+          'hillshade-exaggeration': 0.5,
           'hillshade-shadow-color': `rgba(0, 0, 0, 1.0)`,
           'hillshade-accent-color': "rgba(0, 0, 0, 0.5)",
           'hillshade-highlight-color': `rgba(255, 255, 255, 0.1)`,
           'hillshade-illumination-anchor': 'map',
           'hillshade-illumination-direction': 315
         }}
-      />
+      /> -->
     </RasterDEMTileSource>
   </MapLibre>
 {/await}
