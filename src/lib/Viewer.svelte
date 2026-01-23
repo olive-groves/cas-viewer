@@ -298,7 +298,18 @@
     controls.overlay.visibility = raster_overlay_header ? true : false;
     controls.terrain.enabled = raster_dem_header ? true : false;
     maxZoom = raster_metadata?.maxzoom ?? raster_dem_metadata?.maxzoom ?? raster_overlay_metadata?.maxzoom ?? undefined;
-    metersPerMaxZoomPixel = raster_metadata?.spatialResolutionMeters ?? raster_dem_metadata?.spatialResolutionMeters ?? raster_overlay_metadata?.spatialResolutionMeters ?? undefined;
+    const version = raster_metadata?.metadataVersion ?? raster_dem_metadata?.metadataVersion ?? raster_overlay_metadata?.metadataVersion;
+    if (version === "0.4.0") {
+      const key = "spatialResolutionMeters";
+      metersPerMaxZoomPixel = raster_metadata?.[key] ?? raster_dem_metadata?.[key] ?? raster_overlay_metadata?.[key];
+    } else if (version === "0.2.0") {
+      const keyN = "conversionLengthMeters";
+      const keyD = "conversionLengthPixels";
+      metersPerMaxZoomPixel = (
+        (raster_metadata?.[keyN] ?? raster_dem_metadata?.[keyN] ?? raster_overlay_metadata?.[keyN]) /
+        (raster_metadata?.[keyD] ?? raster_dem_metadata?.[keyD] ?? raster_overlay_metadata?.[keyD])
+      )
+    }
     return {
       raster_header,
       raster_metadata,
