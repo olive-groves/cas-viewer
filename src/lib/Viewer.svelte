@@ -712,7 +712,7 @@
               bind:low={colorRelief.setBreakpoints.low}
               bind:high={colorRelief.setBreakpoints.high}
               step={colorRelief.setBreakpoints.step}
-              --thumb-width=0.5rem
+              --thumb-width=0.1rem
               --padding-top=0.5rem
               --padding-bottom=0.5rem
               --track-height=0.5rem
@@ -723,11 +723,11 @@
             <div style="display: flex; justify-content: space-between;">
               <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
                 <span>{(colorRelief.setBreakpoints.min * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(0)} mm</span>
-                <span>{(colorRelief.setBreakpoints.low * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(1)}</span>
+                <span>{(colorRelief.setBreakpoints.low * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(2)}</span>
               </div>
               <span> – </span>
               <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
-                <span>{(colorRelief.setBreakpoints.high * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(1)}</span>
+                <span>{(colorRelief.setBreakpoints.high * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(2)}</span>
                 <span>{(colorRelief.setBreakpoints.max * hm.raster_dem_metadata?.metersPerInteger * 1000).toFixed(0)}</span>
               </div>
             </div>
