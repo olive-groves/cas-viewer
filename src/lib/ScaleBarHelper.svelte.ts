@@ -1,6 +1,6 @@
 import { untrack } from "svelte";
-import { getLargestLessThanOrEqualTo, getScientific } from "./Math.svelte";
-import type { MetricUnit, NumberScientific } from "./Math.svelte";
+import { getLargestLessThanOrEqualTo, getScientific } from "./Mathematics.svelte";
+import type { MetricUnit, NumberScientific } from "./Mathematics.svelte";
 
 // max length in pixels (length max pixels)
 //  get real-world max length in meters (length max meters)
