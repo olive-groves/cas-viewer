@@ -142,13 +142,13 @@
             height: min-content;
             border-top: var(--mark-border-width) solid white;
             border-bottom: var(--mark-border-width) solid black;
-            transform: translate(0, -50%);  /* Geometric center */
+            transform: translate(0, -50%);
           }
           .label {
             font-family: sans-serif;
             margin-left: 5px;
             height: min-content;
-            transform: translate(0, -45%);  /* Visual center */
+            transform: translate(0, -50%);
             filter: drop-shadow(0 0 0.05rem black);
           }
         }
