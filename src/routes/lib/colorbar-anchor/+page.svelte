@@ -7,7 +7,7 @@
   let max = $state(0.387);
   let n_max = $state(8);
 
-  let units_unrounded = $derived((max - min)/(n_max + 1))
+  let units_unrounded = $derived((max - min)/(n_max))
   let units_scientific: NumberScientific = $derived.by(() => {
     let significand: number;
     let exponent: number;
@@ -29,7 +29,7 @@
   let n = $derived(units === 0 ? 0 : Math.floor(1 + (max/units) - Math.ceil(min/units)))
 
   let ticks_start = $derived(Math.ceil(min/units) * units)
-  let ticks = $derived(range(n).map((i) => ticks_start + i * units))
+  let ticks = $derived(n ? range(n).map((i) => ticks_start + i * units) : [])
 </script>
 
 <label>
