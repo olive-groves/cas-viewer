@@ -160,7 +160,7 @@
 <PMTilesProtocol />
 
 <!-- Use the pmtiles:// protocol -->
-<div id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none;">
+<div class=container id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none;">
 {#await getHeaderMetadata()}
     <em>Loading</em>
 {:then headers_metadatas}
@@ -351,6 +351,7 @@
 </div>
 
 <style>
+.container {
 	:global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
     display: flex;
     flex-direction: column;
@@ -385,4 +386,5 @@
     flex-direction: column;
     align-items: flex-end;
 	}
+}
 </style>

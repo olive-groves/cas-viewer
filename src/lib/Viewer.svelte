@@ -870,18 +870,29 @@
     overflow: hidden;
     margin-bottom: 4px;
   }
-  :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    display: flex;
-    flex-direction: column;
-		background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    pointer-events: none;
-    user-select: none;
-	}
-	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    align-items: flex-end;
-	}
+  .container {
+    :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      display: flex;
+      flex-direction: column;
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      pointer-events: none;
+      user-select: none;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group) {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group button+button) {
+      border-top: unset;
+      border-right: 1px solid #ddd
+    }
+  }
   .map {
     height: 100%;
     width: 100%;

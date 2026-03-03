@@ -70,7 +70,7 @@
   let metersPerPixel = $derived(2**(maxZoom - zoom) * metersPerMaxZoomPixel);
 </script>
 
-<div id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none; background-color: black;">
+<div class=container id=main style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; margin: none; background-color: black;">
   <MapLibre
     bind:map={map}
     bind:zoom
@@ -171,36 +171,38 @@
 </div>
 
 <style>
-	:global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    display: flex;
-    flex-direction: column;
-		background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    pointer-events: none;
-    user-select: none;
-	}
-	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    align-items: flex-end;
-	}
-	:global(.maplibregl-ctrl-top-right) {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-	}
-	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group) {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: flex-end;
-	}
-	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group button+button) {
-    border-top: unset;
-    border-right: 1px solid #ddd
-	}
-	:global(.credits) {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-	}
+	.container {
+    :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      display: flex;
+      flex-direction: column;
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      pointer-events: none;
+      user-select: none;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-top-right) {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group) {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group button+button) {
+      border-top: unset;
+      border-right: 1px solid #ddd
+    }
+    :global(.credits) {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+  }
 
 </style>
