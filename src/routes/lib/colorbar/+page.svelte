@@ -1,11 +1,11 @@
 <script lang="ts">
     import { getScientific, getSmallestGreaterThanOrEqualTo, range, type NumberScientific } from "$lib/Mathematics.svelte";
 
-  let colorbar_length_pixels = $state(400)
+  let colorbar_length_pixels = $state(200)
 
-  let min = $state(-1.1);
+  let min = $state(-0.542);
   let max = $state(0.387);
-  let n_max = $state(15);
+  let n_max = $state(8);
 
   let units_unrounded = $derived((max - min)/(n_max + 1))
   let units_scientific: NumberScientific = $derived.by(() => {
@@ -59,32 +59,33 @@
   and the ticks are placed relative to the start and end.
 -->
 
+
 <div class=figure>
-  <div class=plot>
-    <!-- <div class=axes>
-    </div> -->
-  </div>
+  <div class=plot></div>
   <div class=colorbar style:height={`${colorbar_length_pixels}px`}>
-    <div class=scale>
-    </div>
-    <div class=ticks>
-      {#each ticks as tick}
-        <div class=tick>
-          {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
-            <!-- {tick} -->
-        </div>
-      {/each}
-    </div>
+    <div class=scale></div>
+    {#if ticks.length}
+      <div class=ticks>
+        <!-- (1 / units) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
+        {#each ticks as tick, i}
+          <div class=tick style:flex={`${(1/units)*(i === 0 ? (tick - min) : units)} 1 0`} style:anchor-name={`--tick${i}`}></div>
+          <div class=label style:position-anchor={`--tick${i}`}>
+            {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
+          </div>
+        {/each}
+        <!-- Ticks max buffer -->
+        <div style:height=100% style:flex={`${(1/units)*(max - ticks.at(-1))} 1 0px`}></div>
+      </div>
+    {/if}
   </div>
 </div>
 
-<!-- <ul class=ticks>
-  {#each ticks.toReversed() as tick}
-  <li>
-    {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
-  </li>
-  {/each}
-</ul> -->
+<!-- <div style:display=flex style:flex-direction=column-reverse style:width=250px style:height={`${colorbar_length_pixels}px`}>
+  <div style:width=100% style:height=100% style:flex="1 1 0px" style:background-color=red></div>
+  <div style:width=100% style:height=100% style:flex="1 1 0px" style:background-color=green></div>
+  <div style:width=100% style:height=100% style:flex="1 1 0px" style:background-color=blue></div>
+  <div style:width=100% style:height=100% style:flex="1 1 0px" style:background-color=white></div>
+</div> -->
 
 <style>
   .figure {
@@ -97,7 +98,6 @@
     .plot {
       flex-grow: 1;
       border: 1px solid gray;
-      padding: 10px;
       background-clip: content-box;
       background: radial-gradient(
           #fde725,
@@ -111,12 +111,6 @@
       display: flex;
       border: 1px solid gray;
       padding: 10px;
-      .ticks {
-        display: flex;
-        flex-wrap: nowrap;
-        flex-direction: column-reverse;
-        background-color: gray;
-      }
       .scale {
         border: 1px solid white;
         width: 10px;
@@ -127,6 +121,28 @@
           #3b528b,
           #440154
         );
+      }
+      .ticks {
+        width: 10px;
+        display: flex;
+        flex-wrap: nowrap;
+        flex-direction: column-reverse;
+        .tick {
+          width: 100%;
+          height: 100%;
+          min-height: 0%;
+          border-top: 1px solid white;
+        }
+        .label {
+          position: fixed;
+          top: anchor(top);
+          left: anchor(right);
+          margin-left: 2px;
+          /* Centered on top edge */
+          transform: translate(0, -50%);
+          min-height: 0;
+          min-width: 0;
+        }
       }
     }
   }
