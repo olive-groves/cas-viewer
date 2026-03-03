@@ -111,10 +111,13 @@
       border: 1px solid gray;
       padding: 10px;
       background-color: gray;
+      --scale-border-width: 1px;
+      --mark-border-width: 1px;
       .scale {
-        border: 1px solid white;
+        border: var(--scale-border-width) solid white;
         outline: 1px solid black;
-        width: 10px;
+        position: relative;
+        width: 16px;
         background: linear-gradient(
           #fde725,
           #5ec962,
@@ -127,6 +130,8 @@
         display: flex;
         flex-wrap: nowrap;
         flex-direction: column-reverse;
+        padding-top: var(--scale-border-width);
+        padding-bottom: calc(var(--scale-border-width) - var(--mark-border-width));
         .tick {
           display: flex;
           width: 100%;
@@ -135,8 +140,8 @@
           .mark {
             width: 10px;
             height: min-content;
-            border-top: 1px solid white;
-            border-bottom: 1px solid black;
+            border-top: var(--mark-border-width) solid white;
+            border-bottom: var(--mark-border-width) solid black;
             transform: translate(0, -50%);  /* Geometric center */
           }
           .label {
