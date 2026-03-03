@@ -415,7 +415,7 @@
                 }] : [],
               ]
             }
-            }), 'top-right')
+            }), 'top-left')
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
