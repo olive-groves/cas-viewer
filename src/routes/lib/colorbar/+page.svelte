@@ -1,11 +1,11 @@
 <script lang="ts">
     import { getScientific, getSmallestGreaterThanOrEqualTo, range, type NumberScientific } from "$lib/Mathematics.svelte";
 
-  let colorbar_length_pixels = $state(200)
+  let colorbar_length_pixels = $state(400)
 
   let min = $state(-0.542);
   let max = $state(0.387);
-  let n_max = $state(8);
+  let n_max = $state(12);
 
   let units_unrounded = $derived((max - min)/(n_max + 1))
   let units_scientific: NumberScientific = $derived.by(() => {
@@ -49,16 +49,6 @@
   <input type=range bind:value={colorbar_length_pixels} min={0} max={1000} step={10}>
   {colorbar_length_pixels}px
 </label>
-<!--
-  Tick position as a percentage of the length of a div?
-  [0.271] [0.3, 0.4, 0.5] [0.5]
-  0.3 -> 12.6%
-  0.4 -> 56.3%
-  0.5 -> 100.0%
-  The idea is to define a div (a colorbar) where the start is the min, the end is max,
-  and the ticks are placed relative to the start and end.
--->
-
 
 <div class=figure>
   <div class=plot></div>
@@ -68,9 +58,11 @@
       <div class=ticks>
         <!-- (1 / units) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
         {#each ticks as tick, i}
-          <div class=tick style:flex={`${(1/units)*(i === 0 ? (tick - min) : units)} 1 0`} style:anchor-name={`--tick${i}`}></div>
-          <div class=label style:position-anchor={`--tick${i}`}>
-            {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
+          <div class=tick style:flex={`${(1/units)*(i === 0 ? (tick - min) : units)} 1 0`}>
+            <div class=mark></div>
+            <div class=label style:position-anchor={`--tick${i}`}>
+              {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
+            </div>
           </div>
         {/each}
         <!-- Ticks max buffer -->
@@ -111,8 +103,10 @@
       display: flex;
       border: 1px solid gray;
       padding: 10px;
+      background-color: gray;
       .scale {
         border: 1px solid white;
+        outline: 1px solid black;
         width: 10px;
         background: linear-gradient(
           #fde725,
@@ -123,25 +117,28 @@
         );
       }
       .ticks {
-        width: 10px;
         display: flex;
         flex-wrap: nowrap;
         flex-direction: column-reverse;
         .tick {
+          display: flex;
           width: 100%;
           height: 100%;
-          min-height: 0%;
-          border-top: 1px solid white;
-        }
-        .label {
-          position: fixed;
-          top: anchor(top);
-          left: anchor(right);
-          margin-left: 2px;
-          /* Centered on top edge */
-          transform: translate(0, -50%);
           min-height: 0;
-          min-width: 0;
+          .mark {
+            width: 10px;
+            height: min-content;
+            border-top: 1px solid white;
+            border-bottom: 1px solid black;
+            transform: translate(0, -50%);  /* Geometric center */
+          }
+          .label {
+            font-family: sans-serif;
+            margin-left: 5px;
+            height: min-content;
+            transform: translate(0, -45%);  /* Visual center */
+            filter: drop-shadow(0 0 0.05rem black);
+          }
         }
       }
     }
