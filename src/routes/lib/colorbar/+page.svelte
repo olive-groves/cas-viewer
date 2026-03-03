@@ -109,7 +109,7 @@
     .colorbar {
       display: flex;
       border: 1px solid gray;
-      padding: 10px;
+      padding: 0.5em;  /* Half a line height */
       background-color: gray;
       --scale-border-width: 1px;
       --mark-border-width: 1px;
