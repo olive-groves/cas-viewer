@@ -3,9 +3,9 @@
 
   let colorbar_length_pixels = $state(400)
 
-  let min = $state(-0.542);
-  let max = $state(0.387);
-  let n_max = $state(12);
+  let min = $state(-2);
+  let max = $state(-0.4);
+  let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
 
   let units_unrounded = $derived((max - min)/(n_max))
   let units_scientific: NumberScientific = $derived.by(() => {
@@ -73,7 +73,7 @@
           </div>
         {/each}
         <!-- Ticks max buffer -->
-        <div style:height=100% style:flex={`${(1/units)*(max - ticks.at(-1))} 1 0px`}></div>
+        <div style:height=100% style:flex={`${(1/units)*Math.abs(max - ticks.at(-1))} 1 0px`}></div>
       </div>
     {/if}
   </div>
