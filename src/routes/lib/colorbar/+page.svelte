@@ -1,11 +1,14 @@
 <script lang="ts">
     import { getScientific, getSmallestGreaterThanOrEqualTo, pyrange, type NumberScientific } from "$lib/Mathematics.svelte";
+    import { AxisDisplay } from "$lib/ColorbarHelper.svelte";
 
   let colorbar_length_pixels = $state(400)
 
   let min = $state(-2);
   let max = $state(-0.4);
   let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
+
+  let axis = new AxisDisplay(() => min, () => max, () => n_max);
 
   let interval_unrounded = $derived((max - min)/(n_max))
   let interval_scientific: NumberScientific = $derived.by(() => {
@@ -34,23 +37,22 @@
 
 <label>
   Min:
-  <input type=range bind:value={min} min={-2} max={max} step={0.001}>
-  {min}
+  <input type=range bind:value={min} min={-2} max={axis.max} step={0.001}>
+  {axis.min}
 </label>
 <label>
   Max:
-  <input type=range bind:value={max} min={min} max={2} step={0.001}>
-  {max}
+  <input type=range bind:value={max} min={axis.min} max={2} step={0.001}>
+  {axis.max}
 </label>
 <label>
   N ticks (max):
   <input type=range bind:value={n_max} min={0} max={50} step={1}>
-  {n_max}
+  {axis.nMax}
 </label>
 
-<p>{interval_unrounded} interval unrounded</p>
-<p>{interval} interval</p>
-<p>{n} number of ticks</p>
+<p>{axis.interval} interval</p>
+<p>{axis.n} number of ticks</p>
 
 <label>
   <input type=range bind:value={colorbar_length_pixels} min={0} max={1000} step={10}>
@@ -61,19 +63,20 @@
   <div class=plot></div>
   <div class=colorbar style:height={`${colorbar_length_pixels}px`}>
     <div class=scale></div>
-    {#if ticks.length}
+    {#if axis.displayTicks.length}
       <div class=ticks>
         <!-- (1 / interval) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
-        {#each ticks as tick, i}
-          <div class=tick style:flex={`${(1/interval)*(i === 0 ? (tick - min) : interval)} 1 0`}>
+        {#each axis.displayTicks as displaytick, i}
+          <div class=tick style:flex={`${(1/axis.interval)*(i === 0 ? (axis.ticks[i] - axis.min) : axis.interval)} 1 0`}>
             <div class=mark></div>
             <div class=label style:position-anchor={`--tick${i}`}>
-              {tick.toFixed(interval_scientific.exponent >= 0 ? 0 : Math.abs(interval_scientific.exponent))}
+              {displaytick.number.toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displaytick.unit.symbol}m
+              <!-- {tick.scientific.significand.toFixed(axis.intervalScientific.exponent >= 0 ? 0 : Math.abs(axis.intervalScientific.exponent))} × 10<sup>{tick.scientific.exponent.toFixed()}</sup> -->
             </div>
           </div>
         {/each}
         <!-- Ticks max buffer -->
-        <div style:height=100% style:flex={`${(1/interval)*Math.abs(max - ticks.at(-1))} 1 0px`}></div>
+        <div style:height=100% style:flex={`${(1/axis.interval)*Math.abs(axis.max - axis.ticks.at(-1))} 1 0px`}></div>
       </div>
     {/if}
   </div>
