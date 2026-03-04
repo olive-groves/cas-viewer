@@ -1,12 +1,32 @@
-export interface NumberScientific {
-    significand: number,
-    exponent: number,
-}
-export function getScientific(num: number): NumberScientific {
-    let significand;
-    let exponent;
-    [significand, exponent] = num.toExponential().split('e').map(Number);
-    return {significand, exponent};
+export type ScientificNumberLike =
+    ScientificNumber
+    | {
+        significand: number,
+        exponent: number,
+    }
+    | [
+        number,
+        number,
+    ];
+export class ScientificNumber {
+    significand: number;
+    exponent: number;
+
+    constructor(significand: number, exponent: number) {
+        this.significand = significand;
+        this.exponent = exponent;
+    }
+
+    toNumber(): number {
+        return this.significand * 10 ** this.exponent;
+    }
+    
+    static fromNumber(num: number): ScientificNumber {
+        let significand;
+        let exponent;
+        [significand, exponent] = num.toExponential().split('e').map(Number);
+        return new ScientificNumber(significand, exponent)
+    }
 }
 export interface MetricUnit {
     symbol: string,

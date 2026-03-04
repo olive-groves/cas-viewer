@@ -1,6 +1,6 @@
 import { untrack } from "svelte";
-import { getLargestLessThanOrEqualTo, getScientific } from "./Mathematics.svelte";
-import type { MetricUnit, NumberScientific } from "./Mathematics.svelte";
+import { getLargestLessThanOrEqualTo, ScientificNumber } from "./Mathematics.svelte";
+import type { MetricUnit } from "./Mathematics.svelte";
 import type { Getter, NonEmptyArray } from "./utils";
 
 // max length in pixels (length max pixels)
@@ -38,11 +38,11 @@ class ScaleBarBase {
         const getter = this.#lengthMaxGet;
         return getter ? getter() : this.#lengthMaxValue;
     })
-    readonly lengthMaxSci: NumberScientific = $derived(getScientific(this.lengthMax))
+    readonly lengthMaxSci: ScientificNumber = $derived(ScientificNumber.fromNumber(this.lengthMax))
 
     #withinDecade: NonEmptyArray<number> = [1, 2, 3, 5];  // [1, 10), minimum 1 element
 
-    readonly lengthSci: NumberScientific = $derived.by(() => {
+    readonly lengthSci: ScientificNumber = $derived.by(() => {
         const lengthMaxSci = this.lengthMaxSci;
         let significand: number;
         let exponent: number;
@@ -57,7 +57,7 @@ class ScaleBarBase {
                 exponent -= 1;
             }
         }
-        return {significand, exponent}
+        return new ScientificNumber(significand, exponent)
     });
     readonly length = $derived(this.lengthSci.significand * 10 ** this.lengthSci.exponent) 
 

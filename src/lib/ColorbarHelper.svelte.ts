@@ -1,5 +1,6 @@
 import { untrack } from "svelte";
-import { getLargestLessThanOrEqualTo, getScientific, getSmallestGreaterThanOrEqualTo, pyrange, type MetricUnit, type NumberScientific } from "./Mathematics.svelte";
+import { getLargestLessThanOrEqualTo, ScientificNumber, getSmallestGreaterThanOrEqualTo, pyrange } from "./Mathematics.svelte";
+import type { MetricUnit } from "./Mathematics.svelte";
 import type { Getter, NonEmptyArray } from "./utils";
 
 
@@ -28,10 +29,10 @@ export class AxisBase {
 
     #withinDecade: NonEmptyArray<number> = [1, 2, 5];  // [1, 10), minimum 1 element
 
-    readonly intervalScientific: NumberScientific = $derived.by(() => {
+    readonly intervalScientific: ScientificNumber = $derived.by(() => {
         let significand: number;
         let exponent: number;
-        const unroundedIntervalScientific = getScientific(
+        const unroundedIntervalScientific = ScientificNumber.fromNumber(
             (this.max - this.min) / (this.nMax)
         )
         if (unroundedIntervalScientific.significand === 0) {
@@ -48,7 +49,7 @@ export class AxisBase {
                 exponent += 1;
             }
         }
-        return {significand, exponent}
+        return new ScientificNumber(significand, exponent)
     })
     readonly interval: number = $derived(
         this.intervalScientific.significand * 10 ** this.intervalScientific.exponent
@@ -93,9 +94,8 @@ export class AxisBase {
 }
 
 interface DisplayLength {
-    scientific: NumberScientific,
+    scientific: ScientificNumber,
     unit: MetricUnit,
-    number: number,
 }
 
 // Display class that, given units, gives you the ticks in their nearest unit: value
@@ -131,16 +131,16 @@ export class AxisDisplay extends AxisBase {
         const unit = this.#units[i];
         const scientific = this.intervalScientific;
         scientific.exponent -= exponent;
-        return {scientific, unit, number: this.interval / (10 ** exponent)}
+        return {scientific, unit}
     })
 
     readonly displayTicks: DisplayLength[] = $derived.by(() => {
         const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), this.intervalScientific.exponent - this.#preferredMinimumMagnitiude);
         const unit = this.#units[i];
         return this.ticks.map((tick) => {
-            const scientific = getScientific(tick);
+            const scientific = ScientificNumber.fromNumber(tick);
             scientific.exponent -= exponent
-            return {scientific, unit, number: tick / (10 ** exponent)}
+            return {scientific, unit}
         })
     })
 

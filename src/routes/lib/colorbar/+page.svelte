@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { getScientific, getSmallestGreaterThanOrEqualTo, pyrange, type NumberScientific } from "$lib/Mathematics.svelte";
     import { AxisDisplay } from "$lib/ColorbarHelper.svelte";
 
   let colorbar_length_pixels = $state(400)
@@ -9,30 +8,6 @@
   let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
 
   let axis = new AxisDisplay(() => min, () => max, () => n_max);
-
-  let interval_unrounded = $derived((max - min)/(n_max))
-  let interval_scientific: NumberScientific = $derived.by(() => {
-    let significand: number;
-    let exponent: number;
-    const unrounded_scientific = getScientific(interval_unrounded)
-    if (unrounded_scientific.significand === 0) {
-        significand = 0;
-        exponent = 0;
-    } else {
-      significand = getSmallestGreaterThanOrEqualTo([1, 2, 5], unrounded_scientific.significand)[0];
-      exponent = unrounded_scientific.exponent;
-      if (significand === undefined) {  // Guard if above the highest
-          significand = [1, 2, 5].at(0)!;
-          exponent += 1;
-      }
-    }
-    return {significand, exponent}
-  })
-  let interval = $derived(interval_scientific.significand * 10 ** interval_scientific.exponent)
-  let n = $derived(interval === 0 ? 0 : Math.floor(1 + (max/interval) - Math.ceil(min/interval)))
-
-  let ticks_start = $derived(Math.ceil(min/interval) * interval)
-  let ticks = $derived(n ? pyrange(n).map((i) => ticks_start + i * interval) : [])
 </script>
 
 <label>
@@ -70,7 +45,7 @@
           <div class=tick style:flex={`${(1/axis.interval)*(i === 0 ? (axis.ticks[i] - axis.min) : axis.interval)} 1 0`}>
             <div class=mark></div>
             <div class=label style:position-anchor={`--tick${i}`}>
-              {displaytick.number.toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displaytick.unit.symbol}m
+              {displaytick.scientific.toNumber().toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displaytick.unit.symbol}m
               <!-- {tick.scientific.significand.toFixed(axis.intervalScientific.exponent >= 0 ? 0 : Math.abs(axis.intervalScientific.exponent))} × 10<sup>{tick.scientific.exponent.toFixed()}</sup> -->
             </div>
           </div>
