@@ -96,7 +96,7 @@ interface DisplayLength {
     unit: MetricUnit,
 }
 
-// Display class that, given units, gives you the ticks in their nearest unit: value
+// Display class that, given units, gives you the ticks based on the interval's nearest unit
 export class AxisDisplay extends AxisBase {
     #units: MetricUnit[] = [
         {
