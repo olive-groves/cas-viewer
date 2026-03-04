@@ -7,7 +7,7 @@
 
   let min = $state(-2);
   let max = $state(-0.4);
-  let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
+  let n_max = $state(12);
 
   let axis = new AxisDisplay(() => min, () => max, () => n_max);
 </script>
