@@ -127,11 +127,10 @@ export class AxisDisplay extends AxisBase {
     #preferredMinimumMagnitiude: number = -2;
 
     readonly displayInterval: DisplayLength = $derived.by(() => {
-        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), this.intervalScientific.exponent - this.#preferredMinimumMagnitiude);
+        const interval = this.intervalScientific;
+        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), interval.exponent - this.#preferredMinimumMagnitiude);
         const unit = this.#units[i];
-        const scientific = this.intervalScientific;
-        scientific.exponent -= exponent;
-        return {scientific, unit}
+        return {scientific: new ScientificNumber(interval.significand, interval.exponent - exponent), unit}
     })
 
     readonly displayTicks: DisplayLength[] = $derived.by(() => {
