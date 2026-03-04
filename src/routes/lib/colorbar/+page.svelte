@@ -3,6 +3,8 @@
 
   let colorbar_length_pixels = $state(400)
 
+  const flexGrowScale = 100;
+
   let min = $state(-2);
   let max = $state(-0.4);
   let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
@@ -41,17 +43,17 @@
     {#if axis.displayTicks.length}
       <div class=ticks>
         <!-- (1 / interval) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
-        {#each axis.displayTicks as displaytick, i}
-          <div class=tick style:flex={`${(1/axis.interval)*(i === 0 ? (axis.ticks[i] - axis.min) : axis.interval)} 1 0`}>
+        {#each axis.displayTicks as displayTick, i}
+          <div class=tick style:flex={`${(flexGrowScale*1/axis.interval)*(i === 0 ? (axis.ticks[i] - axis.min) : axis.interval)} 1 0`}>
             <div class=mark></div>
             <div class=label style:position-anchor={`--tick${i}`}>
-              {displaytick.scientific.toNumber().toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displaytick.unit.symbol}m
+              {displayTick.scientific.toNumber().toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displayTick.unit.symbol}m
               <!-- {tick.scientific.significand.toFixed(axis.intervalScientific.exponent >= 0 ? 0 : Math.abs(axis.intervalScientific.exponent))} × 10<sup>{tick.scientific.exponent.toFixed()}</sup> -->
             </div>
           </div>
         {/each}
         <!-- Ticks max buffer -->
-        <div style:height=100% style:flex={`${(1/axis.interval)*Math.abs(axis.max - axis.ticks.at(-1))} 1 0px`}></div>
+        <div style:height=100% style:flex={`${(flexGrowScale*1/axis.interval)*Math.abs(axis.max - axis.ticks.at(-1))} 1 0px`}></div>
       </div>
     {/if}
   </div>
