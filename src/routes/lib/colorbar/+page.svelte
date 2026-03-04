@@ -7,11 +7,11 @@
   let max = $state(-0.4);
   let n_max = $state(12);  // TODO: n_max = 1 fails, sometimes
 
-  let units_unrounded = $derived((max - min)/(n_max))
-  let units_scientific: NumberScientific = $derived.by(() => {
+  let interval_unrounded = $derived((max - min)/(n_max))
+  let interval_scientific: NumberScientific = $derived.by(() => {
     let significand: number;
     let exponent: number;
-    const unrounded_scientific = getScientific(units_unrounded)
+    const unrounded_scientific = getScientific(interval_unrounded)
     if (unrounded_scientific.significand === 0) {
         significand = 0;
         exponent = 0;
@@ -25,11 +25,11 @@
     }
     return {significand, exponent}
   })
-  let units = $derived(units_scientific.significand * 10 ** units_scientific.exponent)
-  let n = $derived(units === 0 ? 0 : Math.floor(1 + (max/units) - Math.ceil(min/units)))
+  let interval = $derived(interval_scientific.significand * 10 ** interval_scientific.exponent)
+  let n = $derived(interval === 0 ? 0 : Math.floor(1 + (max/interval) - Math.ceil(min/interval)))
 
-  let ticks_start = $derived(Math.ceil(min/units) * units)
-  let ticks = $derived(n ? range(n).map((i) => ticks_start + i * units) : [])
+  let ticks_start = $derived(Math.ceil(min/interval) * interval)
+  let ticks = $derived(n ? range(n).map((i) => ticks_start + i * interval) : [])
 </script>
 
 <label>
@@ -48,8 +48,8 @@
   {n_max}
 </label>
 
-<p>{units_unrounded} units unrounded</p>
-<p>{units} units</p>
+<p>{interval_unrounded} interval unrounded</p>
+<p>{interval} interval</p>
 <p>{n} number of ticks</p>
 
 <label>
@@ -63,17 +63,17 @@
     <div class=scale></div>
     {#if ticks.length}
       <div class=ticks>
-        <!-- (1 / units) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
+        <!-- (1 / interval) factor keeps numbers in a size that doesn't get rounded (0.0010 -> 0) vs ((1/0.0002)*0.0010 -> 5) -->
         {#each ticks as tick, i}
-          <div class=tick style:flex={`${(1/units)*(i === 0 ? (tick - min) : units)} 1 0`}>
+          <div class=tick style:flex={`${(1/interval)*(i === 0 ? (tick - min) : interval)} 1 0`}>
             <div class=mark></div>
             <div class=label style:position-anchor={`--tick${i}`}>
-              {tick.toFixed(units_scientific.exponent >= 0 ? 0 : Math.abs(units_scientific.exponent))}
+              {tick.toFixed(interval_scientific.exponent >= 0 ? 0 : Math.abs(interval_scientific.exponent))}
             </div>
           </div>
         {/each}
         <!-- Ticks max buffer -->
-        <div style:height=100% style:flex={`${(1/units)*Math.abs(max - ticks.at(-1))} 1 0px`}></div>
+        <div style:height=100% style:flex={`${(1/interval)*Math.abs(max - ticks.at(-1))} 1 0px`}></div>
       </div>
     {/if}
   </div>
