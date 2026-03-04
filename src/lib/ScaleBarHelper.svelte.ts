@@ -1,6 +1,7 @@
 import { untrack } from "svelte";
 import { getLargestLessThanOrEqualTo, getScientific } from "./Mathematics.svelte";
 import type { MetricUnit, NumberScientific } from "./Mathematics.svelte";
+import type { Getter, NonEmptyArray } from "./utils";
 
 // max length in pixels (length max pixels)
 //  get real-world max length in meters (length max meters)
@@ -28,9 +29,6 @@ import type { MetricUnit, NumberScientific } from "./Mathematics.svelte";
 
 // Scale bar in base units (meters). Conversion to pixels is a separate concern.
 // Give a maximum length in base units (meter), get a largest-less-than length in base and display units
-
-type Getter<T> = () => T;
-type NonEmptyArray<T> = [T, ...T[]];
 
 class ScaleBarBase {
     #lengthMaxValue = $state(0);
