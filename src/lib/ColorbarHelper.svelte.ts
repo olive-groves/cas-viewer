@@ -35,7 +35,7 @@ export class AxisBase {
         const unroundedIntervalScientific = ScientificNumber.fromNumber(
             (this.max - this.min) / (this.nMax)
         )
-        if (unroundedIntervalScientific.significand === 0) {
+        if (unroundedIntervalScientific.significand === 0 || this.nMax === 0) {
             significand = 0;
             exponent = 0;
         } else {
