@@ -178,6 +178,7 @@
     aroundCenter={false}
     hash={true}
     attributionControl={false}
+    anisotropicFilterPitch={180}
     maxZoom={maxZoom + 2}
     center={destinations.at(-2).center}
     pitch={destinations.at(-2).pitch}

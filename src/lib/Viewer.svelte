@@ -423,6 +423,7 @@
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
+        anisotropicFilterPitch={180}
         transformConstrain={myUnderzoom.transformConstrain}
         maxPitch={83}
         maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
