@@ -34,7 +34,7 @@ class ScaleBarBase {
     #lengthMaxValue = $state(0);
     #lengthMaxGet?: Getter<number>
 
-    lengthMax = $derived.by(() => {
+    readonly lengthMax = $derived.by(() => {
         const getter = this.#lengthMaxGet;
         return getter ? getter() : this.#lengthMaxValue;
     })
@@ -77,7 +77,7 @@ interface DisplayLength {
 }
 
 export class ScaleBarDisplay extends ScaleBarBase {
-    #units: MetricUnit[] = [
+    readonly #units: MetricUnit[] = [
         {
             exponent: 0,
             symbol: "",
@@ -99,19 +99,30 @@ export class ScaleBarDisplay extends ScaleBarBase {
             prefix: "micro",
         },
     ]
+    // Magnitude at which to prefer:
+    //      0 -> 1 cm instead of 10 mm
+    //      1 -> 10 mm instead of 1 cm
+    //      -2 -> 0.01 m instead of 1 cm
+    readonly #preferredMinimumMagnitiude: number = 0;
 
-    #unitsExponents = $derived(this.#units.map(unit => unit.exponent));
+    readonly #unitsExponents = $derived(this.#units.map(unit => unit.exponent));
 
-    displayLength: DisplayLength = $derived.by(() => {
+    readonly displayLength: DisplayLength = $derived.by(() => {
         const lengthSci = this.lengthSci;
-        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), lengthSci.exponent);
+        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), lengthSci.exponent - this.#preferredMinimumMagnitiude);
         const value = lengthSci.significand * 10 ** (lengthSci.exponent - exponent);
         const unit = this.#units[i];
         return {value, unit}
     })
 
-    constructor(lengthMax?: number | Getter<number>, withinDecade?: NonEmptyArray<number>, units?: MetricUnit[]) {
+    constructor(
+        lengthMax?: number | Getter<number>,
+        withinDecade?: NonEmptyArray<number>,
+        units?: MetricUnit[],
+        preferredMinimumMagnitiude?: number,
+    ) {
         super(lengthMax, withinDecade);
         this.#units = (units ?? this.#units).sort((a, b) => a.exponent - b.exponent);
+        this.#preferredMinimumMagnitiude = preferredMinimumMagnitiude ?? this.#preferredMinimumMagnitiude;
     }
 }
