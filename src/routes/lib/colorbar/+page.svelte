@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getScientific, getSmallestGreaterThanOrEqualTo, range, type NumberScientific } from "$lib/Mathematics.svelte";
+    import { getScientific, getSmallestGreaterThanOrEqualTo, pyrange, type NumberScientific } from "$lib/Mathematics.svelte";
 
   let colorbar_length_pixels = $state(400)
 
@@ -29,7 +29,7 @@
   let n = $derived(interval === 0 ? 0 : Math.floor(1 + (max/interval) - Math.ceil(min/interval)))
 
   let ticks_start = $derived(Math.ceil(min/interval) * interval)
-  let ticks = $derived(n ? range(n).map((i) => ticks_start + i * interval) : [])
+  let ticks = $derived(n ? pyrange(n).map((i) => ticks_start + i * interval) : [])
 </script>
 
 <label>

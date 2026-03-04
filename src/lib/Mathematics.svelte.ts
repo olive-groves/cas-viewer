@@ -56,6 +56,7 @@ function binaryBisector(list: number[], lessThan: indexGetter, greaterThan: inde
     return {lower, upper};
 }
 
-export function range(n: number): number[] {
+export function pyrange(n: number): number[] {
+    // Return an n-length array from 0 to n-1, just like Python's `range(n)`
     return [...Array(n).keys()]
 }
