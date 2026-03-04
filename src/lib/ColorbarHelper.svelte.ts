@@ -51,9 +51,7 @@ export class AxisBase {
         }
         return new ScientificNumber(significand, exponent)
     })
-    readonly interval: number = $derived(
-        this.intervalScientific.significand * 10 ** this.intervalScientific.exponent
-    )
+    readonly interval: number = $derived(this.intervalScientific.toNumber())
     readonly n: number = $derived(
         this.interval === 0
             ? 0
