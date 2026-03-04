@@ -8,7 +8,7 @@ import type { Getter, NonEmptyArray } from "./utils";
 export class AxisBase {
     #minValue = $state(0);
     #maxValue = $state(10);
-    #nMaxValue = $state(11);  // TODO: nMax = 1 fails, sometimes
+    #nMaxValue = $state(11);  // TODO: nMax = 1 fails, sometimes, but this could be an implementation (flexbox) thing
 
     #minGet?: Getter<number>
     #maxGet?: Getter<number>
@@ -22,6 +22,8 @@ export class AxisBase {
         const getter = this.#maxGet;
         return getter ? getter() : this.#maxValue;
     })
+    // nMax is the maximum number of ticks allowed.
+    // There is an exception to this: When the start tick is equal to the min and the end tick is equal to the max, the resultant n may be +1 nMax.
     readonly nMax = $derived.by(() => {
         const getter = this.#nMaxGet;
         return getter ? getter() : this.#nMaxValue;
