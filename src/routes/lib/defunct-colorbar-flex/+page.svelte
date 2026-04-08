@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getScientific, getSmallestGreaterThanOrEqualTo, range, type NumberScientific } from "$lib/Mathematics.svelte";
+    import { ScientificNumber, getSmallestGreaterThanOrEqualTo, pyrange, type ScientificNumberLike } from "$lib/Mathematics.svelte";
 
   let colorbar_length_pixels = $state(400)
 
@@ -8,10 +8,10 @@
   let n_max = $state(12);
 
   let units_unrounded = $derived((max - min)/(n_max))
-  let units_scientific: NumberScientific = $derived.by(() => {
+  let units_scientific: ScientificNumberLike = $derived.by(() => {
     let significand: number;
     let exponent: number;
-    const unrounded_scientific = getScientific(units_unrounded)
+    const unrounded_scientific = ScientificNumber.fromNumber(units_unrounded)
     if (unrounded_scientific.significand === 0) {
         significand = 0;
         exponent = 0;
@@ -29,7 +29,7 @@
   let n = $derived(units === 0 ? 0 : Math.floor(1 + (max/units) - Math.ceil(min/units)))
 
   let ticks_start = $derived(Math.ceil(min/units) * units)
-  let ticks = $derived(n ? range(n).map((i) => ticks_start + i * units) : [])
+  let ticks = $derived(n ? pyrange(n).map((i) => ticks_start + i * units) : [])
 </script>
 
 <label>
