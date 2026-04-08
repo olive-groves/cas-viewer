@@ -400,7 +400,7 @@
                   'type': 'raster',
                   'source': 'rgb',
                   'paint': {
-                      'raster-resampling': 'linear',
+                      'resampling': 'linear',
                       'raster-opacity': 0.7,
                       'raster-saturation': 0
                   }
@@ -478,7 +478,7 @@
                 'visibility': controls.rgb.visibility ? 'visible' : 'none',
               }}
               paint={{
-                'raster-resampling': 'nearest',
+                'resampling': 'nearest',
                 "raster-brightness-max": controls.rgb.brightness_max,
                 "raster-brightness-min": controls.rgb.brightness_min,
                 "raster-contrast": controls.rgb.contrast,
@@ -542,6 +542,7 @@
                 'visibility': controls.hillshade.visibility ? 'visible' : 'none',
               }}
               paint={{
+                'resampling': 'nearest',
                 'hillshade-exaggeration': controls.hillshade.exaggeration,
                 'hillshade-shadow-color': `rgba(0, 0, 0, ${controls.hillshade.shadow_opacity})`,
                 'hillshade-accent-color': `rgba(0, 0, 0, ${controls.hillshade.accent_opacity})`,
@@ -576,7 +577,7 @@
                 'visibility': controls.overlay.visibility ? 'visible' : 'none',
               }}
               paint={{
-                'raster-resampling': 'nearest',
+                'resampling': 'nearest',
                 'raster-opacity': controls.overlay.opacity,
                 'raster-hue-rotate': controls.overlay.hue,
                 'raster-brightness-max': controls.overlay.brightness_max,
