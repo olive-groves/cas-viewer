@@ -1,4 +1,7 @@
 import { untrack } from "svelte";
+import { getLargestLessThanOrEqualTo, ScientificNumber } from "./Mathematics.svelte";
+import type { MetricUnit } from "./Mathematics.svelte";
+import type { Getter, NonEmptyArray } from "./utils";
 
 // max length in pixels (length max pixels)
 //  get real-world max length in meters (length max meters)
@@ -27,63 +30,19 @@ import { untrack } from "svelte";
 // Scale bar in base units (meters). Conversion to pixels is a separate concern.
 // Give a maximum length in base units (meter), get a largest-less-than length in base and display units
 
-interface NumberScientific {
-    significand: number,
-    exponent: number,
-}
-function getScientific(num: number): NumberScientific {
-    let significand;
-    let exponent;
-    [significand, exponent] = num.toExponential().split('e').map(Number);
-    return {significand, exponent};
-}
-interface MetricUnit {
-    symbol: string,
-    prefix: string,
-    exponent: number,
-}
-
-type Getter<T> = () => T;
-
-function getLargestLessThanOrEqualTo(list: number[], num: number): [number, number] {
-    // Example:
-    //  list = [1, 4, 7], num = 3 -> 1
-    //  list = [1, 4, 7], num = 4 -> 4
-    //  list = [1, 4, 7], num = 5 -> 4
-    //  list = [1, 4, 7], num = 100 -> 7
-    //  list = [1, 4, 7], num = -8 -> 1  Does not fail if less than lowest!
-    // Bisect a sorted, increasing array
-    // https://stackoverflow.com/a/12071013/20921535
-    let i = 0;
-    let end = list.length;
-    while ((end - i) > 1) {
-        const cursor = Math.floor((i + end) / 2);;
-        if (list[cursor] < num) {
-            i = cursor;
-        } else if (list[cursor] > num){
-            end = cursor;
-        } else {
-            i = end = cursor;
-        }
-    }
-    return [list[i], i];
-}
-
-type NonEmptyArray<T> = [T, ...T[]];
-
 class ScaleBarBase {
     #lengthMaxValue = $state(0);
     #lengthMaxGet?: Getter<number>
 
-    lengthMax = $derived.by(() => {
+    readonly lengthMax = $derived.by(() => {
         const getter = this.#lengthMaxGet;
         return getter ? getter() : this.#lengthMaxValue;
     })
-    readonly lengthMaxSci: NumberScientific = $derived(getScientific(this.lengthMax))
+    readonly lengthMaxSci: ScientificNumber = $derived(ScientificNumber.fromNumber(this.lengthMax))
 
     #withinDecade: NonEmptyArray<number> = [1, 2, 3, 5];  // [1, 10), minimum 1 element
 
-    readonly lengthSci: NumberScientific = $derived.by(() => {
+    readonly lengthSci: ScientificNumber = $derived.by(() => {
         const lengthMaxSci = this.lengthMaxSci;
         let significand: number;
         let exponent: number;
@@ -98,7 +57,7 @@ class ScaleBarBase {
                 exponent -= 1;
             }
         }
-        return {significand, exponent}
+        return new ScientificNumber(significand, exponent)
     });
     readonly length = $derived(this.lengthSci.significand * 10 ** this.lengthSci.exponent) 
 
@@ -118,7 +77,7 @@ interface DisplayLength {
 }
 
 export class ScaleBarDisplay extends ScaleBarBase {
-    #units: MetricUnit[] = [
+    readonly #units: MetricUnit[] = [
         {
             exponent: 0,
             symbol: "",
@@ -140,19 +99,30 @@ export class ScaleBarDisplay extends ScaleBarBase {
             prefix: "micro",
         },
     ]
+    // Magnitude at which to prefer:
+    //      0 -> 1 cm instead of 10 mm
+    //      1 -> 10 mm instead of 1 cm
+    //      -2 -> 0.01 m instead of 1 cm
+    readonly #preferredMinimumMagnitiude: number = 0;
 
-    #unitsExponents = $derived(this.#units.map(unit => unit.exponent));
+    readonly #unitsExponents = $derived(this.#units.map(unit => unit.exponent));
 
-    displayLength: DisplayLength = $derived.by(() => {
+    readonly displayLength: DisplayLength = $derived.by(() => {
         const lengthSci = this.lengthSci;
-        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), lengthSci.exponent);
+        const [exponent, i] = getLargestLessThanOrEqualTo(untrack(() => this.#unitsExponents), lengthSci.exponent - this.#preferredMinimumMagnitiude);
         const value = lengthSci.significand * 10 ** (lengthSci.exponent - exponent);
         const unit = this.#units[i];
         return {value, unit}
     })
 
-    constructor(lengthMax?: number | Getter<number>, withinDecade?: NonEmptyArray<number>, units?: MetricUnit[]) {
+    constructor(
+        lengthMax?: number | Getter<number>,
+        withinDecade?: NonEmptyArray<number>,
+        units?: MetricUnit[],
+        preferredMinimumMagnitiude?: number,
+    ) {
         super(lengthMax, withinDecade);
         this.#units = (units ?? this.#units).sort((a, b) => a.exponent - b.exponent);
+        this.#preferredMinimumMagnitiude = preferredMinimumMagnitiude ?? this.#preferredMinimumMagnitiude;
     }
 }

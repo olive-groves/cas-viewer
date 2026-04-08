@@ -400,7 +400,7 @@
                   'type': 'raster',
                   'source': 'rgb',
                   'paint': {
-                      'raster-resampling': 'linear',
+                      'resampling': 'linear',
                       'raster-opacity': 0.7,
                       'raster-saturation': 0
                   }
@@ -415,7 +415,7 @@
                 }] : [],
               ]
             }
-            }), 'top-right')
+            }), 'top-left')
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
@@ -423,6 +423,7 @@
         attributionControl={false}
         hash={true}
         renderWorldCopies={false}
+        anisotropicFilterPitch={180}
         transformConstrain={myUnderzoom.transformConstrain}
         maxPitch={83}
         maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
@@ -477,7 +478,7 @@
                 'visibility': controls.rgb.visibility ? 'visible' : 'none',
               }}
               paint={{
-                'raster-resampling': 'nearest',
+                'resampling': 'nearest',
                 "raster-brightness-max": controls.rgb.brightness_max,
                 "raster-brightness-min": controls.rgb.brightness_min,
                 "raster-contrast": controls.rgb.contrast,
@@ -541,6 +542,7 @@
                 'visibility': controls.hillshade.visibility ? 'visible' : 'none',
               }}
               paint={{
+                'resampling': 'nearest',
                 'hillshade-exaggeration': controls.hillshade.exaggeration,
                 'hillshade-shadow-color': `rgba(0, 0, 0, ${controls.hillshade.shadow_opacity})`,
                 'hillshade-accent-color': `rgba(0, 0, 0, ${controls.hillshade.accent_opacity})`,
@@ -575,7 +577,7 @@
                 'visibility': controls.overlay.visibility ? 'visible' : 'none',
               }}
               paint={{
-                'raster-resampling': 'nearest',
+                'resampling': 'nearest',
                 'raster-opacity': controls.overlay.opacity,
                 'raster-hue-rotate': controls.overlay.hue,
                 'raster-brightness-max': controls.overlay.brightness_max,
@@ -870,18 +872,29 @@
     overflow: hidden;
     margin-bottom: 4px;
   }
-  :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    display: flex;
-    flex-direction: column;
-		background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    pointer-events: none;
-    user-select: none;
-	}
-	:global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
-    align-items: flex-end;
-	}
+  .container {
+    :global(.maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      display: flex;
+      flex-direction: column;
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      pointer-events: none;
+      user-select: none;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-transparent.maplibregl-ctrl-flex.scale) {
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group) {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end;
+    }
+    :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group button+button) {
+      border-top: unset;
+      border-right: 1px solid #ddd
+    }
+  }
   .map {
     height: 100%;
     width: 100%;
