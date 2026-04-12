@@ -59,7 +59,7 @@ export class ColorRelief {
 	].concat(this.#colorReliefColorLayerBreakpoints));
 
 	paint = $derived({
-		'resampling': 'nearest',
+		'resampling': 'nearest',  // TODO: This is not this layer's concern...?
 		"color-relief-opacity": this.opacity,
 		"color-relief-color": this.#colorReliefColorLayer,
 	});
