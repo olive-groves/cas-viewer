@@ -29,7 +29,7 @@ export class ColorRelief {
 	colormap = $state();
 	opacity = $state();
 	colorReliefLayerVisibility = $state("visible");
-	#colormapArray = $derived(COLORMAPS[this.colormap]);
+	colormapArray = $derived(COLORMAPS[this.colormap]);
 
 	setBreakpoints = $state({
 		low: 20,
@@ -41,13 +41,13 @@ export class ColorRelief {
 
 	#colorReliefColorLayerBreakpoints = $derived.by(() => {
 		let layerBreakpoints = [];
-		const n = this.#colormapArray.length,
+		const n = this.colormapArray.length,
 					low = this.setBreakpoints.low,
 					high = this.setBreakpoints.high,
 					slope = (high - low) / (n - 1);
 		for (let i = 0; i < n; i++) {
 			const breakpoint = slope * i + low;
-			layerBreakpoints.push(breakpoint, this.#colormapArray.at(i));
+			layerBreakpoints.push(breakpoint, this.colormapArray.at(i));
 		}
 		return layerBreakpoints;
 	});

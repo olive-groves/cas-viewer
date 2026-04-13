@@ -600,11 +600,10 @@
             min={colorRelief.setBreakpoints.low * hm.raster_dem_metadata?.metersPerInteger}
             max={colorRelief.setBreakpoints.high * hm.raster_dem_metadata?.metersPerInteger}
             --background-color=transparent
-            // --gradient="linear-gradient(
-            //   to top,
-            //   #000,
-            //   #fff
-            // )"
+            --gradient={`linear-gradient(
+              to top,
+              ${colorRelief.colormapArray.join(", ")}
+            )`}
           />
         </div>
       {/if}
