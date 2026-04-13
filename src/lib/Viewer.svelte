@@ -594,7 +594,7 @@
       style:font-size=1.2rem
     >
 
-      {#if (colorRelief.layout.visibility === 'visible') }
+      {#if (data?.raster_dem.url && (colorRelief.layout.visibility === 'visible')) }
         <div style:max-height=400px style:height=100% style:display=flex>
           <Colorbar
             min={colorRelief.setBreakpoints.low * hm.raster_dem_metadata?.metersPerInteger}
