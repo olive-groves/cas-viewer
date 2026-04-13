@@ -101,16 +101,17 @@ interface DisplayLength {
 // Display class that, given units, gives you the ticks based on the interval's nearest unit
 export class AxisDisplay extends AxisBase {
     #units: MetricUnit[] = [
-        {
-            exponent: 0,
-            symbol: "",
-            prefix: "",
-        },
-        {
-            exponent: -2,
-            symbol: "c",
-            prefix: "centi",
-        },
+        // TODO: Make easier to toggle? 'gimme mm and um only'
+        // {
+        //     exponent: 0,
+        //     symbol: "",
+        //     prefix: "",
+        // },
+        // {
+        //     exponent: -2,
+        //     symbol: "c",
+        //     prefix: "centi",
+        // },
         {
             exponent: -3,
             symbol: "m",

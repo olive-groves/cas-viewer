@@ -23,6 +23,7 @@
 
   import Minimap from '$lib/mapboxgl-minimap.js';
   import ScaleBar from './ScaleBar.svelte';
+  import Colorbar from './Colorbar.svelte';
   
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1.0});
   // function identityTransformConstrain(lngLat, zoom) {
@@ -592,6 +593,21 @@
       class=controls-container
       style:font-size=1.2rem
     >
+
+      {#if (data?.raster_dem.url && (colorRelief.layout.visibility === 'visible')) }
+        <div style:max-height=400px style:height=100% style:display=flex>
+          <Colorbar
+            min={colorRelief.setBreakpoints.low * hm.raster_dem_metadata?.metersPerInteger}
+            max={colorRelief.setBreakpoints.high * hm.raster_dem_metadata?.metersPerInteger}
+            --background-color=transparent
+            --gradient={`linear-gradient(
+              to top,
+              ${colorRelief.colormapArray.join(", ")}
+            )`}
+          />
+        </div>
+      {/if}
+
       <div class=controls>
 
         <div class="oneliner">

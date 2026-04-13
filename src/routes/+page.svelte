@@ -195,6 +195,7 @@
   }
   .viewers-controls {
     display: flex;
+    flex-direction: row-reverse;
     pointer-events: none;
     z-index: 1;
   }
