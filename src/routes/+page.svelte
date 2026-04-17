@@ -97,7 +97,9 @@
     return all_pmtiles;
   })
 
-  let mapProps = $state({});
+  let mapProps = $state({
+    threeDimensional: false,
+  });
   let pointer = $state({
     x: 0,
     y: 0,

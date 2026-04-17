@@ -97,7 +97,10 @@
       bearing: 0,
       pitch: 0,
       roll: 0,
-      elevation: 0
+      elevation: 0,
+      threeDimensional: false,
+      dragRotate: false,
+      touchPitch: false,
     }),
     pointer = $bindable({
       x: 0,
@@ -169,7 +172,7 @@
     },
     terrain: {
       exaggeration: 1,
-      enabled: true
+      enabled: mapProps.threeDimensional,
     },
     overlay: {
       visibility: true,
@@ -178,6 +181,23 @@
       lightness: 0.5,
       brightness_max: 1,
       brightness_min: 0
+    }
+  })
+
+  $effect(() => {
+    mapProps.threeDimensional = controls.terrain.enabled;
+  })
+
+  $effect(() => {
+    const is3D = mapProps.threeDimensional;
+    mapProps.dragRotate = is3D;
+    mapProps.touchPitch = is3D;
+    if (is3D) {
+      if (untrack(() => mapProps?.pitch) < 70) {
+        map?.easeTo({pitch: 70})
+      }
+    } else {
+      map?.easeTo({pitch: 0, bearing: 0})
     }
   })
 
@@ -293,7 +313,6 @@
     colorRelief.colorReliefLayerVisibility = raster_dem_header ? 'visible' : 'none';
     controls.hillshade.visibility = raster_dem_header ? true : false;
     controls.overlay.visibility = raster_overlay_header ? true : false;
-    controls.terrain.enabled = raster_dem_header ? true : false;
     colorRelief.colorReliefLayerVisibility = raster_header ? 'none' : 'visible';
     maxZoom = raster_metadata?.maxzoom ?? raster_dem_metadata?.maxzoom ?? raster_overlay_metadata?.maxzoom ?? undefined;
     const version = raster_metadata?.metadataVersion ?? raster_dem_metadata?.metadataVersion ?? raster_overlay_metadata?.metadataVersion;
@@ -435,6 +454,8 @@
         bind:pitch={mapProps.pitch}
         bind:roll={mapProps.roll}
         bind:elevation={mapProps.elevation}
+        dragRotate={mapProps.dragRotate}
+        touchPitch={mapProps.touchPitch}
       >
       {#if hm.raster_metadata}
         <AttributionControl
@@ -500,9 +521,7 @@
             greenFactor={256}
             blueFactor={1}
           >
-            {#if controls.terrain.enabled}
-              <Terrain exaggeration={controls.terrain.exaggeration} />
-            {/if}
+            <Terrain exaggeration={controls.terrain.enabled ? controls.terrain.exaggeration : 0} />
           </RasterDEMTileSource>
           <RasterDEMTileSource
             id="pseudocolor"
