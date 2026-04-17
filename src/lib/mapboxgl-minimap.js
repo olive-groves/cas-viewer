@@ -59,10 +59,13 @@ class Minimap {
 		this._parentMap = parentMap;
 
 		var opts = this.options;
-		var container = this._container = this._createContainer(parentMap);
+		// var container = this._container = this._createContainer(parentMap);
+		const { controlContainer, mapContainer } = this._createContainers(parentMap);
+		this._container = controlContainer;
 		var miniMap = this._miniMap = new maplibregl.Map({
 			attributionControl: false,
-			container: container,
+			// container: container,
+			container: mapContainer,
 			style: opts.style,
 			zoom: opts.zoom,
 			center: opts.center
@@ -175,7 +178,7 @@ class Minimap {
 
 		var miniMap = this._miniMap;
 		var features = miniMap.queryRenderedFeatures(e.point, {
-			layers: ["trackingRectFill"]
+			// layers: ["trackingRectFill"]
 		});
 
 		// don't update if we're still hovering the area
@@ -330,6 +333,40 @@ class Minimap {
 		}
 
 		return container;
+	}
+
+	_createContainers(parentMap) {
+		const opts = this.options;
+
+		const controlContainer = document.createElement("div");
+		controlContainer.className = "maplibregl-ctrl";
+		controlContainer.setAttribute('style', 'display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; justify-items: start;')
+		
+		const mapContainer = document.createElement("div");
+		mapContainer.className = "maplibregl-ctrl-minimap";
+		mapContainer.setAttribute('style', `width: ${opts.width}; height: ${opts.height}; grid-row-start: 1; grid-column-start: 1;`);
+
+		const checkboxContainer = document.createElement("input");
+		checkboxContainer.type = "checkbox";
+		checkboxContainer.checked = true;
+		checkboxContainer.addEventListener('change', (event) => {
+			mapContainer.style.visibility = event.currentTarget.checked ? "visible" : "collapse";
+		})
+		const labelContainer = document.createElement("label");
+		labelContainer.appendChild(checkboxContainer);
+		labelContainer.appendChild(document.createTextNode(" Minimap"));
+		labelContainer.setAttribute('style', `z-index: 0; grid-row-start: 1; grid-column-start: 1; align-self: start;`);
+
+		controlContainer.appendChild(mapContainer);
+		controlContainer.appendChild(labelContainer);
+
+		parentMap.getContainer().appendChild(controlContainer);
+
+		if( opts.id !== "" ) {
+			controlContainer.id = opts.id;
+		}
+
+		return {controlContainer, mapContainer};
 	}
 
 	_preventDefault( e ) {
