@@ -34,7 +34,7 @@ let defaultOptions = {
 	dragRotate: false,
 	keyboard: false,
 	doubleClickZoom: false,
-	touchZoomRotate: false
+	touchZoomRotate: false,
 };
 
 //class Minimap extends maplibregl.NavigationControl {
@@ -52,6 +52,7 @@ class Minimap {
 		this._previousPoint = [0, 0];
 		this._currentPoint = [0, 0];
 		this._trackingRectCoordinates = [[[], [], [], [], []]];
+		this._isVisible = true;
 	}
 
 	onAdd ( parentMap )
@@ -159,7 +160,7 @@ class Minimap {
 
 		this._miniMapCanvas = miniMap.getCanvasContainer();
 		this._miniMapCanvas.addEventListener("wheel", this._preventDefault, {passive: true});
-		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault, {passive: true});
+		this._miniMapCanvas.addEventListener("mousewheel", this._preventDefault, { passive: true });
 	}
 
 	_mouseDown( e )
@@ -339,26 +340,35 @@ class Minimap {
 		const opts = this.options;
 
 		const controlContainer = document.createElement("div");
-		controlContainer.className = "maplibregl-ctrl";
-		controlContainer.setAttribute('style', 'display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; justify-items: start;')
+		controlContainer.classList.add("maplibregl-ctrl")
+		controlContainer.classList.add("maplibregl-ctrl-group")
+		controlContainer.classList.add("collapse")
+		controlContainer.classList.add("active")
+		controlContainer.setAttribute('style', 'display: grid; grid-template: auto 1fr / auto 1fr; background-color: transparent; overflow: hidden;')
 		
 		const mapContainer = document.createElement("div");
-		mapContainer.className = "maplibregl-ctrl-minimap";
-		mapContainer.setAttribute('style', `width: ${opts.width}; height: ${opts.height}; grid-row-start: 1; grid-column-start: 1;`);
-
-		const checkboxContainer = document.createElement("input");
-		checkboxContainer.type = "checkbox";
-		checkboxContainer.checked = true;
-		checkboxContainer.addEventListener('change', (event) => {
-			mapContainer.style.visibility = event.currentTarget.checked ? "visible" : "collapse";
+		mapContainer.classList.add("minimap")
+		mapContainer.setAttribute('style', `display: ${this._isVisible ? "revert" : "none"}; box-sizing: border-box; width: ${opts.width}; height: ${opts.height}; grid-area: 1 / 1 / -1 / -1;`);
+		
+		const button = document.createElement("button");
+		button.type = "button";
+		button.textContent = "Minimap";
+		if (this._isVisible) button.classList.add("active");
+		button.addEventListener('click', (event) => {
+			this._isVisible = !this._isVisible;
+			mapContainer.style.display = this._isVisible ? "revert" : "none";
+			button.style.color = this._isVisible ? "#1b9fd0" : "#555";
+			// setZoom because canvas reverts to 400x300 when display: none, causing a slight zoom-in that remains when display: revert
+			// FIXME: This works for the Viewer, but excessively zooms out on test/minimap. So this isn't really a fix. 
+			setTimeout(() => {
+				this._miniMap?.setZoom(this.options.zoom);
+			}, 0);
 		})
-		const labelContainer = document.createElement("label");
-		labelContainer.appendChild(checkboxContainer);
-		labelContainer.appendChild(document.createTextNode(" Minimap"));
-		labelContainer.setAttribute('style', `z-index: 0; grid-row-start: 1; grid-column-start: 1; align-self: start;`);
-
+		button.setAttribute('style', `width: fit-content; padding-left: 4px; padding-right: 4px; color: #333; background-color: #fff; grid-area: 1 / 1; border-radius: 4px; z-index: 0;`);
+		button.style.color = this._isVisible ? "#1b9fd0" : "#555";
+		
 		controlContainer.appendChild(mapContainer);
-		controlContainer.appendChild(labelContainer);
+		controlContainer.appendChild(button);
 
 		parentMap.getContainer().appendChild(controlContainer);
 
@@ -366,7 +376,7 @@ class Minimap {
 			controlContainer.id = opts.id;
 		}
 
-		return {controlContainer, mapContainer};
+		return { controlContainer, mapContainer };
 	}
 
 	_preventDefault( e ) {

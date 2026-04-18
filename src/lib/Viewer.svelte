@@ -375,67 +375,68 @@
       <MapLibre
         bind:map={map}
         onload={
-          // () => {}
-          map.addControl(new Minimap({
-            width: "180px",
-            height: "180px",
-            lineColor: "#fff",
-            fillColor: "#fff",
-            // dragPan: false,
-            // scrollZoom: false,
-            // boxZoom: false,
-            // dragRotate: false,
-            // keyboard: false,
-            // doubleClickZoom: false,
-            // touchZoomRotate: false,
-            zoom: -2,
-            renderWorldCopies: false,
-            transformConstrain: myUnderzoom.transformConstrain,
-            style: {
-              version: 8,
-              sources: {
-                ...(data?.raster.url && {
-                  rgb: {
-                    type: "raster",
-                    url: data?.raster.url,
-                    tileSize: 512
-                  }
-                }),
-                ...(data?.raster_dem.url && {
-                  hillshade: {
-                    type: "raster-dem",
-                    url: data?.raster_dem.url,
-                    tileSize: 512,
-                    encoding: "custom",
-                    baseShift: 0,
-                    redFactor: 256*256*2,
-                    greenFactor: 256*2,
-                    blueFactor: 2
-                  }
-                })
-              },
-              layers: [
-                ... data?.raster.url ? [{
-                  'id': 'raster',
-                  'type': 'raster',
-                  'source': 'rgb',
-                  'paint': {
-                      'resampling': 'linear',
-                      'raster-opacity': 0.7,
-                      'raster-saturation': 0
-                  }
-                }] : [],
-                ... data?.raster_dem.url ? [{
-                  'id': 'hillshade',
-                  'type': 'hillshade',
-                  'source': 'hillshade',
-                  'paint': {
-                      'hillshade-exaggeration': 1.0
-                  }
-                }] : [],
-              ]
-            }
-            }), 'top-left')
+          () => {
+            map.addControl(new Minimap({
+              width: "180px",
+              height: "180px",
+              lineColor: "#fff",
+              fillColor: "#fff",
+              // dragPan: false,
+              // scrollZoom: false,
+              // boxZoom: false,
+              // dragRotate: false,
+              // keyboard: false,
+              // doubleClickZoom: false,
+              // touchZoomRotate: false,
+              zoom: -8,
+              renderWorldCopies: false,
+              transformConstrain: myUnderzoom.transformConstrain,
+              style: {
+                version: 8,
+                sources: {
+                  ...(data?.raster.url && {
+                    rgb: {
+                      type: "raster",
+                      url: data?.raster.url,
+                      tileSize: 512
+                    }
+                  }),
+                  ...(data?.raster_dem.url && {
+                    hillshade: {
+                      type: "raster-dem",
+                      url: data?.raster_dem.url,
+                      tileSize: 512,
+                      encoding: "custom",
+                      baseShift: 0,
+                      redFactor: 256*256*2,
+                      greenFactor: 256*2,
+                      blueFactor: 2
+                    }
+                  })
+                },
+                layers: [
+                  ... data?.raster.url ? [{
+                    'id': 'raster',
+                    'type': 'raster',
+                    'source': 'rgb',
+                    'paint': {
+                        'resampling': 'linear',
+                        'raster-opacity': 0.7,
+                        'raster-saturation': 0
+                    }
+                  }] : [],
+                  ... data?.raster_dem.url ? [{
+                    'id': 'hillshade',
+                    'type': 'hillshade',
+                    'source': 'hillshade',
+                    'paint': {
+                        'hillshade-exaggeration': 1.0
+                    }
+                  }] : [],
+                ]
+              }
+              }), 'top-left')
+          }
         }
         autoloadGlobalCss={false}
         inlineStyle="height: 100%; width: 100%;"
