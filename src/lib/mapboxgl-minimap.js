@@ -372,6 +372,11 @@ class Minimap {
 	_preventDefault( e ) {
 		e.preventDefault();
 	}
+
+    onRemove() {
+        this._container?.remove();
+        this._parentMap = undefined;
+    }
 }
 
 export default Minimap;
