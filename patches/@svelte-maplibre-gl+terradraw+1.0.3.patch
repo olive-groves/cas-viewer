@@ -1,0 +1,102 @@
+diff --git a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
+index 4dffa1d..057a0aa 100644
+--- a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
++++ b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
+@@ -1,6 +1,6 @@
+ <script lang="ts">
+ 	import { TerraDraw as Draw } from 'terra-draw';
+-	import type { IdStrategy, TerraDrawEventListeners } from 'terra-draw';
++	import type { IdStrategy, TerraDrawEventListeners, TerraDrawModeUndoRedoInterface, TerraDrawSessionUndoRedoInterface, TerraDrawUndoRedoKeyboardShortcutsInterface } from 'terra-draw';
+ 	import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
+ 	import { getMapContext } from 'svelte-maplibre-gl';
+ 
+@@ -13,17 +13,24 @@
+ 		modes,
+ 		tracked,
+ 		idStrategy,
++		undoRedo,
+ 		draw = $bindable(),
+ 		onfinish,
+ 		onchange,
+ 		onready,
+ 		onselect,
+-		ondeselect
++		ondeselect,
++		onhistory,
+ 	}: {
+ 		mode: string;
+ 		modes: ConstructorParameters<typeof Draw>[0]['modes'];
+ 		idStrategy?: IdStrategy<FeatureId>;
+ 		tracked?: boolean;
++		undoRedo?: {
++        modeLevel?: TerraDrawModeUndoRedoInterface;
++        sessionLevel?: TerraDrawSessionUndoRedoInterface;
++        keyboardShortcuts?: TerraDrawUndoRedoKeyboardShortcutsInterface;
++    };
+ 		/** Terra Draw instance */
+ 		draw?: Draw;
+ 		onchange?: TerraDrawEventListeners['change'];
+@@ -31,6 +38,7 @@
+ 		onready?: TerraDrawEventListeners['ready'];
+ 		onselect?: TerraDrawEventListeners['select'];
+ 		ondeselect?: TerraDrawEventListeners['deselect'];
++		onhistory?: TerraDrawEventListeners['history'];
+ 	} = $props();
+ 
+ 	mapCtx.waitForStyleLoaded((map) => {
+@@ -38,7 +46,8 @@
+ 			adapter: new TerraDrawMapLibreGLAdapter({ map }),
+ 			modes,
+ 			idStrategy,
+-			tracked
++			tracked,
++			undoRedo,
+ 		});
+ 	});
+ 
+@@ -76,4 +85,9 @@
+ 		draw?.on('deselect', ondeselect);
+ 		return () => draw?.off('deselect', ondeselect);
+ 	});
++	$effect(() => {
++		if (!onhistory) return;
++		draw?.on('history', onhistory);
++		return () => draw?.off('history', onhistory);
++	});
+ </script>
+diff --git a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
+index bc88fc7..a906df3 100644
+--- a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
++++ b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
+@@ -1,11 +1,22 @@
+ import { TerraDraw as Draw } from 'terra-draw';
+-import type { IdStrategy, TerraDrawEventListeners } from 'terra-draw';
++import type {
++    IdStrategy,
++    TerraDrawEventListeners,
++    TerraDrawModeUndoRedoInterface,
++    TerraDrawSessionUndoRedoInterface,
++    TerraDrawUndoRedoKeyboardShortcutsInterface,
++} from 'terra-draw';
+ type FeatureId = string | number;
+ type $$ComponentProps = {
+     mode: string;
+     modes: ConstructorParameters<typeof Draw>[0]['modes'];
+     idStrategy?: IdStrategy<FeatureId>;
+     tracked?: boolean;
++    undoRedo?: {
++        modeLevel?: TerraDrawModeUndoRedoInterface;
++        sessionLevel?: TerraDrawSessionUndoRedoInterface;
++        keyboardShortcuts?: TerraDrawUndoRedoKeyboardShortcutsInterface;
++    };
+     /** Terra Draw instance */
+     draw?: Draw;
+     onchange?: TerraDrawEventListeners['change'];
+@@ -13,6 +24,7 @@ type $$ComponentProps = {
+     onready?: TerraDrawEventListeners['ready'];
+     onselect?: TerraDrawEventListeners['select'];
+     ondeselect?: TerraDrawEventListeners['deselect'];
++    onhistory?: TerraDrawEventListeners['history'];
+ };
+ declare const TerraDraw: import("svelte").Component<$$ComponentProps, {}, "draw">;
+ type TerraDraw = ReturnType<typeof TerraDraw>;
