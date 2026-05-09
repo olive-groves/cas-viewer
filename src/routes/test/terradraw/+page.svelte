@@ -14,7 +14,15 @@
     TerraDrawModeUndoRedo,
     TerraDrawUndoRedoKeyboardShortcuts,
   } from 'terra-draw';
-    import { untrack } from 'svelte';
+  import { untrack } from 'svelte';
+
+  // TODO: Make into enhanced terradraw componenent
+  // Props:
+  //  autoEdit
+  // Passing modename with 'auto-edit' flag means it will always autoedit
+  //    ...or is there a better way to manage these?
+  let autoEdit: boolean = $state(false);
+
 
   let draw: Draw | undefined = $state.raw();
 
@@ -32,50 +40,34 @@
       }
     }
   };
+  const selectFlags = {
+    point: defaultSelectFlags,
+    linestring: defaultSelectFlags,
+    polygon: defaultSelectFlags,
+    'linestring-auto-edit': defaultSelectFlags,
+  }
   // Select mode for the last drawn item, which is used to auto-select it, but not allow other selections
   const lastDrawSelectMode = new TerraDrawSelectMode({
     modeName: 'lastDraw',
     allowManualSelection: false,
-    flags: {
-      point: defaultSelectFlags,
-      linestring: defaultSelectFlags,
-      polygon: defaultSelectFlags,
-      'profile': defaultSelectFlags,
-    }
+    flags: selectFlags,
   })
   const modes = [
     new TerraDrawSelectMode({
-      flags: {
-        point: defaultSelectFlags,
-        linestring: defaultSelectFlags,
-        polygon: defaultSelectFlags,
-        'profile': defaultSelectFlags,
-        // circle: defaultSelectFlags,
-        // rectangle: defaultSelectFlags,
-      }
+      flags: selectFlags,
     }),
     new TerraDrawPointMode(),
     new TerraDrawLineStringMode(),
     new TerraDrawPolygonMode(),
     new TerraDrawLineStringMode({
       finishOnNthCoordinate: 2,
-      modeName: 'profile',
+      modeName: 'linestring-auto-edit',
     }),
     // new TerraDrawCircleMode(),
     // new TerraDrawRectangleMode(),
   ];
   const modeNames = modes.map((mode) => mode.mode);
-  let mode = $state('profile')
-  // svelte-ignore state_referenced_locally
-  let modeUI = $state(mode);
-  $effect(() => {// If modeUI changed, set draw mode only if different.
-    if (modeUI != draw?.getMode()) {
-      mode = modeUI;
-    }
-  })
-  $effect(() => {  // If mode changes, set modeUI
-    if (mode != untrack(() => modeUI)) modeUI = mode;
-  })
+  let mode = $state('linestring-auto-edit')
   const undoRedo = {
     modeLevel: new TerraDrawModeUndoRedo({ maxStackSize: 100 }),
     sessionLevel: new TerraDrawSessionUndoRedo({ maxStackSize: 100 }),
@@ -108,7 +100,7 @@
       }
     }}
     onfinish={(id: FeatureId, context?) => {
-      if (context?.action === 'draw') {
+      if (context?.action === 'draw' && (draw?.getMode().includes('auto-edit') || autoEdit)) {
         _lastDrawId = id;
         _lastDrawMode = mode;
         draw?.selectFeature(id, lastDrawSelectMode.mode);
@@ -122,13 +114,16 @@
 
   <!-- Draw controls -->
   <div id=controls>
+    <label>
+      <input type="checkbox" bind:checked={autoEdit} /> Auto-edit
+    </label>
     <button
       onclick={() => {
         draw?.undo();
       }}
       >Undo</button>
     {#each modeNames as modeName (modeName)}
-      <label><input type="radio" bind:group={modeUI} value={modeName}/> {modeName}</label>
+      <label><input type="radio" bind:group={mode} value={modeName}/> {modeName}</label>
     {/each}
     {#if selected}
       <button
