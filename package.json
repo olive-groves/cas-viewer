@@ -14,8 +14,8 @@
 	},
 	"devDependencies": {
 		"@stanko/dual-range-input": "^1.0.1",
-		"@svelte-maplibre-gl/pmtiles": "^1.0.3",
-		"@svelte-maplibre-gl/terradraw": "^1.0.3",
+		"@svelte-maplibre-gl/pmtiles": "^2.0.0",
+		"@svelte-maplibre-gl/terradraw": "^2.1.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.57.0",
@@ -24,7 +24,7 @@
 		"patch-package": "^8.0.1",
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
-		"svelte-maplibre-gl": "^1.0.2",
+		"svelte-maplibre-gl": "^2.0.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.2"
 	}
