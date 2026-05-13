@@ -699,7 +699,7 @@
                   raking = !raking;
                   if (raking) updateRaking(e)
                 }}
-                ondblclick={() => {pointer.x = 0; pointer.y = 0}}
+                ondblclick={() => {pointer.x = 0; pointer.y = 0; controls.hillshade.angle = 315; controls.hillshade.exaggeration = 0.7}}
               >
               </figure>
           </details>
