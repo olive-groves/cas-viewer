@@ -47,7 +47,16 @@
     point: defaultSelectFlags,
     linestring: defaultSelectFlags,
     polygon: defaultSelectFlags,
-    'linestring--auto-edit--profile': defaultSelectFlags,
+    'linestring--auto-edit--profile': {
+      ...defaultSelectFlags,
+      feature: {
+        ...defaultSelectFlags.feature,
+        coordinates: {
+          ...defaultSelectFlags.feature.coordinates,
+          midpoints: false,
+        }
+      }
+    },
   }
   // Select mode for the last drawn item, which is used to auto-select it, but not allow other selections
   const lastDrawSelectMode = new TerraDrawSelectMode({
@@ -84,7 +93,7 @@
 
 <MapLibre
   inlineStyle="height: 100%;"
-  // style="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+  style="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
   zoom={2}
   center={{ lng: 60, lat: 20 }}
   renderWorldCopies={false}
@@ -142,6 +151,7 @@
       // console.log(context)
     }}
     onchange={(ids: FeatureId[], type: string, context?) => {
+      // TODO: On delete of a selected auto-edit item, return to the lastDrawSelectMode.mode
     }}
     onhistory={({cause, stack, undoSize, redoSize}) => {
     }}
