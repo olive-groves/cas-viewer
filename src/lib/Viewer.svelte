@@ -12,10 +12,10 @@
     RasterLayer,
     RasterTileSource,
     Terrain,
-    CustomControl
+    CustomControl,
   } from 'svelte-maplibre-gl';
   import { Underzoom } from 'maplibre-xy';
-  import maplibregl from 'maplibre-gl';
+  import maplibregl, { type CameraOptions } from 'maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
   import DualRangeInput from './DualRangeInput.svelte';
@@ -120,7 +120,7 @@
     pointer?: {}
   } = $props();
 
-  let map = $state();
+  let map: maplibregl.Map | undefined = $state.raw();
 
   let raking = $state(false);
 
@@ -171,7 +171,7 @@
       // opacity: 1, // See ColorRelief
     },
     terrain: {
-      exaggeration: 1,
+      // exaggeration: 1,
       enabled: mapProps.threeDimensional,
     },
     overlay: {
@@ -185,20 +185,7 @@
   })
 
   $effect(() => {
-    mapProps.threeDimensional = controls.terrain.enabled;
-  })
-
-  $effect(() => {
-    const is3D = mapProps.threeDimensional;
-    mapProps.dragRotate = is3D;
-    mapProps.touchPitch = is3D;
-    if (is3D) {
-      if (untrack(() => mapProps?.pitch) < 70) {
-        map?.easeTo({pitch: 70})
-      }
-    } else {
-      map?.easeTo({pitch: 0, bearing: 0})
-    }
+    controls.terrain.enabled = mapProps.threeDimensional;
   })
 
   $effect(() => {
@@ -373,7 +360,7 @@
   >
     <div class="map">
       <MapLibre
-        bind:map={map}
+        bind:map
         onload={
           () => {
             map.addControl(new Minimap({
@@ -449,14 +436,26 @@
         maxPitch={83}
         maxZoom={(hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) + 4}
         aroundCenter={false}
-        bind:center={mapProps.center}
-        bind:zoom={mapProps.zoom}
-        bind:bearing={mapProps.bearing}
-        bind:pitch={mapProps.pitch}
-        bind:roll={mapProps.roll}
-        bind:elevation={mapProps.elevation}
-        dragRotate={mapProps.dragRotate}
-        touchPitch={mapProps.touchPitch}
+        center={mapProps.center}
+        zoom={mapProps.zoom}
+        bearing={mapProps.bearing}
+        pitch={mapProps.pitch}
+        roll={mapProps.roll}
+        elevation={mapProps.elevation}
+        onmove={
+          (e) => {
+            if (e.originalEvent || e.sync) {
+              mapProps.zoom = map?.getZoom();
+              mapProps.center = map?.getCenter();
+              mapProps.bearing = map?.getBearing();
+              mapProps.pitch = map?.getPitch();
+              mapProps.roll = map?.getRoll();
+              mapProps.elevation = map?.getCameraTargetElevation();
+            }
+          }
+        }
+        dragRotate={mapProps.threeDimensional}
+        touchPitch={mapProps.threeDimensional}
       >
       {#if hm.raster_metadata}
         <AttributionControl
@@ -483,7 +482,7 @@
           <button
             title={"Zoom scale"}
             onclick={() => {
-              map?.easeTo({zoom: Math.round(mapProps.zoom)})
+              map?.easeTo({zoom: Math.round(mapProps.zoom)}, {sync: true})
             }}
             style={`color: ${((hm.raster_header?.maxZoom ?? hm.raster_dem_header?.maxZoom ?? hm.raster_overlay_header?.maxZoom) < mapProps.zoom) ? "red" : "#333"}; width: fit-content; padding-left: 4px; padding-right: 4px;`}
             >
@@ -522,7 +521,7 @@
             greenFactor={256}
             blueFactor={1}
           >
-            <Terrain exaggeration={controls.terrain.enabled ? controls.terrain.exaggeration : 0} />
+            <Terrain exaggeration={controls.terrain.enabled ? mapProps.exaggeration : 0} />
           </RasterDEMTileSource>
           <RasterDEMTileSource
             id="pseudocolor"
@@ -580,7 +579,17 @@
             <button
               title={controls.terrain.enabled ? "Disable 3D" : "Enable 3D"}
               onclick={() => {
-                controls.terrain.enabled = !controls.terrain.enabled;
+                mapProps.threeDimensional = !mapProps.threeDimensional;
+                const reorient: CameraOptions = {};
+                if (mapProps.threeDimensional) {
+                  if (untrack(() => mapProps?.pitch) < 70) {
+                    reorient.pitch = 70;
+                  }
+                } else {
+                  reorient.pitch = 0;
+                  reorient.bearing = 0;
+                }
+                if (reorient) map?.easeTo(reorient, {sync: true});
               }}
               style:color={controls.terrain.enabled ? "#1b9fd0" : "#555"}
               style:font-weight=900>
@@ -699,7 +708,7 @@
                   raking = !raking;
                   if (raking) updateRaking(e)
                 }}
-                ondblclick={() => {pointer.x = 0; pointer.y = 0}}
+                ondblclick={() => {pointer.x = 0; pointer.y = 0; controls.hillshade.angle = 315; controls.hillshade.exaggeration = 0.7}}
               >
               </figure>
           </details>
@@ -820,8 +829,8 @@
             <summary>3D
             </summary>
             <label>
-              <input type="range" min=1 max=100 step=1 bind:value={controls.terrain.exaggeration} ondblclick={() => controls.terrain.exaggeration = 1}>
-              Exaggeration ({controls.terrain.exaggeration.toFixed(0)}x)
+              <input type="range" min=1 max=100 step=1 bind:value={mapProps.exaggeration} ondblclick={() => mapProps.exaggeration = 1}>
+              Exaggeration ({mapProps.exaggeration.toFixed(0)}x)
             </label>
           </details>
         </div>

@@ -99,6 +99,7 @@
 
   let mapProps = $state({
     threeDimensional: false,
+    exaggeration: 10,
   });
   let pointer = $state({
     x: 0,
