@@ -25,7 +25,7 @@
   import maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
   import ScaleBar from '$lib/ScaleBar.svelte';
-  
+
   let map: maplibregl.Map | undefined = $state()
 
   let destinations: FlyToOptions[] = [
@@ -115,7 +115,7 @@
       hillshadeVisible = true;
     }
   }
-  
+
   function toggleHillshade() {
     hillshadeVisible = !hillshadeVisible;
     if (hillshadeVisible && blenderVisible) blenderVisible = false;
@@ -277,7 +277,7 @@
       </div>
     </CustomControl>
     <RasterDEMTileSource
-      id="terrain"    
+      id="terrain"
       url={`pmtiles://${urls[1]}`}
       encoding="custom"
       baseShift={0}
