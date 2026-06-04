@@ -1,8 +1,8 @@
 <script lang="ts">
   import '$lib/maplibre-gl.css'
-  
-    // import { base } from "$app/paths";
-    let { children } = $props()
+
+  // import { base } from "$app/paths";
+  let { children } = $props()
 </script>
 
 <nav style:margin="0" style:padding="0.3em">
