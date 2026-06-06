@@ -1,0 +1,12 @@
+version = 1
+
+[[annotations]]
+path = ["**"]
+SPDX-FileCopyrightText = "2025– Impasto Project (olive-groves), created by Lars Maxfield"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["src/lib/tileset.ts"]
+precedence = "override"
+SPDX-FileCopyrightText = "2021 and later, Protomaps LLC and contributors"
+SPDX-License-Identifier = "BSD-3-Clause"
