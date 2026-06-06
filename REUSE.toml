@@ -8,5 +8,5 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 [[annotations]]
 path = ["src/lib/tileset.ts"]
 precedence = "override"
-SPDX-FileCopyrightText = "2021 and later, Protomaps LLC and contributors"
+SPDX-FileCopyrightText = "2021 and later, Protomaps LLC and contributors, modifications by Lars Maxfield"
 SPDX-License-Identifier = "BSD-3-Clause"

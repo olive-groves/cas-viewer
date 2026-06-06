@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021 and later, Protomaps LLC and contributors
+// SPDX-FileCopyrightText: 2021 and later, Protomaps LLC and contributors, modifications by Lars Maxfield
 // SPDX-License-Identifier: BSD-3-Clause
 // From https://github.com/protomaps/PMTiles/blob/main/app/src/tileset.ts
 //
@@ -16,12 +16,10 @@ interface Metadata {
   vector_layers: VectorLayer[];
 }
 
-export interface Tileset {
+interface Tileset {
   getZxy(z: number, x: number, y: number): Promise<ArrayBuffer | undefined>;
   getMetadata(): Promise<Metadata>;
-  getStateUrl(): string | undefined;
-  getLocalFileName(): string;
-  getMaplibreSourceUrl(): string;
+  get maplibreSourceUrl(): string;
   getBounds(): Promise<[number, number, number, number]>;
   getMaxZoom(): Promise<number>;
 
@@ -31,15 +29,29 @@ export interface Tileset {
   isVector(): Promise<boolean>;
 
   test(): Promise<void>;
-
-  archiveForProtocol(): PMTiles | undefined;
 }
 
-export class PMTilesTileset {
+export interface Remote {
+  get stateUrl(): string;
+}
+
+export interface Relative {
+  get stateUrl(): string;
+}
+
+export interface Local {
+  get filename(): string;
+}
+
+export class PMTilesTileset implements Tileset {
   archive: PMTiles;
 
   constructor(p: PMTiles) {
     this.archive = p;
+  }
+
+  get maplibreSourceUrl() {
+    return `pmtiles://${this.archive.source.getKey()}`;
   }
 
   async getZxy(z: number, x: number, y: number) {
@@ -92,7 +104,7 @@ export class PMTilesTileset {
   }
 }
 
-class RemotePMTilesTileset extends PMTilesTileset implements Tileset {
+class RemotePMTilesTileset extends PMTilesTileset implements Remote {
   url: string;
 
   constructor(url: string) {
@@ -100,58 +112,33 @@ class RemotePMTilesTileset extends PMTilesTileset implements Tileset {
     this.url = url;
   }
 
-  getStateUrl() {
+  get stateUrl () {
     return this.url;
-  }
-
-  getLocalFileName() {
-    return "";
-  }
-
-  getMaplibreSourceUrl() {
-    return `pmtiles://${this.url}`;
-  }
-
-  archiveForProtocol() {
-    return undefined;
   }
 }
 
-class LocalPMTilesTileset extends PMTilesTileset implements Tileset {
-  name: string;
+class LocalPMTilesTileset extends PMTilesTileset implements Local {
+  file: File;
 
   constructor(file: File) {
     super(new PMTiles(new FileSource(file)));
-    this.name = file.name;
+    this.file = file;
   }
 
-  // the local file cannot be persisted in the URL.
-  getStateUrl() {
-    return undefined;
+  get filename() {
+    return this.file.name;
   }
 
-  getLocalFileName() {
-    return this.name;
-  }
-
-  getMaplibreSourceUrl() {
-    return `pmtiles://${this.name}`;
-  }
-
-  archiveForProtocol() {
-    return this.archive;
-  }
+  // TODO: Add knowledge that this must be added to protocol with protocol.add(<this>.archive)?
+  // shouldBeAdded()?
+  // x instanceof LocalPMTilesTileset
 }
 
-class TileJSONTileset implements Tileset {
+class TileJSONTileset implements Tileset, Remote {
   url: string;
 
   constructor(url: string) {
     this.url = url;
-  }
-
-  archiveForProtocol() {
-    return undefined;
   }
 
   async test() {
@@ -170,7 +157,7 @@ class TileJSONTileset implements Tileset {
     return j.maxzoom;
   }
 
-  getMaplibreSourceUrl() {
+  get maplibreSourceUrl() {
     return this.url;
   }
 
@@ -190,12 +177,8 @@ class TileJSONTileset implements Tileset {
     );
   }
 
-  getStateUrl() {
+  get stateUrl() {
     return this.url;
-  }
-
-  getLocalFileName() {
-    return "";
   }
 
   async getZxy(z: number, x: number, y: number) {
@@ -230,15 +213,18 @@ class TileJSONTileset implements Tileset {
   }
 }
 
+// TODO: Implement RelativePMTilesTileset
+
 // from a input box or a URL param state.
 export const tilesetFromString = (url: string): Tileset => {
   const parsed = new URL(url);
   if (parsed.pathname.endsWith(".json")) {
     return new TileJSONTileset(url);
   }
+  // TODO: if relative or if remote
   return new RemotePMTilesTileset(url);
 };
 
-export const tilesetFromFile = (file: File): Tileset => {
+export const pmtilesTilesetFromFile = (file: File): LocalPMTilesTileset => {
   return new LocalPMTilesTileset(file);
 };
