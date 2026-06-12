@@ -11,7 +11,7 @@ import {
   TileType,
 } from "pmtiles";
 import type { Header as PMTilesHeader } from "pmtiles";
-import type { Coordinates, Coordinates as MapLibreCoordinates } from 'maplibre-gl';
+import { Tile, type Coordinates, type Coordinates as MapLibreCoordinates } from 'maplibre-gl';
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -54,11 +54,29 @@ interface TilesetSource extends Source {
   getMaxZoom(): MaybePromise<number>;
 }
 
-
+// TODO: Consider exactOptionalPropertyTypes
+// https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes
 type PMTilesMetadata = {
-  type?: string;
-  vector_layers?: {id: string}[];
+  // Per https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md
+  name?: string,
+  description?: string,
+  attribution?: string,
+  // type?: "basemap" | "overlay",  // TODO: 'type' is basemap|overlay; Update vg/image_metadata.schema.json
+  version: string,
+  vector_layers?: { id: string }[],
+  // encoding?: string,  // TODO: 'encoding' now spec'd in PMTiles metadata
+
+  // Per vg/image-pmtiles_metadata.schema.json
+  type?: string,
+  tileSize?: number,
+  scheme?: "xyz" | "tms",
+  encoding?: string,
+  redFactor?: number,
+  greenFactor?: number,
+  blueFactor?: number,
+  baseShift?: number,
 };
+
 
 export class StaticImage implements ImageSource {
   type: "raster" = "raster";
@@ -97,13 +115,13 @@ export class PMTilesTileset implements ImageSource, TilesetSource, VectorType {
     this.metadata = this._initializeMetadata();
   }
 
-  private async _initializeHeader() {
+  private async _initializeHeader(): Promise<PMTilesHeader> {
     const header = await this.getHeader();
     this.header = header;
     return header;
   }
 
-  private async _initializeMetadata() {
+  private async _initializeMetadata(): Promise<PMTilesMetadata> {
     const metadata = (await this.getMetadata()) as PMTilesMetadata;
     this.metadata = metadata;
     return metadata;
@@ -206,51 +224,55 @@ export class LocalPMTilesTileset extends PMTilesTileset {
   // x instanceof LocalPMTilesTileset
 }
 
-interface MapLibreBaseSourceSpec {
-  type: MaybePromise<string>,
-  url?: MaybePromise<string>,
-  tiles?: MaybePromise<string[]>,
-  bounds?: MaybePromise<[number, number, number, number]>,
-  minzoom?: MaybePromise<number>,
-  maxzoom?: MaybePromise<number>,
-  tileSize?: MaybePromise<number>,
-  scheme?: MaybePromise<"xyz"|"tms">,
-  attribution?: MaybePromise<string>,
+type MapLibreBaseTileSourceSpec = {
+  type?: string,
+  url?: string,
+  tiles?: string[],
+  bounds?: [number, number, number, number],
+  minzoom?: number,
+  maxzoom?: number,
+  tileSize?: number,
+  scheme?: "xyz" | "tms",
+  attribution?: string,
 }
 
-class MapLibreRasterSourceSpec implements MapLibreBaseSourceSpec {
-  type = "raster";
-}
-class MapLibreRasterDemSourceSpec implements MapLibreBaseSourceSpec {
-  type = "raster-dem";
-  encoding?: "terrarium" | "mapbox" | "custom";
+type MapLibreRasterSourceSpec = {
+  type: "raster",
+} & MapLibreBaseTileSourceSpec
+
+type MapLibreRasterDemSourceSpec = {
+  type: "raster-dem",
+  encoding?: "terrarium" | "mapbox" | "custom",
   redFactor?: number;
-  blueFactor?: number;
-  greenFactor?: number;
-  baseShift?: number;
-}
-class MapLibreVectorSourceSpec implements MapLibreBaseSourceSpec {
-  type = "vector";
-  encoding?: "mvt" | "mlt";
-}
-class MapLibreImageSourceSpec implements MapLibreBaseSourceSpec {
-  type = "image";
-  url: MaybePromise<string>;
-  coordinates: MaybePromise<MapLibreCoordinates>;
+  blueFactor?: number,
+  greenFactor?: number,
+  baseShift?: number,
+} & MapLibreBaseTileSourceSpec
 
-  constructor(baseSpec: MapLibreBaseSourceSpec, url: MaybePromise<string>, coordinates: MaybePromise<Coordinates>) {
-    this.url = url;
-    this.coordinates = coordinates;
-    Object.assign(this, baseSpec)
-  }
-}
+type MapLibreVectorSourceSpec = {
+  type: "vector",
+  encoding?: "mvt" | "mlt",
+} & MapLibreBaseTileSourceSpec
 
+type MapLibreImageSourceSpec = {
+  type: "image",
+  url: string,
+  coordinates: MapLibreCoordinates,
+}
 
 type MapLibreSourceSpec =
   | MapLibreRasterSourceSpec
   | MapLibreRasterDemSourceSpec
   | MapLibreVectorSourceSpec
   | MapLibreImageSourceSpec;
+
+type OverrideMapLibreSourceSpec =
+  | Partial<MapLibreRasterSourceSpec>
+  | Partial<MapLibreRasterDemSourceSpec>
+  | Partial<MapLibreVectorSourceSpec>
+  | Partial<MapLibreImageSourceSpec>;
+
+type PMTilesMapLibreTypes = "vector" | "raster" | "raster-dem";
 
 /*
 You have a ImageSource, right?
@@ -270,26 +292,145 @@ For example, you pass a PMTilesImage, that means it generates url, tileSize, enc
     Then return spec. That return will be a Promise. But as soon it hits this.spec = spec, we'll have our Spec rather than a Promise.
 */
 
-export class MapLibreSourceSpecAdapter {
-  source: Source;
-  spec: MapLibreSourceSpec;
+// TODO: Force override of spec?
+// Or, rather, a spec-getter should never FAIL, but WARN, falling back on undefined?
+// For example, if encoding not provided for DEM, don't fail?
+// Or simply spec = {
+//   ...spec,
+//   ...myOverrides,  // type: "raster" when "raster-dem" to see encoded, for example
+// }
 
-  constructor(source: Source) {
+export class MapLibreSourceSpecAdapter {
+  source: PMTilesTileset | ImageSource;
+  spec: MaybePromise<MapLibreSourceSpec>;
+  overrideSpec?: OverrideMapLibreSourceSpec;
+
+  constructor(
+    source: PMTilesTileset | ImageSource,
+    overrideSpec?: OverrideMapLibreSourceSpec,
+  ) {
     this.source = source;
-    let spec;
-    switch (source.format) {
-      case "pmtiles":
-        source = source as PMTilesTileset
-        spec = {
-          url: `pmtiles://${source.archive.source?.getKey()}`,
-        }
-        const metadata = source.archive
-      default:
-        spec = {}
-    }
-    this.spec = spec;
+    this.overrideSpec = overrideSpec;
+    this.spec = this._initializeSpec();
   }
 
+  // TODO: This is way too big.
+  static async getPMTilesMapLibreSpec(
+    source: PMTilesTileset,
+    forceType?: PMTilesMapLibreTypes,
+  ): Promise<MapLibreRasterSourceSpec | MapLibreRasterDemSourceSpec | MapLibreVectorSourceSpec> {
+    const isForcedVector = forceType === "vector";
+    let isForcedRaster = forceType === "raster";
+    const isForcedRasterDem = forceType === "raster-dem";
+
+    const [headerResult, metadataResult] = await Promise.allSettled([
+      source.header, source.metadata
+    ]);
+    if (headerResult.status !== "fulfilled") {
+      throw Error(headerResult.reason);
+    }
+    const header = headerResult.value;
+    const metadata =
+      metadataResult.status !== "fulfilled"
+        ? undefined
+        : metadataResult.value;
+
+    const baseSpec = {
+      url: `pmtiles://${source.archive.source.getKey()}`,
+      bounds: [header.minLon, header.minLat, header.maxLon, header.maxLat],
+      minzoom: header.minZoom,
+      maxzoom: header.maxZoom,
+      ...(metadata?.scheme ? {scheme: metadata.scheme} : {}),
+      ...(metadata?.tileSize ? {tileSize: metadata.tileSize} : {}),
+      ...(metadata?.attribution ? {attribution: metadata.attribution} : {}),
+    } satisfies MapLibreBaseTileSourceSpec;
+
+    let spec;
+    let encoding: MapLibreVectorSourceSpec["encoding"] | MapLibreRasterDemSourceSpec["encoding"];
+    const tileType = header.tileType;
+    isForcedRaster = tileType === TileType.Unknown && !forceType  // Default unknown to raster
+    const isRasterTile =
+      tileType === TileType.Jpeg ||
+      tileType === TileType.Png ||
+      tileType === TileType.Webp
+    const isVectorTile =
+      tileType === TileType.Mvt ||
+      tileType === TileType.Mlt
+
+    if (
+      (isForcedRaster || isForcedRasterDem) ||  // Either forced
+      (!forceType && isRasterTile)  // Or unforced and proven
+    ) {
+      // Yeah, I know. But I want to be verbose in translating
+      // PMTiles metadata encoding to MapLibre encoding.
+      if (metadata?.encoding === "terrarium") {
+        encoding = "terrarium";
+      } else if (metadata?.encoding === "mapbox") {
+        encoding = "mapbox";
+      } else if (metadata?.encoding === "custom") {
+        encoding = "custom";
+      } else {
+        encoding = undefined;
+      }
+      if (encoding || isForcedRasterDem) {
+        spec = {
+          ...baseSpec,
+          type: "raster-dem",
+          ...(encoding ? { encoding } : {}),
+          ...(metadata?.redFactor ? { redFactor: metadata.redFactor } : {}),
+          ...(metadata?.blueFactor ? { blueFactor: metadata.blueFactor } : {}),
+          ...(metadata?.greenFactor ? { greenFactor: metadata.greenFactor } : {}),
+          ...(metadata?.baseShift ? { baseShift: metadata.baseShift } : {}),
+        } satisfies MapLibreRasterDemSourceSpec;
+      } else {
+        spec = {
+          ...baseSpec,
+          type: "raster",
+        } satisfies MapLibreRasterSourceSpec;
+      }
+    } else if (
+      (isForcedVector) ||  // Either forced
+      (!forceType && isVectorTile)  // Or unforced and proven
+    ) {
+      encoding =
+        tileType === TileType.Mlt ? "mlt" :
+        tileType === TileType.Mvt ? "mvt" :
+        undefined;
+      spec = {
+        ...baseSpec,
+        type: "vector",
+        ...(encoding ? { encoding } : {}),
+      } satisfies MapLibreVectorSourceSpec;
+    } else {
+      throw Error(`Unsupported PMTiles tileType: ${header.tileType}`)
+    }
+    return spec;
+  }
+
+  private async _initializeSpec(): Promise<MapLibreSourceSpec> {
+    const source = this.source;
+    const forceType = this.overrideSpec?.type;
+    let asyncSpec: () => Promise<MapLibreSourceSpec>;
+    switch (source.format) {
+      case "pmtiles":
+        if (
+          typeof forceType !== 'undefined' &&
+          (forceType !== "raster") &&
+          (forceType !== "raster-dem") &&
+          (forceType !== "vector")
+        ) {
+          throw Error(`Unsupported type to force: ${forceType}`)
+        }
+        asyncSpec = () => MapLibreSourceSpecAdapter.getPMTilesMapLibreSpec((source as PMTilesTileset), forceType)
+        break
+      // TODO: How to check for static image? (This is where the support for the image should be checked 'jpeg' | 'jpg' | 'png' |... maybe)
+      default:
+        throw Error(`Format ${source.format} not supported.`)
+    }
+    const spec = await asyncSpec();
+    this.spec = spec;
+    return spec;
+  }
 
 }
 
