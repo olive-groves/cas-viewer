@@ -224,6 +224,17 @@ export class LocalPMTilesTileset extends PMTilesTileset {
   // x instanceof LocalPMTilesTileset
 }
 
+// TODO: Add tiles URL raster, raster-dem, etc.
+// {z}/{x}/{y}
+// 'raster-tiles': {
+//     'type': 'raster',
+//     'tiles': ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+//     'tileSize': 256,
+//     'minzoom': 0,
+//     'maxzoom': 19,
+//     'attribution': "© OpenStreetMap contributors",
+// }
+
 type MapLibreBaseTileSourceSpec = {
   type?: string,
   url?: string,
