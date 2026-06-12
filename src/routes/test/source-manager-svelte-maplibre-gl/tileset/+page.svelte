@@ -29,10 +29,12 @@
   <div>
     {key}
     {#if source.source.format === "pmtiles"}
-      {#await Promise.all([source.source.header, source.source.metadata]) then [header, metadata]}
-        <!-- {#each Object.entries(header) as [key, value]}
+      {#await source.source.header then header}
+        {#each Object.entries(header) as [key, value]}
           <div>{key}: {value}</div>
-        {/each} -->
+        {/each}
+      {/await}
+      {#await source.source.metadata then metadata}
         {#each Object.entries(metadata) as [key, value]}
           <div>{key}: {value}</div>
         {/each}
