@@ -1,38 +1,53 @@
 <script lang="ts">
   import { SvelteMap } from 'svelte/reactivity';
   import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/tileset';
+  import type { OverrideMapLibreSourceSpec } from '$lib/tileset';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { untrack } from 'svelte';
+  import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from 'svelte-maplibre-gl';
 
   // '/local/bagunca-2025-10-21T1629/height.pmtiles',
   // '/local/bagunca-2025-10-21T1629/nan.pmtiles',
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
+  const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const remoteUrl = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
-  const initialUrls = [localUrl, remoteUrl]
+  const remoteUrlDem = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
+  // const initialUrls = [localUrl, remoteUrl]
 
   const sources: SvelteMap<string, PMTilesTileset> = new SvelteMap(
-    initialUrls.map((url) => [crypto.randomUUID(), sourceFromUrl(url)])
+    // initialUrls.map((url) => [crypto.randomUUID(), sourceFromUrl(url)])
   )
 
-  // const mapLibreSources: [string, MapLibreSourceSpecAdapter][] = $derived(
-  //   sources.entries().map(([key, source]) => [key, new MapLibreSourceSpecAdapter(source)])
-  // );
+  function mirrorMap(original: SvelteMap<any, any>, mirror: SvelteMap<any, any>, setter?: Function) {
+    const originalKeys = new Set(original.keys());
+    const mirrorKeys = new Set(untrack(() => mirror).keys());
 
-  const mapLibreSources: SvelteMap<string, MapLibreSourceSpecAdapter> = new SvelteMap();
+    const missingKeys = originalKeys.difference(mirrorKeys);
+    missingKeys.forEach((missingKey) => {
+      const value = original.get(missingKey);
+      mirror.set(missingKey, setter ? setter(value) : value)
+    })
 
+    const removedKeys = mirrorKeys.difference(originalKeys);
+    removedKeys.forEach((removedKey) => mirror.delete(removedKey));
+  };
+
+  // Mirror `sources` with MapLibre sources and overrides
+  const mapLibreSources: SvelteMap<string, {source: MapLibreSourceSpecAdapter, override: OverrideMapLibreSourceSpec}> = new SvelteMap();
+  // const mapLibreSourceOverrides: SvelteMap<string, OverrideMapLibreSourceSpec> = new SvelteMap();
   $effect(() => {
-    const m = untrack(() => mapLibreSources)
-
-    // Which keys in sources are missing in mapLibreSources? Which are now gone?
-    const sourcesKeys = new Set(sources.keys());
-    const mapLibreSourcesKeys = new Set(m.keys());
-    const missingMapLibreSources = sourcesKeys.difference(mapLibreSourcesKeys);
-    const removedSources = mapLibreSourcesKeys.difference(sourcesKeys);
-
-    missingMapLibreSources.forEach((sourceKey) => mapLibreSources.set(sourceKey, new MapLibreSourceSpecAdapter(sources.get(sourceKey))));
-    removedSources.forEach((sourceKey) => mapLibreSources.delete(sourceKey));
+    mirrorMap(sources, mapLibreSources, (source) => {
+      const override = $state({
+        type: "raster-dem",
+        opacity: 0.5,
+      });
+      // const override = {};
+      return {
+        source: new MapLibreSourceSpecAdapter(source),
+        override,
+      }
+    })
   })
-
 
   function sourceFromUrl(url: URL): PMTilesTileset {
     const pathname = url.pathname.toLowerCase();
@@ -51,21 +66,68 @@
 
 </script>
 
-<!-- <PMTilesProtocol /> -->
+<PMTilesProtocol />
 
 <div style={'height: 100%; overflow: hidden; display: flex; flex-direction: column;'}>
   <div style={'display: flex;'}>
-    <button onclick={() => addSource(sourceFromUrl(localUrl))}>Add local</button>
+    <button onclick={() => addSource(sourceFromUrl(localUrl))}>Add local raster</button>
+    <button onclick={() => addSource(sourceFromUrl(localUrlDem))}>Add local raster DEM</button>
     <button onclick={() => addSource(sourceFromUrl(remoteUrl))}>Add remote</button>
     <button onclick={() => sources.delete([...sources.keys()][0])}>Delete</button>
     <!-- <button onclick={() => addSource(sourceFromUrl(remoteUrl))}>Add remote</button> -->
   </div>
+  <div style={'display: flex;'}>
+    <button onclick={
+      () => {
+        const key = [...sources.keys()][0];
+        const opacity = mapLibreSources.get(key).override.opacity;
+        const type = mapLibreSources.get(key).override.type;
+        mapLibreSources.get(key).override.opacity = opacity < 1 ? 1 : 0.5;
+        mapLibreSources.get(key).override.type = (type === "raster") ? "raster-dem" : "raster";
+      }
+    }>Set raster-DEM</button>
+  </div>
+  <div style={'display: flex; height: 200px;'}>
+    <MapLibre
+      inlineStyle="height: 100%; width: 100%;"
+      renderWorldCopies={false}
+      aroundCenter={false}
+      transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom})}
+    >
+    {#each mapLibreSources as [key, {source, override}] (key)}
+      {#await source.spec then spec}
+        {#if override.type === "raster" || ((spec.type === "raster") && !override.type)}
+          <RasterTileSource
+            {...{...spec, ...override}}
+          >
+            <RasterLayer
+              paint={{
+                'raster-resampling': 'nearest',
+                'raster-opacity': override.opacity,
+              }}
+            />
+          </RasterTileSource>
+        {:else if override.type === "raster-dem" || ((spec.type === "raster-dem") && !override.type)}
+          <RasterDEMTileSource
+              {...{...spec, ...override}}
+          >
+            <HillshadeLayer
+              paint={{
+                'hillshade-exaggeration': override.opacity,
+              }}
+            />
+          </RasterDEMTileSource>
+        {/if}
+      {/await}
+    {/each}
+    </MapLibre>
+  </div>
   <div style={'overflow-y: scroll; flex: 1;'}>
-  {#each mapLibreSources as [key, mapLibreSource] (key)}
+  {#each mapLibreSources as [key, {source, ...rest}] (key)}
     <div>
       {key}
-      {#if mapLibreSource.source.format === "pmtiles"}
-        {#await mapLibreSource.source.header then header}
+      <!-- {#if source.source.format === "pmtiles"}
+        {#await source.source.header then header}
           {#each Object.entries(header) as [key, value]}
             <div>{key}: {value}</div>
           {/each}
@@ -75,8 +137,8 @@
             <div>{key}: {value}</div>
           {/each}
         {/await}
-      {/if}
-      {#await mapLibreSource.spec then spec}
+      {/if} -->
+      {#await source.spec then spec}
         {#each Object.entries(spec) as [key, value]}
           <div>{key}: {value}</div>
         {/each}
