@@ -11,7 +11,7 @@ import {
   TileType,
 } from "pmtiles";
 import type { Header as PMTilesHeader } from "pmtiles";
-import { Tile, type Coordinates, type Coordinates as MapLibreCoordinates } from 'maplibre-gl';
+import { type Coordinates as MapLibreCoordinates } from 'maplibre-gl';
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -277,7 +277,7 @@ type MapLibreSourceSpec =
   | MapLibreVectorSourceSpec
   | MapLibreImageSourceSpec;
 
-type OverrideMapLibreSourceSpec =
+export type OverrideMapLibreSourceSpec =
   | Partial<MapLibreRasterSourceSpec>
   | Partial<MapLibreRasterDemSourceSpec>
   | Partial<MapLibreVectorSourceSpec>
