@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { flip } from "svelte/animate";
   class IdLayer {
     layer = {type: "raster"};
     id = crypto.randomUUID();  // Key is essential for non-rerenders
@@ -17,7 +18,7 @@
 
 <div style:display=flex style:flex-direction=column>
   {#each layerGroupArray as layer, z (layer.id)}
-    <div>{layer.id}</div>
+    <div animate:flip>{layer.id}</div>
   {/each}
 </div>
 
@@ -29,16 +30,14 @@
 </div>
 <div style:display=flex style:flex-direction=column>
   {#each layerGroupArray as layer, z (layer.id)}
-    <div style:display=flex>
+    <div style:display=flex animate:flip onfocusout={() => console.trace("we out ere")}>
       <div>
         <button onclick={() => layerGroupArray.splice(z > 0 ? z - 1 : 0, 0, layerGroupArray.splice(z, 1)[0])}>▲</button>
       </div>
+      <!-- FIXME: Tab focus lost when pressed with keyboard; same with X -->
       <div>
         <button onclick={() => layerGroupArray.splice(z < layerGroupArray.length - 1 ? z + 1 : layerGroupArray.length - 1, 0, layerGroupArray.splice(z, 1)[0])}>▼</button>
       </div>
-      <!-- <div>
-        <button onclick={() => layerGroup.move(layer, (z < layerGroup.map.size - 1) ? z + 1 : layerGroup.map.size - 1)}></button>
-      </div> -->
       <div style:margin="0px 8px">{z}</div>
       <div style:flex=1>{layer.id}</div>
       <div>
