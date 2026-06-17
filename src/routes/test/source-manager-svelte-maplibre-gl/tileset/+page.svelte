@@ -6,14 +6,13 @@
   import { untrack } from 'svelte';
   import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from 'svelte-maplibre-gl';
 
-  // '/local/bagunca-2025-10-21T1629/height.pmtiles',
-  // '/local/bagunca-2025-10-21T1629/nan.pmtiles',
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const remoteUrl = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
-  const remoteUrlDem = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
+  const remoteUrlDem = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles');
   // const initialUrls = [localUrl, remoteUrl]
 
+  // TODO: Make shared.svelte.ts
   const sources: SvelteMap<string, PMTilesTileset> = new SvelteMap(
     // initialUrls.map((url) => [crypto.randomUUID(), sourceFromUrl(url)])
   )
@@ -70,11 +69,12 @@
 
 <div style={'height: 100%; overflow: hidden; display: flex; flex-direction: column;'}>
   <div style={'display: flex;'}>
-    <button onclick={() => addSource(sourceFromUrl(localUrl))}>Add local raster</button>
-    <button onclick={() => addSource(sourceFromUrl(localUrlDem))}>Add local raster DEM</button>
-    <button onclick={() => addSource(sourceFromUrl(remoteUrl))}>Add remote</button>
+    Add
+    <button onclick={() => addSource(sourceFromUrl(localUrl))}>Local</button>
+    <button onclick={() => addSource(sourceFromUrl(localUrlDem))}>Local DEM</button>
+    <button onclick={() => addSource(sourceFromUrl(remoteUrl))}>Remote</button>
+    <button onclick={() => addSource(sourceFromUrl(remoteUrlDem))}>Remote DEM</button>
     <button onclick={() => sources.delete([...sources.keys()][0])}>Delete</button>
-    <!-- <button onclick={() => addSource(sourceFromUrl(remoteUrl))}>Add remote</button> -->
   </div>
   <div style={'display: flex;'}>
     <button onclick={

@@ -54,17 +54,16 @@ import {
 <PMTilesProtocol />
 
 <!--
-
+// see https://github.com/maplibre/maplibre-gl-js/discussions/3787#discussioncomment-12871417
+// You can achieve the functionality of slots with hidden background layers, no?
+  {
+    "id": "my-slot",
+    "type": "background",
+    "layout": {"visibility": "none"}
+  }
 <map>
   each slot (n-layers?)
     <background-layer>
-      // see https://github.com/maplibre/maplibre-gl-js/discussions/3787#discussioncomment-12871417
-      // You can achieve the functionality of slots with hidden background layers, no?
-        {
-          "id": "my-slot",
-          "type": "background",
-          "layout": {"visibility": "none"}
-        }
       id={`slot-{i}`}
   each source, besides terrain source
     <source>
@@ -77,7 +76,6 @@ import {
   the active terrain source
     <source>
       <terrain>
-
 -->
 
 <div style:display=flex style:height=100vh>
