@@ -3,19 +3,23 @@
   import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/tileset';
   import type { OverrideMapLibreSourceSpec } from '$lib/tileset';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
-  import { untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from 'svelte-maplibre-gl';
 
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const remoteUrl = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
   const remoteUrlDem = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles');
-  // const initialUrls = [localUrl, remoteUrl]
+  const initialUrls = [localUrl, localUrlDem]
 
   // TODO: Make shared.svelte.ts
   const sources: SvelteMap<string, PMTilesTileset> = new SvelteMap(
     // initialUrls.map((url) => [crypto.randomUUID(), sourceFromUrl(url)])
   )
+
+  onMount(() => {
+    initialUrls.forEach((url) => addSource(sourceFromUrl(url)));
+  })
 
   function mirrorMap(original: SvelteMap<any, any>, mirror: SvelteMap<any, any>, setter?: Function) {
     const originalKeys = new Set(original.keys());
