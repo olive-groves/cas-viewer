@@ -1,48 +1,112 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
   import { flip } from "svelte/animate";
-  class IdLayer {
-    layer = {type: "raster"};
-    id = crypto.randomUUID();  // Key is essential for non-rerenders
+  import { fade, slide, fly } from "svelte/transition";
+
+  class OrderedSvelteMap<V> {
+    map: SvelteMap<string, V> = new SvelteMap();
+    order: string[] = $state([]);
+    private reorderItemInPlace: boolean;
+
+    constructor(initialValues?: V[], options = {reorderItemInPlace: false}) {
+      this.reorderItemInPlace = options.reorderItemInPlace;
+      if (typeof initialValues !== 'undefined') {
+        initialValues.forEach((value) => this.add(value));
+      }
+    }
+
+    generateKey(): string {
+      return crypto.randomUUID()
+    }
+
+    add(value: V, options?: {index?: number}) {
+      const key = this.generateKey();
+      this.map.set(key, value)
+
+      const to = options?.index ?? this.order.length;
+      const toRemainder = to % (this.order.length + 1);
+      if (this.reorderItemInPlace) {
+        this.order = this.order.toSpliced(toRemainder < 0 ? this.order.length + toRemainder : toRemainder, 0, key);
+      } else {
+        this.order.splice(toRemainder < 0 ? this.order.length + toRemainder : toRemainder, 0, key)
+      }
+
+      return key
+    }
+
+    delete(keyOrIndex: string | number): boolean {
+      let key, index;
+      if (typeof keyOrIndex === "number") {
+        index = keyOrIndex;
+        key = this.order.at(index);
+      } else {
+        key = keyOrIndex;
+        index = this.order.indexOf(key);
+      }
+      if (index < 0) return false
+      this.order.splice(index, 1);
+      return key ? this.map.delete(key) : false;
+    }
+
+    move(from: number, to: number) {
+      const toRemainder = to % this.order.length;
+      if (toRemainder === from) return;
+      if (this.reorderItemInPlace) {  // Slower (copies), but retains focus
+        this.order = this.order.toSpliced(from, 1).toSpliced(toRemainder < 0 ? this.order.length + toRemainder : toRemainder, 0, this.order[from]);
+      } else {  // Faster (mutates), but does not retain focus
+        this.order.splice(toRemainder < 0 ? this.order.length + toRemainder : toRemainder, 0, this.order.splice(from, 1)[0])
+      }
+    }
+
+  }
+
+  class Value {
+    id = crypto.randomUUID();
   }
   const initial_n = 5;
-  const layerGroupArray = $state([...Array(initial_n).keys()].map(() => new IdLayer()));
+  const initial_values = Array.from(Array(initial_n), (_) => new Value());
+  const valuesMap = new OrderedSvelteMap(initial_values, {reorderItemInPlace: true});
 
-  // Class that manages a list of ID'd layers,
+  // Keep tab focus on move
+  let previousActiveElement: HTMLLIElement | null = $state(null);
+	$effect(() => {
+		void valuesMap.order;  // Array whose order may be rearranged.
+    let gaveFocusToPrevious = false;
+		untrack(() => {
+      if ((document?.activeElement === document?.body) && previousActiveElement) {  // Reorder moves focus to body, so we set to previous
+        previousActiveElement.focus();
+        gaveFocusToPrevious = true;
+      }
+		});
+    if (gaveFocusToPrevious) previousActiveElement = null;
+	});
 </script>
 
-<div>
-  {#each {length: layerGroupArray.length}, z }
-    {z}
-  {/each}
-</div>
-
 <div style:display=flex style:flex-direction=column>
-  {#each layerGroupArray as layer, z (layer.id)}
-    <div animate:flip>{layer.id}</div>
-  {/each}
-</div>
-
-<div>
-  <button onclick={() => layerGroupArray.unshift(new IdLayer())}>Add to start</button>
-</div>
-<div>
-  <button onclick={() => layerGroupArray.splice(0, 0, layerGroupArray.splice(Math.floor(layerGroupArray.length/2), 1)[0])}>Move middle to start</button>
-</div>
-<div style:display=flex style:flex-direction=column>
-  {#each layerGroupArray as layer, z (layer.id)}
-    <div style:display=flex animate:flip onfocusout={() => console.trace("we out ere")}>
+  <button onclick={() => valuesMap.add(new Value(), {index: 0})}>Add to start</button>
+  <button onclick={() => valuesMap.add(new Value())}>Add to end</button>
+  {#each valuesMap.order as key, index (key)}
+    {@const value = valuesMap.map.get(key)}
+    <div style:display=flex animate:flip in:fly out:slide>
       <div>
-        <button onclick={() => layerGroupArray.splice(z > 0 ? z - 1 : 0, 0, layerGroupArray.splice(z, 1)[0])}>▲</button>
+        <button onclick={() => valuesMap.move(index, index - 1)} onfocusout={(e) => previousActiveElement = e.target}>
+          ▲
+        </button>
       </div>
-      <!-- FIXME: Tab focus lost when pressed with keyboard; same with X -->
       <div>
-        <button onclick={() => layerGroupArray.splice(z < layerGroupArray.length - 1 ? z + 1 : layerGroupArray.length - 1, 0, layerGroupArray.splice(z, 1)[0])}>▼</button>
+        <button onclick={() => {valuesMap.move(index, index + 1)}} onfocusout={(e) => previousActiveElement = e.target}>
+          ▼
+        </button>
       </div>
-      <div style:margin="0px 8px">{z}</div>
-      <div style:flex=1>{layer.id}</div>
       <div>
-        <button onclick={() => layerGroupArray.splice(z, 1)}>X</button>
+        <button onclick={() => {valuesMap.delete(index)}}>
+          ×
+        </button>
       </div>
+      <div style:margin="0px 8px">{index}</div>
+      <div style:flex=1>{value.id}</div>
     </div>
   {/each}
 </div>
+
