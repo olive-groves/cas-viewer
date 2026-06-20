@@ -69,16 +69,12 @@
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const remoteUrl = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
   const remoteUrlDem = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/height.pmtiles');
-  const initialUrls = [localUrl, localUrlDem, remoteUrl, remoteUrlDem]
+  const initialUrls = [localUrl, localUrlDem]
 
   const sourceManager = new SourceManager();
 
   onMount(() => {
     initialUrls.forEach((url) => addSource(sourceFromUrl(url)));
-    // addLayer(0)
-    addLayer(1)
-    // addLayer(2)
-    // addLayer(3)
   })
 
   // const mapLibreSourceOverrides: SvelteMap<string, OverrideMapLibreSourceSpec> = new SvelteMap();
@@ -95,46 +91,17 @@
     }
   };
 
-  function addSource(source) {sourceManager.add(source, {mapLibre: {override: {}}})};
-  function addLayer(i) {mapLibreLayerGroup.add({source_key: [...sourceManager.mapLibreSources.keys()][i]})}
-
-  // Depends on the map, not the order
-  const mapLibreLayerGroup = new OrderedSvelteMap();
-  // FIXME: Uniqueness based on SOURCE and SOURCE TYPE, because the each-layer goes into a given SOURCE, but a layer could have an overridden source
-  const uniqueSourceKeys = $derived(
-    [...new Set(Array.from(mapLibreLayerGroup.map.values(), (value) => value.source_key))]
-  )
+  function addSource(source) {sourceManager.add(source, {mapLibre: {override: {type: "raster-dem"}}})};
 
 </script>
 
-<!-- {#each sourceManager.mapLibreSources as [key, {source: {spec, overrideSpec}, override}] (key)}
-  {#await spec then spec}
-    <div>
-      {key} {spec.type} {override.type}
-    </div>
-  {/await}
-{/each} -->
-
-<!-- {#each uniqueSourceKeys as sourceKey}
-{@const source = sourceManager.mapLibreSources.get(sourceKey)}
-{#await source?.source.spec then spec}
-  <div>
-    {spec.type}
-  </div>
-{/await}
-{/each} -->
-
-<PMTilesProtocol />
+<PMTilesProtocol pmtiles={[...sourceManager.sources.values()].map((value) => value.archive)} />
 
 <div style={'height: 100%; overflow: hidden; display: flex; flex-direction: column;'}>
   <div style={'display: flex;'}>
     Add
-    <button onclick={() => addLayer(0)}>Local</button>
-    <button onclick={() => addLayer(1)}>Local DEM</button>
-    <button onclick={() => addLayer(2)}>Remote</button>
-    <button onclick={() => addLayer(3)}>Remote DEM</button>
-    <button onclick={() => sourceManager.delete([...sourceManager.sources.keys()][0])}>Delete</button>
-    <input type=range bind:value={opacity} min={0} max={1} step={0.1}/>
+    <button onclick={() => addSource(sourceFromUrl(localUrl))}>Local</button>
+    <button onclick={() => addSource(sourceFromUrl(localUrlDem))}>Local DEM</button>
   </div>
   <div style={'display: flex; height: 200px;'}>
     <MapLibre
@@ -144,50 +111,15 @@
       transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom})}
       zoom={-2}
     >
-    {#each uniqueSourceKeys as sourceKey (sourceKey)}
+      {@const sourceKey = [...sourceManager.mapLibreSources.keys()][0]}
       {@const override = sourceManager.mapLibreSources.get(sourceKey)?.override}
-      {#await sourceManager.mapLibreSources.get(sourceKey).source.spec then spec}
-        {@const layers = [...mapLibreLayerGroup.map].filter(([layerKey, value]) => value.source_key === sourceKey)}
-        {#if override?.type === "raster-dem" || ((spec.type === "raster-dem") && !override?.type)}
-          <RasterDEMTileSource
-            {...{...spec, ...override}}
-          >
-            {#each layers as [layerKey, value] (layerKey)}
-              <HillshadeLayer />
-            {/each}
-          </RasterDEMTileSource>
-        {:else if override?.type === "raster" || ((spec.type === "raster") && !override?.type)}
-          <RasterTileSource
-            {...{...spec, ...override}}
-          >
-            {#each layers as [layerKey, value] (layerKey)}
-            <RasterLayer
-                paint={{
-                  'raster-opacity': opacity,
-                }}
-              />
-            {/each}
-          </RasterTileSource>
-        {/if}
+      {#await [...sourceManager.mapLibreSources.values()].at(0)?.source.spec then spec}
+        <RasterDEMTileSource
+          {...{...spec, ...override}}
+        >
+          <HillshadeLayer/>
+        </RasterDEMTileSource>
       {/await}
-    {/each}
     </MapLibre>
-  </div>
-  {#each uniqueSourceKeys as key}
-    <div>
-      {key}
-    </div>
-  {/each}
-  <div style={'border-top: 1px solid red; overflow-y: scroll; flex: 1;'}>
-    {#each sourceManager.mapLibreSources as [key, {source, ...rest}] (key)}
-      <div>
-        {key}
-        {#await source.spec then spec}
-          {#each Object.entries(spec) as [key, value]}
-            <div>{key}: {value}</div>
-          {/each}
-        {/await}
-      </div>
-    {/each}
   </div>
 </div>
