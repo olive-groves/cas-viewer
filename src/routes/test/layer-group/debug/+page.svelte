@@ -9,47 +9,15 @@
 
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { ColorReliefLayer, HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, NavigationControl } from 'svelte-maplibre-gl';
-
-  // A layer group defines a map of layers with a particular order.
-  // You start with an empty group.
-  // Add a layer.
-  // This layer gets added into the group.map with a random key, and its key gets pushed to the group.order.
-  // Add another layer, and the same happens.
-  // You could already #each across the keys in group.order and get/place each layer with group.map.get(key):
-  // each key in group.key
-  //  <source>
-  //    <layer ...>
-  //  </source>
-
-  // The problem is that for MapLibre we should add by source.
-  // That is, for each unique source, we add the layers that use that source.
-  // If we were to add a source for each layer, we might add redundant sources.
-  // Redundant sources will fetch tiles twice, thrice, etc. as needed.
-  // So, for a MapLibre layer group, we add instead by source.
-  // (To manage order, we'll use slots and `beforeId`.)
-  // (Future-proofedness asks we assume groups can be nested.)
-  // We need something like this:
-  //
-  // #each uniqueSource in sourcesOfLayerGroup
-  //  <source uniqueSource>
-  //    #each layer that uses that uniqueSource
-  //      <layer>
-
-  let opacity = $state(0.1)
-
   class SourceManager {
-    // TODO: Abstract this out with adapters; that is, elect to have mapLibre, openseadragon, etc.?
     sources: SvelteMap<string, PMTilesTileset> = new SvelteMap();
     mapLibreSources: SvelteMap<string, {source: MapLibreSourceSpecAdapter, override: OverrideMapLibreSourceSpec}> = new SvelteMap();
 
     add(source: PMTilesTileset, adapters?: {mapLibre?: {override?: OverrideMapLibreSourceSpec}}) {
-      // Add to the list of sources and instantiate relevant adapters
       const key = crypto.randomUUID();
 
-      // Sources
       this.sources.set(key, source);
 
-      // MapLibre sources
       const override = adapters?.mapLibre?.override;
       const mapLibreSource = {
         source: new MapLibreSourceSpecAdapter(source),
@@ -75,7 +43,6 @@
     initialUrls.forEach((url) => addSource(sourceFromUrl(url)));
   })
 
-  // const mapLibreSourceOverrides: SvelteMap<string, OverrideMapLibreSourceSpec> = new SvelteMap();
   function sourceFromUrl(url: URL): PMTilesTileset {
     const pathname = url.pathname.toLowerCase();
 
@@ -151,15 +118,6 @@
           {/if}
         {/await}
       {/each}
-      <!-- {@const sourceKey = [...sourceManager.mapLibreSources.keys()][0]}
-      {@const override = sourceManager.mapLibreSources.get(sourceKey)?.override}
-      {#await [...sourceManager.mapLibreSources.values()].at(0)?.source.spec then spec}
-        <RasterDEMTileSource
-          {...{...spec, ...override}}
-        >
-          <HillshadeLayer/>
-        </RasterDEMTileSource>
-      {/await} -->
     </MapLibre>
   </div>
 </div>
