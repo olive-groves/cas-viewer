@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SvelteMap } from 'svelte/reactivity';
-  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/tileset';
-  import type { OverrideMapLibreSourceSpec } from '$lib/tileset';
+  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/sources';
+  import type { OverrideMapLibreSourceSpec } from '$lib/sources';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { onMount, untrack } from 'svelte';
   import { HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from 'svelte-maplibre-gl';

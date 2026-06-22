@@ -1,9 +1,10 @@
 <script lang="ts">
   import { OrderedSvelteMap } from "$lib/utils.svelte";
+  import { SourceManager } from "$lib/source-manager.svelte";
 
   import { SvelteMap } from 'svelte/reactivity';
-  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/tileset';
-  import type { OverrideMapLibreSourceSpec } from '$lib/tileset';
+  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/sources';
+  import type { OverrideMapLibreSourceSpec } from '$lib/sources';
   import { onMount, untrack } from 'svelte';
 
 
@@ -37,34 +38,6 @@
 
   let opacity = $state(0.1)
 
-  class SourceManager {
-    // TODO: Abstract this out with adapters; that is, elect to have mapLibre, openseadragon, etc.?
-    sources: SvelteMap<string, PMTilesTileset> = new SvelteMap();
-    mapLibreSources: SvelteMap<string, {source: MapLibreSourceSpecAdapter, override: OverrideMapLibreSourceSpec}> = new SvelteMap();
-
-    add(source: PMTilesTileset, adapters?: {mapLibre?: {override?: OverrideMapLibreSourceSpec}}) {
-      // Add to the list of sources and instantiate relevant adapters
-      const key = crypto.randomUUID();
-
-      // Sources
-      this.sources.set(key, source);
-
-      // MapLibre sources
-      const override = adapters?.mapLibre?.override;
-      const mapLibreSource = {
-        source: new MapLibreSourceSpecAdapter(source),
-        override
-      }
-      this.mapLibreSources.set(key, mapLibreSource);
-      return key
-    }
-
-    delete(key: string) {
-      this.sources.delete(key);
-      this.mapLibreSources.delete(key);
-    }
-  }
-
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const remoteUrl = new URL('https://tiles.larsmaxfield.com/paintings/almond-blossom/20250107-1604/20250520_153658/rgb.pmtiles');
@@ -96,13 +69,13 @@
   };
 
   function addSource(source) {sourceManager.add(source, {mapLibre: {override: {}}})};
-  function addLayer(i) {mapLibreLayerGroup.add({source_key: [...sourceManager.mapLibreSources.keys()][i]})}
+  function addLayer(i) {mapLibreLayerGroup.add({sourceKey: [...sourceManager.mapLibreSources.keys()][i]})}
 
   // Depends on the map, not the order
   const mapLibreLayerGroup = new OrderedSvelteMap();
   // FIXME: Uniqueness based on SOURCE and SOURCE TYPE, because the each-layer goes into a given SOURCE, but a layer could have an overridden source
   const uniqueSourceKeys = $derived(
-    [...new Set(Array.from(mapLibreLayerGroup.map.values(), (value) => value.source_key))]
+    [...new Set(Array.from(mapLibreLayerGroup.map.values(), (value) => value.sourceKey))]
   )
 
 </script>
@@ -147,7 +120,7 @@
     {#each uniqueSourceKeys as sourceKey (sourceKey)}
       {@const override = sourceManager.mapLibreSources.get(sourceKey)?.override}
       {#await sourceManager.mapLibreSources.get(sourceKey).source.spec then spec}
-        {@const layers = [...mapLibreLayerGroup.map].filter(([layerKey, value]) => value.source_key === sourceKey)}
+        {@const layers = [...mapLibreLayerGroup.map].filter(([layerKey, value]) => value.sourceKey === sourceKey)}
         {#if override?.type === "raster-dem" || ((spec.type === "raster-dem") && !override?.type)}
           <RasterDEMTileSource
             {...{...spec, ...override}}

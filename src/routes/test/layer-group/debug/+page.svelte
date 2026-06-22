@@ -2,8 +2,8 @@
   import { OrderedSvelteMap } from "$lib/utils.svelte";
 
   import { SvelteMap } from 'svelte/reactivity';
-  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/tileset';
-  import type { OverrideMapLibreSourceSpec } from '$lib/tileset';
+  import { PMTilesTileset, MapLibreSourceSpecAdapter, RemotePMTilesTileset } from '$lib/sources';
+  import type { OverrideMapLibreSourceSpec } from '$lib/sources';
   import { onMount, untrack } from 'svelte';
 
 

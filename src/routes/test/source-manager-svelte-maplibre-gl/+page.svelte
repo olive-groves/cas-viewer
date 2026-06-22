@@ -1,57 +1,98 @@
 <script lang="ts">
-  import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
-import {
-    MapLibre,
-    RasterTileSource,
-    RasterDEMTileSource,
-    RasterLayer,
-    HillshadeLayer,
-    Terrain,
-    TerrainControl
-  } from 'svelte-maplibre-gl';
+  // Orchestration of sources, synced layers, and layer groups...
+  // Viewer Manager?
+  import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
+  import { RemotePMTilesTileset, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
+  import { MapLibreSyncedLayer } from "$lib/synced-layer.svelte";
 
-// MapLibre-knowing?
-// Svelte-agnostic.
-// Class LayerManager
-//   layers  // object of layers, each with their source, type, etc., manager-id (unique)
-//   addLayer  // add a layer to the list with a source, type, etc., id
-//   removeLayer  // remove a layer using its id
-//   reorderLayer  // using 'beforeId'? or index? do we rearrange whole layers object?
-//   numberOfLayers  // derived n of layers? (convenience for slot-layers?)
+  const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
+  const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
+  const initialUrls = [localUrl, localUrlDem]
 
-  let paths = $state([
-    '/local/bagunca-2025-10-21T1629/rgb.pmtiles',
-    '/local/bagunca-2025-10-21T1629/height.pmtiles',
-    '/local/bagunca-2025-10-21T1629/rgb.pmtiles',
-    '/local/bagunca-2025-10-21T1629/height.pmtiles',
-    '/local/bagunca-2025-10-21T1629/rgb.pmtiles',
-    '/local/bagunca-2025-10-21T1629/height.pmtiles',
-    '/local/bagunca-2025-10-21T1629/rgb.pmtiles',
-    '/local/bagunca-2025-10-21T1629/height.pmtiles',
-    // '/local/bagunca-2025-10-21T1629/nan.pmtiles',
-  ])
-  // import.meta.url to resolve with Vite
-  let urls = $derived(paths.map((path) => new URL(path, import.meta.url)))
+  function sourceFromUrl(url: URL): PMTilesTileset {
+    const pathname = url.pathname.toLowerCase();
 
-  function getFileStats(url: string){
-    let headers;
-    fetch(url, {method: 'HEAD'})
-      .then((res) => {
-        headers = res.headers;
-        console.log([
-          headers.get('content-length'),
-          headers.get('last-modified'),
-        ]);
-      })
+    if (pathname.endsWith(".json")) {
+      // return new TileJSONTileset(url);
+      throw Error("JSON not yet supported")
+    } else if (pathname.endsWith(".pmtiles")) {
+      return new RemotePMTilesTileset(url.toString());
+    } else {
+      throw Error("Unable to parse source from url")
+    }
+  };
+
+  function addSource(source: PMTilesTileset) {
+    return sourceManager.add(
+      source,
+      {
+        mapLibre: {
+          forceSpecType: undefined,
+          override: {}
+        }
+      }
+    )
+  };
+
+  // function addLayerFromSource()
+
+  // Proof:
+  import { onMount } from "svelte";
+
+  let nViewers = $state(2);
+
+  async function deriveSyncedLayerFromMapLibreSource(
+    mapLibreSourceKey: string,
+    nOverrides: number,
+  ) {
+    const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
+    if (mapLibreSource === undefined) return;
+    const spec: MapLibreSourceSpec = await mapLibreSource.source.spec;
+    const fullSpec = {...spec, ...mapLibreSource?.override}
+    const overrides = [...Array(nViewers).keys()].map(() => [crypto.randomUUID(), {spec: {}}])
+    const syncedLayer = new MapLibreSyncedLayer(
+      fullSpec,
+      undefined,
+      overrides,
+    )
+    syncedMapLibreLayers.set(
+      crypto.randomUUID(),
+      syncedLayer
+    )
   }
+  onMount(() => {
+    const initialSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
 
-  $effect(() => {
-    urls.forEach((url) => getFileStats(url.href))
+    // For each source, create a synced layer derived from its spec with as many
+    // overrides as nViewers, to simulate side by side with the same source
+    initialSourceKeys.forEach((sourceKey) => {
+      // const mapLibreSource = sourceManager.mapLibreSources.get(sourceKey);
+      // console.log(
+      //   mapLibreSource?.source
+      // )
+      deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
+    })
+    // addLayer()
   })
 
 </script>
 
-<PMTilesProtocol />
+{#each syncedMapLibreLayers as [syncedLayerKey, syncedLayer]}
+  <div>{syncedLayer.spec.type}</div>
+  {#each syncedLayer.overrides as [overrideKey, override]}
+    <div>Override spec: {override.spec}</div>
+  {/each}
+{/each}
+
+
+<!-- MapLibre-knowing?
+Svelte-agnostic.
+Class LayerManager
+  layers  // object of layers, each with their source, type, etc., manager-id (unique)
+  addLayer  // add a layer to the list with a source, type, etc., id
+  removeLayer  // remove a layer using its id
+  reorderLayer  // using 'beforeId'? or index? do we rearrange whole layers object?
+  numberOfLayers  // derived n of layers? (convenience for slot-layers?) -->
 
 <!--
 // see https://github.com/maplibre/maplibre-gl-js/discussions/3787#discussioncomment-12871417
@@ -77,25 +118,3 @@ import {
     <source>
       <terrain>
 -->
-
-<div style:display=flex style:height=100vh>
-  {#each urls as url, i}
-  <MapLibre
-    inlineStyle="height: 100%; width: 100%;"
-    transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom})}
-    renderWorldCopies={false}
-  >
-    <RasterTileSource
-      id={`raster-${i}`}
-      url={`pmtiles://${url}`}
-    >
-      <RasterLayer
-        paint={{"raster-opacity": 0.1}}
-      />
-      <RasterLayer
-        paint={{"raster-opacity": 0.3, "raster-hue-rotate": 100,}}
-      />
-    </RasterTileSource>
-  </MapLibre>
-  {/each}
-</div>

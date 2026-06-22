@@ -271,7 +271,7 @@ type MapLibreImageSourceSpec = {
   coordinates: MapLibreCoordinates,
 }
 
-type MapLibreSourceSpec =
+export type MapLibreSourceSpec =
   | MapLibreRasterSourceSpec
   | MapLibreRasterDemSourceSpec
   | MapLibreVectorSourceSpec
@@ -311,18 +311,21 @@ For example, you pass a PMTilesImage, that means it generates url, tileSize, enc
 //   ...myOverrides,  // type: "raster" when "raster-dem" to see encoded, for example
 // }
 
+export type MapLibreSourceSpecType = maplibregl.SourceSpecification["type"];
+
 export class MapLibreSourceSpecAdapter {
   source: PMTilesTileset | ImageSource;
   spec: MaybePromise<MapLibreSourceSpec>;
-  overrideSpec?: OverrideMapLibreSourceSpec;
 
   constructor(
     source: PMTilesTileset | ImageSource,
-    overrideSpec?: OverrideMapLibreSourceSpec,
+    forceSpecType?: MapLibreSourceSpecType,
   ) {
     this.source = source;
-    this.overrideSpec = overrideSpec;
-    this.spec = this._initializeSpec();
+    if (forceSpecType) {
+      console.warn("forceSpecType is not reactive and will not update the spec")
+    }
+    this.spec = this._initializeSpec(forceSpecType);
   }
 
   // TODO: This is way too big.
@@ -388,10 +391,10 @@ export class MapLibreSourceSpecAdapter {
           ...baseSpec,
           type: "raster-dem",
           ...(encoding ? { encoding } : {}),
-          ...(metadata?.redFactor ? { redFactor: metadata.redFactor } : {}),
-          ...(metadata?.blueFactor ? { blueFactor: metadata.blueFactor } : {}),
-          ...(metadata?.greenFactor ? { greenFactor: metadata.greenFactor } : {}),
-          ...(metadata?.baseShift ? { baseShift: metadata.baseShift } : {}),
+          ...(metadata?.redFactor !== undefined ? { redFactor: metadata.redFactor } : {}),
+          ...(metadata?.greenFactor !== undefined ? { greenFactor: metadata.greenFactor } : {}),
+          ...(metadata?.blueFactor !== undefined ? { blueFactor: metadata.blueFactor } : {}),
+          ...(metadata?.baseShift !== undefined ? { baseShift: metadata.baseShift } : {}),
         } satisfies MapLibreRasterDemSourceSpec;
       } else {
         spec = {
@@ -418,9 +421,9 @@ export class MapLibreSourceSpecAdapter {
     return spec;
   }
 
-  private async _initializeSpec(): Promise<MapLibreSourceSpec> {
+  private async _initializeSpec(forceSpecType?: MapLibreSourceSpecType): Promise<MapLibreSourceSpec> {
     const source = this.source;
-    const forceType = this.overrideSpec?.type;
+    const forceType = forceSpecType;
     let asyncSpec: () => Promise<MapLibreSourceSpec>;
     switch (source.format) {
       case "pmtiles":
@@ -432,7 +435,7 @@ export class MapLibreSourceSpecAdapter {
         ) {
           throw Error(`Unsupported type to force: ${forceType}`)
         }
-        asyncSpec = () => MapLibreSourceSpecAdapter.getPMTilesMapLibreSpec((source as PMTilesTileset), forceType)
+        asyncSpec = () => MapLibreSourceSpecAdapter.getPMTilesMapLibreSpec(source, forceType)
         break
       // TODO: How to check for static image? (This is where the support for the image should be checked 'jpeg' | 'jpg' | 'png' |... maybe)
       default:
