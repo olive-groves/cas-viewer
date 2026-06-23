@@ -1,12 +1,15 @@
 import { SvelteMap } from "svelte/reactivity";
 
+type Key = string | `${string}-${string}-${string}-${string}-${string}`;
+
 export class OrderedSvelteMap<V> {
   map: SvelteMap<string, V> = new SvelteMap();
-  order: string[] = $state([]);
+  order: Key[] = $state([]);
   // Whether to reorder the key in place upon add and move, allowing tab focus to be retained* in #each blocks.
   // *This requires you to track the previously focused element, for which there is an example in /routes/lib.
   private reorderItemInPlace: boolean;
 
+  // TODO: Add keys with initial values... like set?
   constructor(initialValues?: V[], options = {reorderItemInPlace: false}) {
     this.reorderItemInPlace = options.reorderItemInPlace;
     if (typeof initialValues !== 'undefined') {
@@ -18,8 +21,9 @@ export class OrderedSvelteMap<V> {
     return crypto.randomUUID()
   }
 
-  add(value: V, options?: {index?: number}) {
-    const key = this.generateKey();
+  // Change to .set(), like a map? key, value, options
+  add(value: V, options?: {key?: string, index?: number}) {
+    const key = options?.key ?? this.generateKey();
     this.map.set(key, value)
 
     const to = options?.index ?? this.order.length;

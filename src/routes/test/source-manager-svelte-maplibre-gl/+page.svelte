@@ -4,6 +4,12 @@
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
   import { RemotePMTilesTileset, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
   import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
+  import { OrderedSvelteMap } from "$lib/utils.svelte";
+
+  // FIXME: For development purposes...
+  sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
+  syncedMapLibreLayers.forEach((_, key) => syncedMapLibreLayers.delete(key));
+  layerGroups.map.forEach((_, key) => layerGroups.delete(key));
 
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
@@ -40,6 +46,8 @@
   import { onMount } from "svelte";
 
   let nViewers = $state(2);
+  // svelte-ignore state_referenced_locally
+  [...Array(nViewers).keys()].map(() => layerGroups.add(new OrderedSvelteMap()))
 
   async function deriveSyncedLayerFromMapLibreSource(
     mapLibreSourceKey: string,
@@ -72,12 +80,18 @@
       undefined,
       overrides,
     )
-    syncedMapLibreLayers.set(
-      crypto.randomUUID(),
-      syncedLayer
-    )
+    const syncedLayerKey = crypto.randomUUID();
+    syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);
+    const overrideKeys = [...syncedLayer.overrides.keys()];
+    layerGroups.order.forEach((layerGroupKey, index) => {
+      layerGroups.map.get(layerGroupKey)?.add(syncedLayerKey, {key: overrideKeys.at(index)})
+    })
+    // layerGroups.map.get(layerGroups.order.at(0))?.add(syncedLayerKey, {key: overrideKeys.at(0)})
+    // layerGroups.map.get(layerGroups.order.at(1))?.add(syncedLayerKey, {key: overrideKeys.at(1)})
   }
+
   onMount(() => {
+
     const initialSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
 
     // For each source, create a synced layer derived from its spec with as many
@@ -95,13 +109,21 @@
 </script>
 
 <h2>List of layer groups and their respective (override) layers</h2>
+{#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
+  <h3>Viewer (layer group): {iGroup}</h3>
+  {#each layerGroup.map as [overrideKey, syncedLayerKey] (overrideKey)}
+    <div>
+      {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
+    </div>
+  {/each}
+{/each}
+
 <h2>List of synced layers and their respective overrides</h2>
 {#each syncedMapLibreLayers as [syncedLayerKey, syncedLayer]}
-  <div>{syncedLayer.spec.type}</div>
+  <h3>{syncedLayer.spec.type} {syncedLayerKey}</h3>
   {#each syncedLayer.overrides as [overrideKey, override]}
     <div>Override: {overrideKey}</div>
     {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
-
       <div style:display=flex>
       <p>{property}</p>
       {#if typeof override.spec?.paint?.[property] !== "undefined"}
