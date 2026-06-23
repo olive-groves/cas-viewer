@@ -1,10 +1,15 @@
 import { SvelteMap } from "svelte/reactivity";
 import { MapLibreSourceSpecAdapter, type MapLibreSourceSpecType, type OverrideMapLibreSourceSpec, type PMTilesTileset } from "./sources";
 
+export type MapLibreSource = {
+  source: MapLibreSourceSpecAdapter,
+  override: OverrideMapLibreSourceSpec
+}
+
 export class SourceManager {
   // TODO: Abstract this out with adapters; that is, elect to have mapLibre, openseadragon, etc.?
   sources: SvelteMap<string, PMTilesTileset> = new SvelteMap();
-  mapLibreSources: SvelteMap<string, {source: MapLibreSourceSpecAdapter, override: OverrideMapLibreSourceSpec}> = new SvelteMap();
+  mapLibreSources: SvelteMap<string, MapLibreSource> = new SvelteMap();
 
   add(
     source: PMTilesTileset,

@@ -3,7 +3,7 @@
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
   import { RemotePMTilesTileset, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
-  import { MapLibreSyncedLayer } from "$lib/synced-layer.svelte";
+  import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
 
   const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
@@ -47,11 +47,28 @@
   ) {
     const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
     if (mapLibreSource === undefined) return;
-    const spec: MapLibreSourceSpec = await mapLibreSource.source.spec;
-    const fullSpec = {...spec, ...mapLibreSource?.override}
-    const overrides = [...Array(nViewers).keys()].map(() => [crypto.randomUUID(), {spec: {}}])
+    const sourceSpec = {
+      ...await mapLibreSource.source.spec,
+      ...mapLibreSource?.override
+    }
+    const layerSpecType = sourceSpec.type === "raster" ? "raster" : "hillshade";
+    const initialPaintSpec =
+      layerSpecType === "raster" ?
+      {
+        "raster-opacity": 0.5,
+      } :
+      {
+        "hillshade-exaggeration": 0.5,
+        "hillshade-illumination-direction": 315,
+      }
+    const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
+      source: mapLibreSourceKey,
+      type: layerSpecType,
+      paint: initialPaintSpec,
+    }
+    const overrides = [...Array(nOverrides).keys()].map(() => [crypto.randomUUID(), {spec: {}}] satisfies [string, LayerOverride<AnyLayerSpec>])
     const syncedLayer = new MapLibreSyncedLayer(
-      fullSpec,
+      layerSpec,
       undefined,
       overrides,
     )
@@ -77,10 +94,31 @@
 
 </script>
 
+<h2>List of layer groups and their respective (override) layers</h2>
+<h2>List of synced layers and their respective overrides</h2>
 {#each syncedMapLibreLayers as [syncedLayerKey, syncedLayer]}
   <div>{syncedLayer.spec.type}</div>
   {#each syncedLayer.overrides as [overrideKey, override]}
-    <div>Override spec: {override.spec}</div>
+    <div>Override: {overrideKey}</div>
+    {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
+
+      <div style:display=flex>
+      <p>{property}</p>
+      {#if typeof override.spec?.paint?.[property] !== "undefined"}
+        <input type=range bind:value={override.spec.paint[property]} style:user-select=none/>
+      {:else if typeof syncedLayer.spec.paint?.[property] !== "undefined"}
+        <input type=range bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
+      {/if}
+      <input type=checkbox checked={override.spec?.paint?.[property] === undefined} onchange={(e) => {
+        if (e.target.checked) {
+          delete override.spec.paint[property];
+        } else {
+          override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
+        }
+      }}>
+      </div>
+
+    {/each}
   {/each}
 {/each}
 

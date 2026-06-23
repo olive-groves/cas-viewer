@@ -23,7 +23,7 @@ type LayerSpecByType<TType extends LayerType> = MakeOptional<
   "id"
 >;
 
-type LayerOverride<TSpec> = {
+export type LayerOverride<TSpec> = {
   spec: DeepPartial<Omit<TSpec, "type">>;
   background?: DeepPartial<Background>;
 };

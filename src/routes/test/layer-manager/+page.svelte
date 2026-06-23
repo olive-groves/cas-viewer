@@ -53,7 +53,7 @@
     background?: DeepPartial<Background>;
   };
 
-  export class MapLibreSharedLayer<TSpec extends AnyLayerSpec> {
+  export class MapLibreSyncedLayer<TSpec extends AnyLayerSpec> {
     spec: TSpec;
     background?: Background = $state();
     overrides: SvelteMap<string, LayerOverride<TSpec>> = new SvelteMap();
@@ -71,19 +71,9 @@
     }
   }
 
-  // export function createSharedLayerByType<TType extends maplibregl.LayerSpecification["type"]>(
-  //   sourceKey: string,
-  //   spec: LayerSpecByType<TType>,
-  //   background?: Background,
-  // ) {
-  //   const layer = new MapLibreSharedLayer<TType>(sourceKey, spec, background);
-  //   return layer;
-  // }
-
-
-  // I have some source URLs, I wanna make some shared layers
-  // createLayerFromSource() --> given a MapLibreSource, create a layer spec, feed into sharedlayer
-  const mapLibreSharedLayers: SvelteMap<string, MapLibreSharedLayer<AnyLayerSpec>> = new SvelteMap();
+  // I have some source URLs, I wanna make some synced layers
+  // createLayerFromSource() --> given a MapLibreSource, create a layer spec, feed into SyncedLayer
+  const mapLibreSyncedLayers: SvelteMap<string, MapLibreSyncedLayer<AnyLayerSpec>> = new SvelteMap();
 
   const spec: LayerSpecByType<"hillshade"> = {
     source: "0",  // source will be the key to the sources.map
@@ -93,7 +83,7 @@
       "hillshade-illumination-direction": 180,
     }
   }
-  const hillshadeSharedLayer = new MapLibreSharedLayer(
+  const hillshadeSyncedLayer = new MapLibreSyncedLayer(
     spec,
     undefined,
     [
@@ -107,7 +97,7 @@
     ]
   )
 
-  hillshadeSharedLayer.addOverride(
+  hillshadeSyncedLayer.addOverride(
     "33",
     {
       spec: {
@@ -118,29 +108,29 @@
       }
     },
   )
-  mapLibreSharedLayers.set(crypto.randomUUID(), hillshadeSharedLayer)
+  mapLibreSyncedLayers.set(crypto.randomUUID(), hillshadeSyncedLayer)
 
 </script>
 
-{#each mapLibreSharedLayers as [sharedLayerKey, sharedLayer] (sharedLayerKey)}
-<div>Shared layer: {sharedLayerKey}</div>
-<div>spec: {sharedLayer.spec.type}</div>
-{#each sharedLayer.overrides as [overrideKey, override] (overrideKey)}
+{#each mapLibreSyncedLayers as [SyncedLayerKey, syncedLayer] (SyncedLayerKey)}
+<div>Synced layer: {SyncedLayerKey}</div>
+<div>spec: {syncedLayer.spec.type}</div>
+{#each syncedLayer.overrides as [overrideKey, override] (overrideKey)}
   <div style:user-select=none>Layer: {overrideKey}</div>
-  {#if sharedLayer.spec.type === "hillshade"}
-  {#each sharedLayer.spec?.paint ? Object.keys(sharedLayer.spec?.paint) : [] as property (property)}
+  {#if syncedLayer.spec.type === "hillshade"}
+  {#each syncedLayer.spec?.paint ? Object.keys(syncedLayer.spec?.paint) : [] as property (property)}
   <div style:display=flex>
     <p>{property}</p>
     {#if typeof override.spec?.paint?.[property] !== "undefined"}
       <input type=range bind:value={override.spec.paint[property]} style:user-select=none/>
-    {:else if typeof sharedLayer.spec.paint?.[property] !== "undefined"}
-      <input type=range bind:value={sharedLayer.spec.paint[property]} style:user-select=none/>
+    {:else if typeof syncedLayer.spec.paint?.[property] !== "undefined"}
+      <input type=range bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
     {/if}
     <input type=checkbox checked={override.spec?.paint?.[property] === undefined} onchange={(e) => {
       if (e.target.checked) {
         delete override.spec.paint[property];
       } else {
-        override.spec.paint = {...override.spec?.paint, [property]: sharedLayer.spec.paint[property]}
+        override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
       }
     }}>
   </div>
