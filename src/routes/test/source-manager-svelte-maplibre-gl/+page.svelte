@@ -137,9 +137,10 @@
 
 </script>
 
+<!-- Prove layers by source -->
 <div style:display=grid style:grid-template-columns="1fr auto 0fr">
   <div style:grid-column="-1 / 1">
-    Add layer(s) from
+    Add new synced layer(s) from
     <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][0], nViewers)}>raster source</button>
     <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][1], nViewers)}>raster-dem source</button>
   </div>
