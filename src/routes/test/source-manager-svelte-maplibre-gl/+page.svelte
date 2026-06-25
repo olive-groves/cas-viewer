@@ -2,34 +2,38 @@
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
-  import { RemotePMTilesTileset, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
+  import { RemotePMTilesTileset, StaticImage, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
   import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
   import { OrderedSvelteMap } from "$lib/utils.svelte";
+  import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
 
-  // FIXME: For development purposes...
+  // FIXME: Clear for development purposes
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
   syncedMapLibreLayers.forEach((_, key) => syncedMapLibreLayers.delete(key));
   layerGroups.map.forEach((_, key) => layerGroups.delete(key));
 
-  const localUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
-  const localUrlDem = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
-  // const initialUrls = [localUrl, localUrl, localUrlDem]
-  const initialUrls = [localUrl, localUrlDem]
+  const localPmtilesUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
+  const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
+  const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
+  const localPngUrl = new URL('/local/impasto.png', import.meta.url);
+  // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localJpgUrl];
+  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
 
-  function sourceFromUrl(url: URL): PMTilesTileset {
+  function sourceFromUrl(url: URL): PMTilesTileset | StaticImage {
     const pathname = url.pathname.toLowerCase();
-
     if (pathname.endsWith(".json")) {
       // return new TileJSONTileset(url);
       throw Error("JSON not yet supported")
     } else if (pathname.endsWith(".pmtiles")) {
       return new RemotePMTilesTileset(url.toString());
+    } else if ([".jpeg", ".jpg", ".png"].some((extension) => pathname.endsWith(extension))) {
+      return new StaticImage(url.toString());
     } else {
       throw Error("Unable to parse source from url")
     }
   };
 
-  function addSource(source: PMTilesTileset) {
+  function addSource(source: PMTilesTileset | StaticImage) {
     return sourceManager.add(
       source,
       {
@@ -45,9 +49,10 @@
 
   // Proof:
   import { onMount } from "svelte";
+  import { ColorReliefLayer, HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
   import { symbolName } from "typescript";
 
-  let nViewers = $state(2);
+  let nViewers = $state(5);
   // svelte-ignore state_referenced_locally
   [...Array(nViewers).keys()].map(() => layerGroups.add(new OrderedSvelteMap()))
 
@@ -70,6 +75,7 @@
       const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
         source: mapLibreSourceKey,
         type: layerSpecType,
+        layout: {visibility: "visible"},
         paint: initialPaintSpec,
       }
       const overrides = [...Array(nOverrides).keys()].map(() => [crypto.randomUUID(), {spec: {}}] satisfies [string, LayerOverride<AnyLayerSpec>])
@@ -85,26 +91,27 @@
         layerGroups.map.get(layerGroupKey)?.add(syncedLayerKey, {key: overrideKeys.at(index)})
       })
     } else if (sourceSpec.type === "raster-dem") {  // If raster-dem, add a hillshade AND color-relief layer to each group
-      const layerSpecTypes = ["hillshade", "color-relief"];
+      const layerSpecTypes = ["color-relief", "hillshade"];
       layerSpecTypes.forEach((layerSpecType) => {
         const initialPaintSpec =
           layerSpecType === "hillshade" ?
           {
             "hillshade-exaggeration": 0.5,
-            "hillshade-illumination-direction": 315,
+            "hillshade-illumination-direction": 90,
           } :
           {
             'color-relief-color': [
               'interpolate',
               ['linear'],
               ['elevation'],
-              0, 'rgb(4, 0, 108)',
-              5000, 'rgb(215, 5, 13)'
+              0, 'rgba(4, 0, 108, 0.5)',
+              5000, 'rgba(215, 5, 13, 0.5)'
             ]
           }
         const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
           source: mapLibreSourceKey,
           type: layerSpecType,
+          layout: {visibility: "visible"},
           paint: initialPaintSpec,
         }
         const overrides = [...Array(nOverrides).keys()].map(() => [crypto.randomUUID(), {spec: {}}] satisfies [string, LayerOverride<AnyLayerSpec>])
@@ -135,10 +142,111 @@
     // addLayer()
   })
 
+  let myReactiveLayoutSpec = $state({
+    layout: {
+      visibility: "visible",
+    }
+  })
+
+  let mapOptions = $state({
+    zoom: undefined,
+    center: undefined,
+  })
+
+  /** https://stackoverflow.com/a/48218209/20921535
+    * Performs a deep merge of objects and returns new object. Does not modify
+    * objects (immutable) and merges arrays via concatenation.
+    *
+    * @param {...object} objects - Objects to merge
+    * @returns {object} New object with merged key/values
+  */
+  function mergeDeep(...objects) {
+    const isObject = obj => obj && typeof obj === 'object';
+
+    return objects.reduce((prev, obj) => {
+      Object.keys(obj).forEach(key => {
+        const pVal = prev[key];
+        const oVal = obj[key];
+
+        if (Array.isArray(pVal) && Array.isArray(oVal)) {
+          prev[key] = pVal.concat(...oVal);
+        }
+        else if (isObject(pVal) && isObject(oVal)) {
+          prev[key] = mergeDeep(pVal, oVal);
+        }
+        else {
+          prev[key] = oVal;
+        }
+      });
+
+      return prev;
+    }, {});
+  }
+
 </script>
 
+<PMTilesProtocol />
+
+<!-- Prove MapLibre maps -->
+<div style:display=flex style:height=100% style:width=100%>
+  {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
+    <!-- Reduce across the overrideKeys, the source keys -->
+    {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
+      (uniqueSources, [overrideKey, syncedLayerKey]) => {
+        const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
+        const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source;
+        if (uniqueSources.get(sourceKey) === undefined) {
+          const sourceLayerGroup = new Map([[overrideKey, syncedLayerKey]]);
+          uniqueSources.set(sourceKey, sourceLayerGroup);
+        } else {
+          uniqueSources.get(sourceKey).set(overrideKey, syncedLayerKey)
+        }
+        return uniqueSources
+      },
+      new Map()
+      )
+    }
+    <MapLibre
+      inlineStyle={"height: 100%; width: 100%;"}
+      attributionControl={false}
+      bind:zoom={mapOptions.zoom}
+      bind:center={mapOptions.center}
+    >
+      {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
+        {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+        {#await source?.source.spec then sourceSpecOriginal}
+          {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
+          {#if sourceSpec.type === "raster"}
+            <RasterTileSource {...sourceSpec}>
+              {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+                {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+                <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
+                {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+                <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+              {/each}
+            </RasterTileSource>
+          {:else if sourceSpec.type === "raster-dem"}
+            <RasterDEMTileSource {...sourceSpec}>
+              {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+                {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+                {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+                {#if layerSpec.type === "hillshade"}
+                  <HillshadeLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                {:else if layerSpec.type === "color-relief"}
+                  <ColorReliefLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                {/if}
+              {/each}
+            </RasterDEMTileSource>
+          {/if}
+        {/await}
+      {/each}
+    </MapLibre>
+  {/each}
+</div>
+
+
 <!-- Prove layers by source -->
-<div style:display=grid style:grid-template-columns="1fr auto 0fr">
+<!-- <div style:display=grid style:grid-template-columns="1fr auto 0fr" style:overflow-y=scroll>
   <div style:grid-column="-1 / 1">
     Add new synced layer(s) from
     <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][0], nViewers)}>raster source</button>
@@ -156,7 +264,6 @@
     <div style:grid-column="-1 / 1" style:border-top="1px solid white">
       <h3>Viewer (layer group): {iGroup}</h3>
     </div>
-    <!-- Reduce across the overrideKeys, the source keys -->
     {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
       (uniqueSources, [overrideKey, syncedLayerKey]) => {
         const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
@@ -183,11 +290,10 @@
       {/each}
     {/each}
   {/each}
-</div>
-
+</div> -->
 
 <!-- Prove sidebar Layer Manager -->
-<div style:display=grid style:grid-template-columns="1fr auto 0fr">
+<div style:display=grid style:grid-template-columns="1fr auto 0fr" style:overflow-y=scroll style:max-height=300px>
   <div style:grid-column="-1 / 1">
     <h2>List of layer groups and their respective (override) layers</h2>
   </div>
@@ -203,19 +309,25 @@
     {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
       {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
       {@const override = syncedLayer?.overrides.get(overrideKey)}
-      <div style:grid-column="-1 / 1">
+      <div style:display=flex style:grid-column="-1 / 1">
         <div>
           {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
         </div>
+        <div>
+          <input type=checkbox checked={syncedLayer.spec?.layout?.visibility === "visible"} onchange={(e) => {
+            syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none";
+          }}>
+        </div>
       </div>
+
       {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
         <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
           <div>{property}</div>
           <div>
             {#if typeof override.spec?.paint?.[property] !== "undefined"}
-              <input type=range bind:value={override.spec.paint[property]} style:user-select=none/>
+              <input type=range max=1 step=0.1 bind:value={override.spec.paint[property]} style:user-select=none/>
             {:else if typeof syncedLayer.spec.paint?.[property] !== "undefined"}
-              <input type=range bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
+              <input type=range max=1 step=0.1 bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
             {/if}
           </div>
           <div style:align-self=center style:justify-self=center>
@@ -228,7 +340,6 @@
             }}>
           </div>
         </div>
-
       {/each}
     {/each}
   {/each}
