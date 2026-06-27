@@ -293,18 +293,26 @@
 </div> -->
 
 <!-- Prove sidebar Layer Manager -->
-<div style:display=grid style:grid-template-columns="1fr auto 0fr" style:overflow-y=scroll style:max-height=300px>
+<div
+  style:display=grid
+  style:grid-template-columns="1fr auto 0fr"
+  style:overflow-y=scroll
+  style:max-height=300px
+  // Firefox scrollbar is over scrollable content, not next to it, so we pad
+  style:-moz-padding-end=16px
+>
   <div style:grid-column="-1 / 1">
+    <h1>Layer Manager Proof</h1>
     <h2>List of layer groups and their respective (override) layers</h2>
   </div>
   <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
-    <div>Property</div>
-    <div>Value</div>
-    <div>Sync?</div>
+    <div><h4>Property</h4></div>
+    <div><h4>Value</h4></div>
+    <div><h4>Sync</h4></div>
   </div>
   {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
     <div style:grid-column="-1 / 1" style:border-top="1px solid white">
-      <h3>Viewer (layer group): {iGroup}</h3>
+      <h3>View {iGroup}</h3>
     </div>
     {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
       {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
@@ -407,6 +415,50 @@ Class LayerManager
 -->
 
 <style>
+  @font-face {
+    font-family: "SourceSans3-VariableFont_wght";
+    font-style: normal;
+    src: url('/fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: "SourceSans3-Italic-VariableFont_wght";
+    font-style: italic;
+    src: url('/fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: "TexgyrepagellaRegular";
+    font-style: normal;
+    src: url("/fonts/TexgyrepagellaRegular.otf");
+  }
+  @font-face {
+    font-family: "TexgyrepagellaItalic";
+    font-style: italic;
+    src: url("/fonts/TexgyrepagellaItalic.otf");
+  }
+  * {
+    font-family: SourceSans3-VariableFont_wght;
+    font-kerning: normal;
+  }
+  h1 {
+    font-size: 4rem;
+    font-family: TexgyrepagellaItalic;
+    font-weight: unset;
+  }
+  h3, h4 {
+    text-transform: lowercase;
+    font-variant: small-caps;
+    color: color-mix(in srgb, currentColor, transparent 30%);
+  }
+  h2 {
+    font-family: TexgyrepagellaRegular;
+    font-weight: unset;
+  }
+  h3 {
+    font-weight: 500;
+  }
+  h4 {
+    font-weight: 600;
+  }
   /*
     Josh's Custom CSS Reset
     https://www.joshwcomeau.com/css/custom-css-reset/
