@@ -2,7 +2,7 @@
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
-  import { RemotePMTilesTileset, StaticImage, type MapLibreSourceSpec, type PMTilesTileset } from "$lib/sources";
+  import { LocalPMTilesTileset, RemotePMTilesTileset, StaticImage, type PMTilesTileset } from "$lib/sources";
   import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
   import { OrderedSvelteMap } from "$lib/utils.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
@@ -17,7 +17,8 @@
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
   // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localJpgUrl];
-  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
+  // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
+  const initialUrls = [];
 
   function sourceFromUrl(url: URL): PMTilesTileset | StaticImage {
     const pathname = url.pathname.toLowerCase();
@@ -50,7 +51,6 @@
   // Proof:
   import { onMount } from "svelte";
   import { ColorReliefLayer, HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
-  import { symbolName } from "typescript";
 
   let nViewers = $state(5);
   // svelte-ignore state_referenced_locally
@@ -108,7 +108,7 @@
               5000, 'rgba(215, 5, 13, 0.5)'
             ]
           }
-        const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
+        const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual MapLibreSyncedLayer.spec is.
           source: mapLibreSourceKey,
           type: layerSpecType,
           layout: {visibility: "visible"},
@@ -140,12 +140,6 @@
       deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
     })
     // addLayer()
-  })
-
-  let myReactiveLayoutSpec = $state({
-    layout: {
-      visibility: "visible",
-    }
   })
 
   let mapOptions = $state({
@@ -183,9 +177,23 @@
     }, {});
   }
 
+  let pmtiles = $state([]);
+
+  function handleFiles(files: FileList | null) {
+    if (files) {
+      // for (const file in files) {
+      const pmtilesSource = new LocalPMTilesTileset(files[0]);
+      deriveSyncedLayerFromMapLibreSource(addSource(pmtilesSource), nViewers);
+      pmtiles.push(pmtilesSource.archive)
+      // }
+    }
+  }
+
 </script>
 
-<PMTilesProtocol />
+<PMTilesProtocol pmtiles={pmtiles} />
+
+<input type=file onchange={(e) => handleFiles((e.target as HTMLInputElement).files)}/>
 
 <!-- Prove MapLibre maps -->
 <div style:display=flex style:height=100% style:width=100%>
