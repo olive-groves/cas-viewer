@@ -1,5 +1,5 @@
 import { SvelteMap } from "svelte/reactivity";
-import { MapLibreSourceSpecAdapter, type MapLibreSourceSpecType, type OverrideMapLibreSourceSpec, type PMTilesTileset } from "./sources";
+import { MapLibreSourceSpecAdapter, SingleImage, type MapLibreSourceSpecType, type OverrideMapLibreSourceSpec, type PMTilesTileset } from "./sources";
 
 export type MapLibreSource = {
   source: MapLibreSourceSpecAdapter,
@@ -8,11 +8,11 @@ export type MapLibreSource = {
 
 export class SourceManager {
   // TODO: Abstract this out with adapters; that is, elect to have mapLibre, openseadragon, etc.?
-  sources: SvelteMap<string, PMTilesTileset> = new SvelteMap();
+  sources: SvelteMap<string, PMTilesTileset | SingleImage> = new SvelteMap();
   mapLibreSources: SvelteMap<string, MapLibreSource> = new SvelteMap();
 
   add(
-    source: PMTilesTileset,
+    source: PMTilesTileset | SingleImage,
     adapters?: {
       mapLibre?: {
         forceSpecType?: MapLibreSourceSpecType,

@@ -15,6 +15,7 @@ import { type Coordinates as MapLibreCoordinates } from 'maplibre-gl';
 
 type MaybePromise<T> = T | Promise<T>;
 
+type Form = "tiled" | "single";
 type SingleFormat = "jpeg" | "jpg" | "png" | "webp";
 type TiledFormat = "pmtiles" | "zyx" | "dzi" | "json";
 
@@ -41,6 +42,7 @@ interface Source {
 
 interface ImageSource extends Source {
   type: MaybePromise<"raster" | "vector" | undefined>;
+  form: Form;
 }
 
 interface VectorType {
@@ -78,8 +80,9 @@ type PMTilesMetadata = {
 };
 
 
-export class StaticImage implements ImageSource {
-  type: "raster" = "raster";
+export class SingleImage implements ImageSource {
+  form = "single" as const;
+  type = "raster" as const;
   format: "jpeg" | "jpg" | "png" | "webp" | undefined;
   url: string;
   constructor(url: string) {
@@ -87,13 +90,13 @@ export class StaticImage implements ImageSource {
   }
 }
 
-export class RemoteStaticImage extends StaticImage {
+export class RemoteSingleImage extends SingleImage {
   constructor(url: string) {
     super(url);
   }
 }
 
-export class LocalStaticImage extends StaticImage {
+export class LocalSingleImage extends SingleImage {
   file: File;
   constructor(file: File) {
     const url = URL.createObjectURL(file);
@@ -103,7 +106,8 @@ export class LocalStaticImage extends StaticImage {
 }
 
 export class PMTilesTileset implements ImageSource, TilesetSource, VectorType {
-  format = "pmtiles";
+  form = "tiled" as const;
+  format = "pmtiles" as const;
   archive: PMTiles;
   type: ImageSource["type"];
   header: MaybePromise<PMTilesHeader>;
@@ -290,7 +294,7 @@ You have a ImageSource, right?
 You want it to work with MapLibre, right?
 Then you need to make an adapter.
 An adapter for MapLibre means you give it an ImageSource, and it creates a ready-to-go source with all the MapLibre spec goodness.
-For example, you pass a StaticImage, that means it will generate a url and specify type = "image" and make coordinates. That's it.
+For example, you pass a SingleImage, that means it will generate a url and specify type = "image" and make coordinates. That's it.
   Maybe we should automatically make those coordinates? Optional 'determine coordinates' arg that yoinks the dimensions and converts to coords?
 For example, you pass a PMTilesImage, that means it generates url, tileSize, encoding, type, etc. based on what's inside that Header-Metadata.
   How will that work?
@@ -314,11 +318,11 @@ For example, you pass a PMTilesImage, that means it generates url, tileSize, enc
 export type MapLibreSourceSpecType = maplibregl.SourceSpecification["type"];
 
 export class MapLibreSourceSpecAdapter {
-  source: PMTilesTileset | ImageSource;
+  source: PMTilesTileset | SingleImage;
   spec: MaybePromise<MapLibreSourceSpec>;
 
   constructor(
-    source: PMTilesTileset | ImageSource,
+    source: PMTilesTileset | SingleImage,
     forceSpecType?: MapLibreSourceSpecType,
   ) {
     this.source = source;
@@ -326,6 +330,23 @@ export class MapLibreSourceSpecAdapter {
       console.warn("forceSpecType is not reactive and will not update the spec")
     }
     this.spec = this._initializeSpec(forceSpecType);
+  }
+
+  static async getSingleImageSpec(
+    source: SingleImage,
+  ): Promise<MapLibreImageSourceSpec> {
+    const coordinates: MapLibreCoordinates = [
+      [-90, 70],
+      [90, 70],
+      [90, -70],
+      [-90, -70],
+    ]
+    const spec = {
+      type: "image" as const,
+      url: source.url,
+      coordinates: coordinates,
+    }
+    return spec
   }
 
   // TODO: This is way too big.
@@ -425,21 +446,30 @@ export class MapLibreSourceSpecAdapter {
     const source = this.source;
     const forceType = forceSpecType;
     let asyncSpec: () => Promise<MapLibreSourceSpec>;
-    switch (source.format) {
-      case "pmtiles":
-        if (
-          typeof forceType !== 'undefined' &&
-          (forceType !== "raster") &&
-          (forceType !== "raster-dem") &&
-          (forceType !== "vector")
-        ) {
-          throw Error(`Unsupported type to force: ${forceType}`)
-        }
-        asyncSpec = () => MapLibreSourceSpecAdapter.getPMTilesMapLibreSpec(source, forceType)
+    switch (source.form) {
+      case "tiled":
+        switch (source.format) {
+          case "pmtiles":
+            if (
+              typeof forceType !== 'undefined' &&
+              (forceType !== "raster") &&
+              (forceType !== "raster-dem") &&
+              (forceType !== "vector")
+            ) {
+              throw Error(`Unsupported type to force: ${forceType}`)
+            }
+            asyncSpec = () => MapLibreSourceSpecAdapter.getPMTilesMapLibreSpec(source, forceType)
+            break
+          default:
+            throw Error(`Format ${source["format"]} not supported.`)
+          }
+          break
+      // FIXME: Should we check for static image based on format or form or a different property?
+      case "single":
+        asyncSpec = () => MapLibreSourceSpecAdapter.getSingleImageSpec(source)
         break
-      // TODO: How to check for static image? (This is where the support for the image should be checked 'jpeg' | 'jpg' | 'png' |... maybe)
       default:
-        throw Error(`Format ${source.format} not supported.`)
+        throw Error(`Form ${source["form"]} not supported.`)
     }
     const spec = await asyncSpec();
     this.spec = spec;

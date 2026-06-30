@@ -2,7 +2,7 @@
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
-  import { LocalPMTilesTileset, RemotePMTilesTileset, StaticImage, type PMTilesTileset } from "$lib/sources";
+  import { LocalPMTilesTileset, LocalSingleImage, RemotePMTilesTileset, RemoteSingleImage, SingleImage, type PMTilesTileset } from "$lib/sources";
   import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
   import { OrderedSvelteMap } from "$lib/utils.svelte";
   import { mergeDeep } from "$lib/utils";
@@ -18,11 +18,10 @@
   const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
-  // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localJpgUrl];
-  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
+  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localPngUrl];
   // const initialUrls = [];
 
-  function sourceFromUrl(url: URL): PMTilesTileset | StaticImage {
+  function sourceFromUrl(url: URL): PMTilesTileset | SingleImage {
     const pathname = url.pathname.toLowerCase();
     if (pathname.endsWith(".json")) {
       // return new TileJSONTileset(url);
@@ -30,13 +29,13 @@
     } else if (pathname.endsWith(".pmtiles")) {
       return new RemotePMTilesTileset(url.toString());
     } else if ([".jpeg", ".jpg", ".png"].some((extension) => pathname.endsWith(extension))) {
-      return new StaticImage(url.toString());
+      return new RemoteSingleImage(url.toString());
     } else {
       throw Error("Unable to parse source from url")
     }
   };
 
-  function addSource(source: PMTilesTileset | StaticImage) {
+  function addSource(source: PMTilesTileset | SingleImage) {
     return sourceManager.add(
       source,
       {
@@ -55,7 +54,7 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
   import { onMount } from "svelte";
-  import { ColorReliefLayer, HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
+  import { ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
 
   let nViewers = $state(3);
   // svelte-ignore state_referenced_locally
@@ -72,7 +71,7 @@
       ...mapLibreSource?.override
     }
 
-    if (sourceSpec.type === "raster") {  // If raster, add a raster layer to each group
+    if (sourceSpec.type === "raster" || sourceSpec.type === "image") {  // If raster, add a raster layer to each group
       const layerSpecType = "raster";
       const initialPaintSpec = {
         "raster-opacity": 0.5,
@@ -144,7 +143,6 @@
     initialSourceKeys.forEach((sourceKey) => {
       deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
     })
-    // addLayer()
   })
 
   let mapOptions = $state({
@@ -155,9 +153,16 @@
   function handleFiles(files: FileList | null) {
     if (files) {
       [...files].forEach((file) => {
-        const pmtilesSource = new LocalPMTilesTileset(file);
-        deriveSyncedLayerFromMapLibreSource(addSource(pmtilesSource), nViewers);
-        pmtiles.push(pmtilesSource.archive)
+        let source;
+        if (file.name.endsWith("pmtiles")) {
+          source = new LocalPMTilesTileset(file);
+          pmtiles.push(source.archive)
+        } else if ([".jpeg", ".jpg", ".png"].some((extension) => file.name.endsWith(extension))) {
+          source = new LocalSingleImage(file);
+        } else {
+          throw Error(`File not supported: ${file.name}.`)
+        }
+        deriveSyncedLayerFromMapLibreSource(addSource(source), nViewers);
       })
     }
   }
@@ -220,6 +225,15 @@
                   {/if}
                 {/each}
               </RasterDEMTileSource>
+            {:else if sourceSpec.type === "image"}
+              <ImageSource {...sourceSpec}>
+                {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+                  {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+                  <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
+                  {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+                  <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                {/each}
+              </ImageSource>
             {/if}
           {/await}
         {/each}
