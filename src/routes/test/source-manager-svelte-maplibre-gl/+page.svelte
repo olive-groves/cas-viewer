@@ -19,8 +19,8 @@
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
   // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localJpgUrl];
-  // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
-  const initialUrls = [];
+  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
+  // const initialUrls = [];
 
   function sourceFromUrl(url: URL): PMTilesTileset | StaticImage {
     const pathname = url.pathname.toLowerCase();
@@ -57,7 +57,7 @@
   import { onMount } from "svelte";
   import { ColorReliefLayer, HillshadeLayer, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
 
-  let nViewers = $state(5);
+  let nViewers = $state(3);
   // svelte-ignore state_referenced_locally
   [...Array(nViewers).keys()].map(() => layerGroups.add(new OrderedSvelteMap()))
 
@@ -101,8 +101,8 @@
         const initialPaintSpec =
           layerSpecType === "hillshade" ?
           {
-            "hillshade-exaggeration": 0.5,
             "hillshade-illumination-direction": 90,
+            "hillshade-exaggeration": 0.5,
           } :
           {
             'color-relief-color': [
@@ -166,172 +166,180 @@
 
 <PMTilesProtocol pmtiles={pmtiles} />
 
-<input type=file multiple onchange={(e) => handleFiles((e.target as HTMLInputElement).files)}/>
 
-<!-- Prove MapLibre maps -->
-<div style:display=flex style:height=100% style:width=100%>
-  {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
-    <!-- Reduce across the overrideKeys, the source keys -->
-    {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
-      (uniqueSources, [overrideKey, syncedLayerKey]) => {
-        const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
-        const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source;
-        if (uniqueSources.get(sourceKey) === undefined) {
-          const sourceLayerGroup = new Map([[overrideKey, syncedLayerKey]]);
-          uniqueSources.set(sourceKey, sourceLayerGroup);
-        } else {
-          uniqueSources.get(sourceKey).set(overrideKey, syncedLayerKey)
-        }
-        return uniqueSources
-      },
-      new Map()
-      )
-    }
-    <MapLibre
-      inlineStyle={"height: 100%; width: 100%;"}
-      attributionControl={false}
-      bind:zoom={mapOptions.zoom}
-      bind:center={mapOptions.center}
-    >
-      {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
-        {@const source = sourceManager.mapLibreSources.get(sourceKey)}
-        {#await source?.source.spec then sourceSpecOriginal}
-          {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
-          {#if sourceSpec.type === "raster"}
-            <RasterTileSource {...sourceSpec}>
-              {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
-                {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
-                <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
-                {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-                <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
-              {/each}
-            </RasterTileSource>
-          {:else if sourceSpec.type === "raster-dem"}
-            <RasterDEMTileSource {...sourceSpec}>
-              {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
-                {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
-                {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-                {#if layerSpec.type === "hillshade"}
-                  <HillshadeLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
-                {:else if layerSpec.type === "color-relief"}
-                  <ColorReliefLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
-                {/if}
-              {/each}
-            </RasterDEMTileSource>
-          {/if}
-        {/await}
-      {/each}
-    </MapLibre>
-  {/each}
-</div>
+<div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
 
-
-<!-- Prove layers by source -->
-<!-- <div style:display=grid style:grid-template-columns="1fr auto 0fr" style:overflow-y=scroll>
-  <div style:grid-column="-1 / 1">
-    Add new synced layer(s) from
-    <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][0], nViewers)}>raster source</button>
-    <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][1], nViewers)}>raster-dem source</button>
-  </div>
-  <div style:grid-column="-1 / 1">
-    <h2>List of layer group overrides sorted by source</h2>
-  </div>
-  <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
-    <div>Property</div>
-    <div>Value</div>
-    <div>Sync?</div>
-  </div>
-  {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
-    <div style:grid-column="-1 / 1" style:border-top="1px solid white">
-      <h3>Viewer (layer group): {iGroup}</h3>
-    </div>
-    {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
-      (uniqueSources, [overrideKey, syncedLayerKey]) => {
-        const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
-        const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source;
-        if (uniqueSources.get(sourceKey) === undefined) {
-          const sourceLayerGroup = new Map([[overrideKey, syncedLayerKey]]);
-          uniqueSources.set(sourceKey, sourceLayerGroup);
-        } else {
-          uniqueSources.get(sourceKey).set(overrideKey, syncedLayerKey)
-        }
-        return uniqueSources
-      },
-      new Map()
-      )
-    }
-    {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
-      <div style:grid-column="-1 / 1" style:border-top="1px solid gray">
-        <h4>Source: {sourceKey}</h4>
-      </div>
-      {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
-        <div>{syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}</div>
-        <div>{syncedLayerKey}</div>
-        <div></div>
-      {/each}
-    {/each}
-  {/each}
-</div> -->
-
-<!-- Prove sidebar Layer Manager -->
-<div
-  style:display=grid
-  style:grid-template-columns="1fr auto 0fr"
-  style:overflow-y=scroll
-  style:max-height=300px
-  // Firefox scrollbar is over scrollable content, not next to it, so we pad
-  style:-moz-padding-end=16px
->
-  <div style:grid-column="-1 / 1">
-    <h1>Layer Manager Proof</h1>
-    <h2>List of layer groups and their respective (override) layers</h2>
-  </div>
-  <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
-    <div><h4>Property</h4></div>
-    <div><h4>Value</h4></div>
-    <div><h4>Sync</h4></div>
-  </div>
-  {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
-    <div style:grid-column="-1 / 1" style:border-top="1px solid white">
-      <h3>View {iGroup}</h3>
-    </div>
-    {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
-      {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
-      {@const override = syncedLayer?.overrides.get(overrideKey)}
-      <div style:display=flex style:grid-column="-1 / 1">
-        <div>
-          {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
-        </div>
-        <div>
-          <input type=checkbox checked={syncedLayer.spec?.layout?.visibility === "visible"} onchange={(e) => {
-            syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none";
-          }}>
-        </div>
-      </div>
-
-      {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
-        <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
-          <div>{property}</div>
-          <div>
-            {#if typeof override.spec?.paint?.[property] !== "undefined"}
-              <input type=range max=1 step=0.1 bind:value={override.spec.paint[property]} style:user-select=none/>
-            {:else if typeof syncedLayer.spec.paint?.[property] !== "undefined"}
-              <input type=range max=1 step=0.1 bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
+  <!-- Prove MapLibre maps -->
+  <div style:display=flex style:height=100% style:width=100%>
+    {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
+      <!-- Reduce across the overrideKeys, the source keys -->
+      {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
+        (uniqueSources, [overrideKey, syncedLayerKey]) => {
+          const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
+          const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source;
+          if (uniqueSources.get(sourceKey) === undefined) {
+            const sourceLayerGroup = new Map([[overrideKey, syncedLayerKey]]);
+            uniqueSources.set(sourceKey, sourceLayerGroup);
+          } else {
+            uniqueSources.get(sourceKey).set(overrideKey, syncedLayerKey)
+          }
+          return uniqueSources
+        },
+        new Map()
+        )
+      }
+      <MapLibre
+        inlineStyle={"height: 100%; width: 100%;"}
+        attributionControl={false}
+        bind:zoom={mapOptions.zoom}
+        bind:center={mapOptions.center}
+        renderWorldCopies={false}
+      >
+        {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
+          {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+          {#await source?.source.spec then sourceSpecOriginal}
+            {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
+            {#if sourceSpec.type === "raster"}
+              <RasterTileSource {...sourceSpec}>
+                {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+                  {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+                  <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
+                  {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+                  <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                {/each}
+              </RasterTileSource>
+            {:else if sourceSpec.type === "raster-dem"}
+              <RasterDEMTileSource {...sourceSpec}>
+                {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+                  {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+                  {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+                  {#if layerSpec.type === "hillshade"}
+                    <HillshadeLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                  {:else if layerSpec.type === "color-relief"}
+                    <ColorReliefLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                  {/if}
+                {/each}
+              </RasterDEMTileSource>
             {/if}
-          </div>
-          <div style:align-self=center style:justify-self=center>
-            <input type=checkbox checked={override.spec?.paint?.[property] === undefined} onchange={(e) => {
-              if (e.target.checked) {
-                delete override.spec.paint[property];
-              } else {
-                override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
-              }
-            }}>
-          </div>
-        </div>
-      {/each}
+          {/await}
+        {/each}
+      </MapLibre>
     {/each}
-  {/each}
+  </div>
+
+
+  <div style:display=flex style:flex-direction=column>
+
+    <!-- Prove layers by source -->
+    <!-- <div style:display=grid style:grid-template-columns="1fr auto 0fr" style:overflow-y=scroll>
+      <div style:grid-column="-1 / 1">
+        Add new synced layer(s) from
+        <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][0], nViewers)}>raster source</button>
+        <button onclick={() => deriveSyncedLayerFromMapLibreSource([...sourceManager.mapLibreSources.keys()][1], nViewers)}>raster-dem source</button>
+      </div>
+      <div style:grid-column="-1 / 1">
+        <h2>List of layer group overrides sorted by source</h2>
+      </div>
+      <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
+        <div>Property</div>
+        <div>Value</div>
+        <div>Sync?</div>
+      </div>
+      {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
+        <div style:grid-column="-1 / 1" style:border-top="1px solid white">
+          <h3>Viewer (layer group): {iGroup}</h3>
+        </div>
+        {@const layerGroupEntriesBySource = layerGroup.map.entries().reduce(
+          (uniqueSources, [overrideKey, syncedLayerKey]) => {
+            const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
+            const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source;
+            if (uniqueSources.get(sourceKey) === undefined) {
+              const sourceLayerGroup = new Map([[overrideKey, syncedLayerKey]]);
+              uniqueSources.set(sourceKey, sourceLayerGroup);
+            } else {
+              uniqueSources.get(sourceKey).set(overrideKey, syncedLayerKey)
+            }
+            return uniqueSources
+          },
+          new Map()
+          )
+        }
+        {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
+          <div style:grid-column="-1 / 1" style:border-top="1px solid gray">
+            <h4>Source: {sourceKey}</h4>
+          </div>
+          {#each layerGroupEntries.entries() as [overrideKey, syncedLayerKey]}
+            <div>{syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}</div>
+            <div>{syncedLayerKey}</div>
+            <div></div>
+          {/each}
+        {/each}
+      {/each}
+    </div> -->
+
+    <input type=file multiple onchange={(e) => handleFiles((e.target as HTMLInputElement).files)}/>
+
+    <!-- Prove sidebar Layer Manager -->
+    <div
+      style:display=grid
+      style:grid-template-columns="1fr auto 0fr"
+      style:overflow-y=scroll
+      // Firefox scrollbar is over scrollable content, not next to it, so we pad
+      style:-moz-padding-end=16px
+    >
+      <div style:grid-column="-1 / 1">
+        <h1>Layer Manager Proof</h1>
+        <h2>List of layer groups and their respective (override) layers</h2>
+      </div>
+      <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
+        <div><h4>Property</h4></div>
+        <div><h4>Value</h4></div>
+        <div><h4>Sync</h4></div>
+      </div>
+      {#each layerGroups.map as [layerGroupKey, layerGroup], iGroup (layerGroupKey)}
+        <div style:grid-column="-1 / 1" style:border-top="1px solid white">
+          <h3>View {iGroup + 1}</h3>
+        </div>
+        {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
+          {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+          {@const override = syncedLayer?.overrides.get(overrideKey)}
+          <div style:display=flex style:grid-column="-1 / 1">
+            <div>
+              {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
+            </div>
+            <div>
+              <input type=checkbox checked={syncedLayer.spec?.layout?.visibility === "visible"} onchange={(e) => {
+                syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none";
+              }}>
+            </div>
+          </div>
+
+          {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
+            <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:padding-left="12px">
+              <div>{property}</div>
+              <div>
+                {#if typeof override.spec?.paint?.[property] !== "undefined"}
+                  <input type=range max=1 step=0.1 bind:value={override.spec.paint[property]} style:user-select=none/>
+                {:else if typeof syncedLayer.spec.paint?.[property] !== "undefined"}
+                  <input type=range max=1 step=0.1 bind:value={syncedLayer.spec.paint[property]} style:user-select=none/>
+                {/if}
+              </div>
+              <div style:align-self=center style:justify-self=center>
+                <input type=checkbox checked={override.spec?.paint?.[property] === undefined} onchange={(e) => {
+                  if (e.target.checked) {
+                    delete override.spec.paint[property];
+                  } else {
+                    override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
+                  }
+                }}>
+              </div>
+            </div>
+          {/each}
+        {/each}
+      {/each}
+    </div>
+
+  </div>
 </div>
 
 <!-- <h2>List of synced layers and their respective overrides</h2>
@@ -424,6 +432,7 @@ Class LayerManager
     font-size: 4rem;
     font-family: TexgyrepagellaItalic;
     font-weight: unset;
+    line-height: 0.9;
   }
   h3, h4 {
     text-transform: lowercase;
