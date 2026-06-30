@@ -56,7 +56,7 @@
   import { onMount } from "svelte";
   import { ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
 
-  let nViewers = $state(3);
+  let nViewers = $state(3);  // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
   // svelte-ignore state_referenced_locally
   [...Array(nViewers).keys()].map(() => layerGroups.add(new OrderedSvelteMap()))
 
@@ -108,7 +108,8 @@
               'interpolate',
               ['linear'],
               ['elevation'],
-              0, 'rgba(4, 0, 108, 0.5)',
+              0, 'rgba(0, 0, 0, 0)',
+              1, 'rgba(4, 0, 108, 0.5)',
               5000, 'rgba(215, 5, 13, 0.5)'
             ]
           }
@@ -194,11 +195,12 @@
         )
       }
       <MapLibre
-        inlineStyle={"height: 100%; width: 100%;"}
+        inlineStyle={`flex: 1 1;`}
         attributionControl={false}
         bind:zoom={mapOptions.zoom}
         bind:center={mapOptions.center}
         renderWorldCopies={false}
+        transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
       >
         {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
           {@const source = sourceManager.mapLibreSources.get(sourceKey)}
