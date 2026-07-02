@@ -1,9 +1,13 @@
+<svelte:head>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</svelte:head>
+
 <script lang="ts">
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, layerGroups } from "$lib/shared.svelte";
   import { LocalPMTilesTileset, LocalSingleImage, RemotePMTilesTileset, RemoteSingleImage, SingleImage, type PMTilesTileset } from "$lib/sources";
-  import { MapLibreSyncedLayer, type AnyLayerSpec, type LayerOverride } from "$lib/synced-layer.svelte";
+  import { MapLibreSyncedLayer, type AnyLayerSpec, type Background, type LayerOverride } from "$lib/synced-layer.svelte";
   import { OrderedSvelteMap } from "$lib/utils.svelte";
   import { mergeDeep } from "$lib/utils";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
@@ -54,7 +58,7 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
   import { onMount } from "svelte";
-  import { ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
+  import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
 
   let nViewers = $state(3);  // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
   // svelte-ignore state_referenced_locally
@@ -113,6 +117,14 @@
               5000, 'rgba(215, 5, 13, 0.5)'
             ]
           }
+        const initialBackgroundSpec: Background | undefined =
+          layerSpecType === "hillshade" ?
+          {
+            color: "#7f7f7f",
+            opacity: 1,
+            visibility: true,
+          } :
+          undefined
         const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual MapLibreSyncedLayer.spec is.
           source: mapLibreSourceKey,
           type: layerSpecType,
@@ -122,7 +134,7 @@
         const overrides = [...Array(nOverrides).keys()].map(() => [crypto.randomUUID(), {spec: {}}] satisfies [string, LayerOverride<AnyLayerSpec>])
         const syncedLayer = new MapLibreSyncedLayer(
           layerSpec,
-          undefined,
+          initialBackgroundSpec,
           overrides,
         )
         const syncedLayerKey = crypto.randomUUID();
@@ -239,6 +251,15 @@
             {/if}
           {/await}
         {/each}
+        {#each layerGroup.map as [overrideKey, syncedLayerKey] (overrideKey)}
+          {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+          {@const override = syncedLayer?.overrides.get(overrideKey)}
+          {@const background = mergeDeep(syncedLayer?.background ?? {}, override?.background ?? {}) }
+          {@const layerVisibility = override?.spec?.layout?.visibility ?? syncedLayer?.spec?.layout?.visibility ?? "none"}
+          {#if (background?.visibility && layerVisibility === "visible")}
+            <BackgroundLayer beforeId={overrideKey} paint={{"background-color": background?.color, "background-opacity": background?.opacity}} layout={{visibility: layerVisibility}} />
+          {/if}
+        {/each}
       </MapLibre>
     {/each}
   </div>
@@ -301,6 +322,7 @@
       style:grid-template-columns="1fr auto 0fr"
       style:overflow-y=scroll
       // Firefox scrollbar is over scrollable content, not next to it, so we pad
+      style:padding-right=4px
       style:-moz-padding-end=16px
     >
       <div style:grid-column="-1 / 1">
@@ -319,19 +341,31 @@
         {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
           {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
           {@const override = syncedLayer?.overrides.get(overrideKey)}
-          <div style:display=flex style:grid-column="-1 / 1">
-            <div>
-              {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
-            </div>
+          <div style:display=flex style:grid-column="-1 / 1" style:border-top="1px solid oklch(1 0 0 / 0.2)">
             <div>
               <input type=checkbox checked={syncedLayer.spec?.layout?.visibility === "visible"} onchange={(e) => {
                 syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none";
               }}>
             </div>
+            <div>
+              <button>
+                <span class="material-symbols-outlined">
+                  keyboard_arrow_up
+                </span>
+              </button>
+              <button>
+                <span class="material-symbols-outlined">
+                  keyboard_arrow_down
+                </span>
+              </button>
+            </div>
+            <div>
+              {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
+            </div>
           </div>
 
           {#each Object.keys(syncedLayer.spec?.paint ?? {}) as property (property)}
-            <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:padding-left="12px">
+            <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:padding-left="6px">
               <div>{property}</div>
               <div>
                 {#if typeof override.spec?.paint?.[property] !== "undefined"}
@@ -420,6 +454,18 @@ Class LayerManager
 -->
 
 <style>
+  .material-symbols-outlined {
+    font-size: 0.8rem;
+    font-variation-settings:
+    'FILL' 0,
+    'wght' 700,
+    'GRAD' 0,
+    'opsz' 24
+  }
+  button:has(>.material-symbols-outlined) {
+    line-height: 0;
+  }
+
   @font-face {
     font-family: "SourceSans3-VariableFont_wght";
     font-style: normal;
