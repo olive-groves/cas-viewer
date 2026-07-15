@@ -3,7 +3,6 @@
     MapLibre,
     BackgroundLayer
   } from 'svelte-maplibre-gl';
-  import { convertCompilerOptionsFromJson } from 'typescript';
 
   let map = $state.raw(undefined);
 
@@ -23,7 +22,7 @@
   // We'll need to run a 'refresh beforeIds' sesh to get those layers back in order
   function refreshBeforeIds(targetMap) {
     if (targetMap?.isStyleLoaded()) {
-      // TODO: Only refresh if order is different than existing
+      // TODO: Only refresh if order is different than existing?
       console.log("Refreshing")
       refreshing = true;
       // Set slot beforeId backwards, starting from second to last, because we "stack under"
@@ -61,45 +60,35 @@
   }
 
   $effect(() => {
-    layers.at(0);
+    const _ = layers;  // TODO: Is there a better way to trigger upon change in layers? (Maybe SvelteMap?)
     setTimeout(() => {
+      // When `layers` changes (effect),
+      // compare the order of the actual map layers with what it should be,
+      // if different order (that is, the changes of layers has not propogated to the map),
+      // then indeed refresh to ensure the order.
       const actualOrder = map?.getLayersOrder().filter(layer => !layer.includes("slot"))
-      console.log(actualOrder)
-      // TODO COMPARE IF TRUE ORDER; IF NOT, DO EM
-    }, 100)
+      if (JSON.stringify(actualOrder) !== JSON.stringify(layers)) {
+        refreshBeforeIds(map);
+      }
+    }, 20)
   })
 
 </script>
 
-<button onclick={
-  () => {
-    const from = layers.length - 1;
-    const to = 0;
-    layers = layers.toSpliced(from, 1).toSpliced(to < 0 ? layers.length + to : to, 0, layers[from]);
-  }
-}>
-  Move Top to Bottom
-</button>
-
-<button onclick={
-  () => {
-    const index = `${count++}`;
-    layers.push(index);
-    backgrounds[index] = `hsla(${Math.floor(360 * Math.random())} 100% 50% / 100%)`;
-  }
-}>
-  add (push)
-</button>
-<button onclick={
-  () => {
-    const index = layers.at(-1);
-    layers.pop();
-  }
-}>
-  pop
-</button>
-
 <div style:display=flex style:flex-direction=column>
+
+  <div style:display=flex>
+    <button onclick={
+      () => {
+        const index = `${count++}`;
+        backgrounds[index] = `hsla(${Math.floor(360 * Math.random())} 100% 50% / 100%)`;
+        layers.push(index);
+      }
+    }>
+      add (push)
+    </button>
+  </div>
+
   {#each [...layers].reverse() as layer, reversedIndex (layer)}
     {@const index = layers.length - 1 - reversedIndex}
     <div style:display=flex>
@@ -110,6 +99,7 @@
       <button onclick={() => layers.splice(index, 1)}>x</button>
     </div>
   {/each}
+
 </div>
 
 <MapLibre
