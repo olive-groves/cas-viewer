@@ -1,5 +1,6 @@
 <svelte:head>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" /> -->
 </svelte:head>
 
 <script lang="ts">
@@ -13,17 +14,17 @@
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
   import { PMTiles } from "pmtiles";
 
-  // FIXME: Clear for development purposes
+  // FIXME: Clear for development purposes /////////////////////////////////////////////
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
   syncedMapLibreLayers.forEach((_, key) => syncedMapLibreLayers.delete(key));
   layerGroups.map.forEach((_, key) => layerGroups.delete(key));
+  // ///////////////////////////////////////////////////////////////////////////////////
 
   const localPmtilesUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
   const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localPngUrl];
-  // const initialUrls = [];
 
   function sourceFromUrl(url: URL): PMTilesTileset | SingleImage {
     const pathname = url.pathname.toLowerCase();
@@ -53,14 +54,12 @@
 
   let pmtiles: PMTiles[] = $state([]);
 
-  // function addLayerFromSource()
-
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
   import { onMount } from "svelte";
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from "svelte-maplibre-gl";
 
-  let nViewers = $state(3);  // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
+  let nViewers = $state(1);  // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
   // svelte-ignore state_referenced_locally
   [...Array(nViewers).keys()].map(() => layerGroups.add(new OrderedSvelteMap()))
 
@@ -78,7 +77,7 @@
     if (sourceSpec.type === "raster" || sourceSpec.type === "image") {  // If raster, add a raster layer to each group
       const layerSpecType = "raster";
       const initialPaintSpec = {
-        "raster-opacity": 0.5,
+        "raster-opacity": 0.8,
       }
       const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
         source: mapLibreSourceKey,
@@ -121,7 +120,7 @@
           layerSpecType === "hillshade" ?
           {
             color: "#7f7f7f",
-            opacity: 1,
+            opacity: 0.8,
             visibility: true,
           } :
           undefined
@@ -180,6 +179,56 @@
     }
   }
 
+  const MAPLIBRE_TIMEOUT_MILLISECONDS = 100;
+  let refreshing: boolean = false;
+  let refreshTimeout: number | undefined;
+  function _refreshBeforeIds(target: maplibregl.Map) {
+    console.warn("Refreshing")
+    refreshing = true;
+    try {
+      // FIXME: This should just apply to the layer group of the target map, not all maps
+      // This will be a component-level function for "View" (a single Map)
+      layerGroups.map.forEach((layerGroup) => {
+        const orderedLayerOverrides = layerGroup.order;
+        // Set slot beforeId backwards, starting from second to last, because we "stack under"
+        for (let i = orderedLayerOverrides.length - 2; i > -1; i--) {
+          const id = `slot-${orderedLayerOverrides.at(i)}`;
+          const beforeId = `slot-${orderedLayerOverrides.at(i + 1)}`;
+          target.moveLayer(id, beforeId)
+        }
+        // Knowledge of layer naming should be... where? Here?
+        // We use "background-" and "slot-" in a couple places.
+        orderedLayerOverrides.forEach(override => {
+          target.moveLayer(override, "slot-" + override);
+          target.moveLayer("background-" + override, override)
+        })
+      })
+    } catch {
+      console.error("Error in refreshing beforeId's.")
+    } finally {
+      setTimeout(() => refreshing = false, 100)
+    }
+  }
+  function refreshBeforeIds(target: maplibregl.Map) {
+    if (target?.isStyleLoaded() && !refreshing) {
+      _refreshBeforeIds(target);
+    } else {
+      clearTimeout(refreshTimeout);
+      refreshTimeout = setTimeout(
+        target => refreshBeforeIds(target),
+        MAPLIBRE_TIMEOUT_MILLISECONDS
+      );
+    }
+  }
+
+  function handleOnData(e: maplibregl.MapDataEvent) {
+    if (e?.isSourceLoaded) {
+      refreshBeforeIds(e.target);
+    }
+  }
+
+  let map0 = $state.raw();
+
 </script>
 
 <PMTilesProtocol pmtiles={pmtiles} />
@@ -207,13 +256,22 @@
         )
       }
       <MapLibre
+        bind:map={map0}
         inlineStyle={`flex: 1 1;`}
+        onload={handleOnData}
+        ondata={handleOnData}
         attributionControl={false}
         bind:zoom={mapOptions.zoom}
         bind:center={mapOptions.center}
         renderWorldCopies={false}
         transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
       >
+        {#each layerGroup.order as overrideKey (overrideKey)}
+          <BackgroundLayer
+            id={`slot-${overrideKey}`}
+            layout={{visibility: "none"}}
+          />
+        {/each}
         {#each layerGroupEntriesBySource as [sourceKey, layerGroupEntries] (sourceKey)}
           {@const source = sourceManager.mapLibreSources.get(sourceKey)}
           {#await source?.source.spec then sourceSpecOriginal}
@@ -224,7 +282,12 @@
                   {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
                   <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
                   {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-                  <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                  <RasterLayer
+                    id={overrideKey}
+                    paint={{...layerSpec.paint}}
+                    layout={{...layerSpec.layout}}
+                    beforeId={`slot-${overrideKey}`}
+                  />
                 {/each}
               </RasterTileSource>
             {:else if sourceSpec.type === "raster-dem"}
@@ -233,9 +296,19 @@
                   {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
                   {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
                   {#if layerSpec.type === "hillshade"}
-                    <HillshadeLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                    <HillshadeLayer
+                      id={overrideKey}
+                      paint={{...layerSpec.paint}}
+                      layout={{...layerSpec.layout}}
+                      beforeId={`slot-${overrideKey}`}
+                    />
                   {:else if layerSpec.type === "color-relief"}
-                    <ColorReliefLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                    <ColorReliefLayer
+                      id={overrideKey}
+                      paint={{...layerSpec.paint}}
+                      layout={{...layerSpec.layout}}
+                      beforeId={`slot-${overrideKey}`}
+                    />
                   {/if}
                 {/each}
               </RasterDEMTileSource>
@@ -245,7 +318,12 @@
                   {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
                   <!-- This overwrites nested objects! {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
                   {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-                  <RasterLayer id={overrideKey} paint={{...layerSpec.paint}} layout={{...layerSpec.layout}} />
+                  <RasterLayer
+                    id={overrideKey}
+                    paint={{...layerSpec.paint}}
+                    layout={{...layerSpec.layout}}
+                    beforeId={`slot-${overrideKey}`}
+                  />
                 {/each}
               </ImageSource>
             {/if}
@@ -256,9 +334,13 @@
           {@const override = syncedLayer?.overrides.get(overrideKey)}
           {@const background = mergeDeep(syncedLayer?.background ?? {}, override?.background ?? {}) }
           {@const layerVisibility = override?.spec?.layout?.visibility ?? syncedLayer?.spec?.layout?.visibility ?? "none"}
-          {#if (background?.visibility && layerVisibility === "visible")}
-            <BackgroundLayer beforeId={overrideKey} paint={{"background-color": background?.color, "background-opacity": background?.opacity}} layout={{visibility: layerVisibility}} />
-          {/if}
+          <!-- TODO: Better default (hidden) background handling -->
+          <BackgroundLayer
+            id={"background-" + overrideKey}
+            beforeId={overrideKey}
+            paint={{"background-color": background?.color ?? "rgb(0, 255, 0)", "background-opacity": background?.opacity ?? 0}}
+            layout={{visibility: layerVisibility}}
+          />
         {/each}
       </MapLibre>
     {/each}
@@ -338,7 +420,8 @@
         <div style:grid-column="-1 / 1" style:border-top="1px solid white">
           <h3>View {iGroup + 1}</h3>
         </div>
-        {#each [...layerGroup.map.entries()].reverse() as [overrideKey, syncedLayerKey] (overrideKey)}
+        {#each [...layerGroup.order].reverse() as overrideKey (overrideKey)}
+          {@const syncedLayerKey = layerGroup.map.get(overrideKey)}
           {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
           {@const override = syncedLayer?.overrides.get(overrideKey)}
           <div style:display=flex style:grid-column="-1 / 1" style:border-top="1px solid oklch(1 0 0 / 0.2)">
@@ -348,19 +431,29 @@
               }}>
             </div>
             <div>
-              <button>
+              <button
+                onclick={() => {
+                  layerGroup.shiftByKey(overrideKey, 1);
+                  refreshBeforeIds(map0);
+                }}
+              >
                 <span class="material-symbols-outlined">
                   keyboard_arrow_up
                 </span>
               </button>
-              <button>
+              <button
+                onclick={() => {
+                  layerGroup.shiftByKey(overrideKey, -1);
+                  refreshBeforeIds(map0);
+                }}
+              >
                 <span class="material-symbols-outlined">
                   keyboard_arrow_down
                 </span>
               </button>
             </div>
             <div>
-              {syncedMapLibreLayers.get(syncedLayerKey)?.spec.type}
+              {syncedLayer?.spec.type}
             </div>
           </div>
 
