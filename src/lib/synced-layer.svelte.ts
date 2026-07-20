@@ -5,10 +5,10 @@ import { SvelteMap } from 'svelte/reactivity';
 type DeepPartial<T> = T extends any[] ? T : { [P in keyof T]?: DeepPartial<T[P]> }
 
 // Generic Background for layers, not as a MapLibre spec, though it is meant for adding backgrounds to slots.
-type Background = {
+export type Background = {
   color: string;  // Could restrict to MapLibre background type, but not for now...
   opacity: number;
-  visibilty: boolean;
+  visibility: boolean;
 }
 
 type LayerType = maplibregl.LayerSpecification["type"];
