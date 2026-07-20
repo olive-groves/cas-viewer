@@ -1,6 +1,6 @@
 <script lang="ts">
   // Adapted from https://svelte-maplibre-gl.mierune.dev/examples/terradraw
-  import { MapLibre, GlobeControl } from 'svelte-maplibre-gl';
+  import { MapLibre, GlobeControl, RasterTileSource, RasterLayer } from 'svelte-maplibre-gl';
   import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
   import type { TerraDraw as Draw } from 'terra-draw';
   import {
@@ -89,99 +89,130 @@
     if (_selected) draw?.deselectFeature(_selected);
     _mode = mode;
   })
+
+  let zoom = $state()
+  let center = $state()
+  let pitch = $state()
+  let bearing = $state()
+  let roll = $state()
 </script>
 
-<MapLibre
-  inlineStyle="height: 100%;"
-  style="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-  zoom={2}
-  center={{ lng: 60, lat: 20 }}
-  renderWorldCopies={false}
-  onload={() => {
-    // Auto-save
-    // const retrievedFeatures = localStorage.getItem('terra-draw-data');
-    // if (retrievedFeatures) {
-    //   draw?.addFeatures(JSON.parse(retrievedFeatures))
-    // }
-  }}
->
-  <!-- Terra Draw -->
-  <TerraDraw
-    mode={_mode}
-    modes={[...modes, lastDrawSelectMode]}
-    {undoRedo}
-    bind:draw
-    onselect={(id: FeatureId) => {
-      selected = id;
-    }}
-    ondeselect={(id: FeatureId) => {
-      selected = null;
-      // Auto-edit
-      if (id === _lastDrawId && _lastDrawMode) {
-        _lastDrawId = undefined;
-        draw?.setMode(_lastDrawMode);
-      }
-    }}
-    onfinish={(id: FeatureId, context?) => {
-      // Auto-save
-      // const features = draw?.getSnapshot()
-      // if (features) {
-      //   // We don't want any mid points or selection points so we filter them out
-      //   const filteredFeatures = features.filter((f) => !f.properties.midPoint && !f.properties.selectionPoint)
-      //   // localStorage can only store strings, so we stringify the features first
-      //   localStorage.setItem('terra-draw-data', JSON.stringify(filteredFeatures));
-      // }
-  
-      // Auto-edit
-      if (
-        context?.action === 'draw' &&
-        (
-          context?.mode.includes('--auto-edit') ||
-          autoEdit
-        ) 
-      ) {
-        _lastDrawId = id;
-        _lastDrawMode = mode;
-        draw?.selectFeature(id, lastDrawSelectMode.mode);
-      }
-      
-      // Profile tool
-      // If linestring-auto-edit finishes, register profile and plot?
-      // if (context?.action === "draw" && draw?.getSnapshotFeature(id[0]))
-      // console.log(context)
-    }}
-    onchange={(ids: FeatureId[], type: string, context?) => {
-      // TODO: On delete of a selected auto-edit item, return to the lastDrawSelectMode.mode
-    }}
-    onhistory={({cause, stack, undoSize, redoSize}) => {
-    }}
-  />
+<div style="display: grid; height: 100%; grid: 1fr / 1fr;">
+  <MapLibre
+    inlineStyle="height: 100%; width: 100%; grid-area: 1 / 1 / -1 / -1;"
+    renderWorldCopies={false}
+    attributionControl={false}
+    bind:zoom
+    bind:center
+    bind:pitch
+    bind:bearing
+    bind:roll
+  >
+    <RasterTileSource
+      tiles={['https://tile.openstreetmap.org/{z}/{x}/{y}.png']}
+    >
+      <RasterLayer
+        paint={{
+          "raster-opacity": 1.0,
+        }}
+      />
+    </RasterTileSource>
+  </MapLibre>
 
-  <!-- Draw controls -->
-  <div id=controls>
-    <label>
-      <input type="checkbox" bind:checked={autoEdit} /> Auto-edit
-    </label>
-    <button
-      onclick={() => {
-        draw?.undo();
+  <MapLibre
+    inlineStyle="height: 100%; width: 100%; grid-area: 1 / 1 / -1 / -1;"
+    renderWorldCopies={false}
+    bind:zoom
+    bind:center
+    bind:pitch
+    bind:bearing
+    bind:roll
+    onload={() => {
+      // Auto-save
+      // const retrievedFeatures = localStorage.getItem('terra-draw-data');
+      // if (retrievedFeatures) {
+      //   draw?.addFeatures(JSON.parse(retrievedFeatures))
+      // }
+    }}
+  >
+    <!-- Terra Draw -->
+    <TerraDraw
+      mode={_mode}
+      modes={[...modes, lastDrawSelectMode]}
+      {undoRedo}
+      bind:draw
+      onselect={(id: FeatureId) => {
+        selected = id;
       }}
-      >Undo</button>
-    {#each modeNames as modeName (modeName)}
-      <label><input type="radio" bind:group={mode} value={modeName}/> {modeName}</label>
-    {/each}
-    {#if selected}
+      ondeselect={(id: FeatureId) => {
+        selected = null;
+        // Auto-edit
+        if (id === _lastDrawId && _lastDrawMode) {
+          _lastDrawId = undefined;
+          draw?.setMode(_lastDrawMode);
+        }
+      }}
+      onfinish={(id: FeatureId, context?) => {
+        // Auto-save
+        // const features = draw?.getSnapshot()
+        // if (features) {
+        //   // We don't want any mid points or selection points so we filter them out
+        //   const filteredFeatures = features.filter((f) => !f.properties.midPoint && !f.properties.selectionPoint)
+        //   // localStorage can only store strings, so we stringify the features first
+        //   localStorage.setItem('terra-draw-data', JSON.stringify(filteredFeatures));
+        // }
+
+        // Auto-edit
+        if (
+          context?.action === 'draw' &&
+          (
+            context?.mode.includes('--auto-edit') ||
+            autoEdit
+          )
+        ) {
+          _lastDrawId = id;
+          _lastDrawMode = mode;
+          draw?.selectFeature(id, lastDrawSelectMode.mode);
+        }
+
+        // Profile tool
+        // If linestring-auto-edit finishes, register profile and plot?
+        // if (context?.action === "draw" && draw?.getSnapshotFeature(id[0]))
+        // console.log(context)
+      }}
+      onchange={(ids: FeatureId[], type: string, context?) => {
+        // TODO: On delete of a selected auto-edit item, return to the lastDrawSelectMode.mode
+      }}
+      onhistory={({cause, stack, undoSize, redoSize}) => {
+      }}
+    />
+
+    <!-- Draw controls -->
+    <div id=controls>
+      <label>
+        <input type="checkbox" bind:checked={autoEdit} /> Auto-edit
+      </label>
       <button
         onclick={() => {
-          if (!selected) return;
-          draw?.removeFeatures([selected]);
-          draw?.deselectFeature(selected);
-        }}>Remove</button
-      >
-    {/if}
-  </div>
-  <GlobeControl />
-</MapLibre>
+          draw?.undo();
+        }}
+        >Undo</button>
+      {#each modeNames as modeName (modeName)}
+        <label><input type="radio" bind:group={mode} value={modeName}/> {modeName}</label>
+      {/each}
+      {#if selected}
+        <button
+          onclick={() => {
+            if (!selected) return;
+            draw?.removeFeatures([selected]);
+            draw?.deselectFeature(selected);
+          }}>Remove</button
+        >
+      {/if}
+    </div>
+    <GlobeControl />
+  </MapLibre>
+</div>
 
 <style>
     #controls {
