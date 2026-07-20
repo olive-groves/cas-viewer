@@ -64,7 +64,7 @@
     aroundCenter={false}
   >
     <RasterDEMTileSource
-      id="terrain"    
+      id="terrain"
       url={`pmtiles://${urls[1]}`}
       encoding="custom"
       baseShift={0}

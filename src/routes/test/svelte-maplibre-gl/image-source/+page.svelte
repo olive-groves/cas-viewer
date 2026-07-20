@@ -6,7 +6,7 @@
     Marker,
   } from 'svelte-maplibre-gl';
 
-  let url = $state('/web-app-manifest-512x511.png');
+  let url = $state('/web-app-manifest-512x512.png');
 
   let lnglats: [[number, number], [number, number], [number, number], [number, number]] = $state([
     [-45, 45],
