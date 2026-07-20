@@ -61,4 +61,10 @@ export class OrderedSvelteMap<V> {
     }
   }
 
+  shiftByKey(key: string, shift: number) {
+    const from = this.order.indexOf(key)
+    if (from < 0) return
+    this.move(from, from + shift)
+  }
+
 }
