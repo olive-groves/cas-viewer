@@ -107,13 +107,33 @@
       </div>
     {/each}
   </div>
+  <div
+    class=status-bar
+  >
+    <label>
+      <input type=radio value={"side-by-side"} bind:group={mode.type} />
+      side-by-side
+    </label>
+    <label>
+      <input type=radio value={"lens"} bind:group={mode.type} />
+      lens
+    </label>
+  </div>
 </div>
 
 <style>
+  .status-bar {
+    display: flex;
+    justify-content: center;
+    border: 1px solid white;
+    border-bottom: none;
+  }
   .multi-viewer {
     container: multiViewer / size;
     height: 100%;
     width: 100%;
+    display: flex;
+    flex-direction: column;
   }
   .views {
     height: 100%;

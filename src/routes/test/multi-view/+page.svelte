@@ -19,12 +19,10 @@
   // viewB.layers.add("synced-layer-2", {key: "override-21"})
 
   const viewC = new MultiView();
-  viewC.mode.type = "lens";
   viewC.views.add(viewA, {key: "viewA"});
   viewC.views.add(viewB, {key: "viewB"});
 
   const viewD = new MultiView();
-  viewD.mode.type = "lens";
   viewD.views.add(viewA, {key: "viewA"});
   viewD.views.add(viewB, {key: "viewB"});
   viewD.views.add(viewB, {key: "viewBB"});
@@ -32,8 +30,9 @@
   // multiView.views.add(viewA, {key: "view-i"})
   // multiView.views.add(viewB, {key: "view-ii"})
   // multiView.views.add(viewB, {key: "view-iii"})
-  multiView.views.add(viewC, {key: "view-iv"})
+  // multiView.views.add(viewC, {key: "view-iv"})
   multiView.views.add(viewD, {key: "view-v"})
+  multiView.views.add(viewD, {key: "view-vi"})
 
   let camera = $state({
     zoom: undefined,

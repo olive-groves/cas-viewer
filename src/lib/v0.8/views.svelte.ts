@@ -24,7 +24,6 @@ export class SingleView {
 export class MultiView {
   type = "multi";
   mode: ViewMode = $state({
-    // type: "lens",
     type: "side-by-side",
   });
   views: OrderedSvelteMap<SingleView | MultiView> = new OrderedSvelteMap();
