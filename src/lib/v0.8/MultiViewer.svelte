@@ -4,6 +4,7 @@
   import { cubicInOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
   import type { ViewMode } from './views.svelte';
+	import type { Attachment } from 'svelte/attachments';
 
   let {
     views,
@@ -18,8 +19,8 @@
   // Lens
   let lens =$state(
 		{
-      x: undefined,
-      y: undefined,
+      x: 0,
+      y: 0,
 			diameter: new Tween(200, {
 				duration: 100,
 				easing: cubicInOut
@@ -39,10 +40,12 @@
 		lens.x = lens.clientX - lens.containerX;
 		lens.y = lens.clientY - lens.containerY;
 	});
-  function recordBoundingClientRect(node, obj) {
-		obj.containerX = node.getBoundingClientRect().left;
-		obj.containerY = node.getBoundingClientRect().top;
-	}
+  function recordBoundingClientRectToLens(lens): Attachment {
+    return (element) => {
+      lens.containerX = element.getBoundingClientRect().left;
+      lens.containerY = element.getBoundingClientRect().top;
+    }
+  }
   function onKeyUp(event) {
     console.log(event)
 		switch (event.key) {
@@ -84,7 +87,7 @@
         "lens": mode.type === "lens",
       }
     ]}
-    use:recordBoundingClientRect={lens}
+    {@attach recordBoundingClientRectToLens(lens)}
   >
     {#each views.order as viewKey, i (viewKey)}
       {@const view = views.map.get(viewKey)}
