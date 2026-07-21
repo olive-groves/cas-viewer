@@ -3,7 +3,7 @@ import { OrderedSvelteMap } from "$lib/utils.svelte";
 // MODEL /////////////////////////////////////////////////////////////////////////////
 // Define the WHAT of a single view
 // A single view is a set of layers that are "fused".
-// They must be presented as a single view, not side by side.
+// They MUST be presented as a single view, not side by side.
 // If a set of 3 layers should be presented side by side, then the
 // responsibility is on someone else to create 3 single views and arrange them
 // side by side.

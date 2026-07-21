@@ -7,6 +7,7 @@
   let { data }: PageProps = $props();
 
   let multiView: MultiView = new MultiView();
+  // multiView.mode.type = "lens"
 
   const viewA = new SingleView();
   viewA.layers.add("synced-layer-0", {key: "override-00"})
@@ -25,14 +26,11 @@
   const viewD = new MultiView();
   viewD.views.add(viewA, {key: "viewA"});
   viewD.views.add(viewB, {key: "viewB"});
-  viewD.views.add(viewB, {key: "viewBB"});
 
   // multiView.views.add(viewA, {key: "view-i"})
   // multiView.views.add(viewB, {key: "view-ii"})
-  // multiView.views.add(viewB, {key: "view-iii"})
-  // multiView.views.add(viewC, {key: "view-iv"})
+  multiView.views.add(viewC, {key: "view-iv"})
   multiView.views.add(viewD, {key: "view-v"})
-  multiView.views.add(viewD, {key: "view-vi"})
 
   let camera = $state({
     zoom: undefined,
@@ -47,5 +45,6 @@
   <MultiViewer
     {...multiView}
     bind:camera
+    bind:mode={multiView.mode}
   />
 </div>

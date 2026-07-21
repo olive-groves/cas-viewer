@@ -99,7 +99,7 @@
           <MultiViewer
             {...view}
             bind:camera
-            mode={view.mode}
+            bind:mode={view.mode}
           />
         {:else}
           <SingleViewer
