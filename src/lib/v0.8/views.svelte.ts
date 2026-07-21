@@ -1,3 +1,4 @@
+import type { OverrideMapLibreLayerKey, SyncedMapLibreLayerKey } from "$lib/synced-layer.svelte";
 import { OrderedSvelteMap } from "$lib/utils.svelte";
 
 // MODEL /////////////////////////////////////////////////////////////////////////////
@@ -15,16 +16,16 @@ type LensMode = {
 }
 export type ViewMode = SideBySideMode | LensMode;
 
+type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
+
 export class SingleView {
   type = "single";
-  // key: overrideKey
-  // value: syncedLayerKey
-  layers: OrderedSvelteMap<string> = new OrderedSvelteMap();
+  layers: OrderedSvelteMap<OverrideMapLibreLayerKey, SyncedMapLibreLayerKey> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `override-maplibre-layer_${crypto.randomUUID()}` });
 }
 export class MultiView {
   type = "multi";
   mode: ViewMode = $state({
     type: "side-by-side",
   });
-  views: OrderedSvelteMap<SingleView | MultiView> = new OrderedSvelteMap();
+  views: OrderedSvelteMap<ViewKey, SingleView | MultiView> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `view_${crypto.randomUUID()}` });
 }

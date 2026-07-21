@@ -72,7 +72,7 @@
   function addLayer(i) {mapLibreLayerGroup.add({sourceKey: [...sourceManager.mapLibreSources.keys()][i]})}
 
   // Depends on the map, not the order
-  const mapLibreLayerGroup = new OrderedSvelteMap();
+  const mapLibreLayerGroup = new OrderedSvelteMap({keyGenerator: () => crypto.randomUUID()});
   // FIXME: Uniqueness based on SOURCE and SOURCE TYPE, because the each-layer goes into a given SOURCE, but a layer could have an overridden source
   const uniqueSourceKeys = $derived(
     [...new Set(Array.from(mapLibreLayerGroup.map.values(), (value) => value.sourceKey))]

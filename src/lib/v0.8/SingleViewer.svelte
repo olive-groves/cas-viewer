@@ -11,7 +11,6 @@
 <MapLibre
   bind:map
   inlineStyle={`height: var(--height, 100%); width: var(--width, 100%);`}
-  // attributionControl={false}
   renderWorldCopies={false}
   transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
   // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
@@ -25,7 +24,8 @@
     (e) => {
       if (e.originalEvent || e?.sync) {
         // e.sync is an event prop that we pass if easing or otherwise causing map move,
-        // like the auto-pitch when enabling 3D.
+        // like the auto-pitch when enabling 3D:
+        //    map.easeTo({zoom: 2}, {sync: true})
         camera.zoom = map?.getZoom();
         camera.center = map?.getCenter();
         camera.bearing = map?.getBearing();

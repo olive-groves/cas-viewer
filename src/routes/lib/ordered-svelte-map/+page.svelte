@@ -10,7 +10,8 @@
   }
   const initial_n = 5;
   const initial_values = Array.from(Array(initial_n), (_) => new Value());
-  const valuesMap = new OrderedSvelteMap(initial_values, {reorderItemInPlace: true});
+  const valuesMap = new OrderedSvelteMap({reorderItemInPlace: true, keyGenerator: () => crypto.randomUUID()});
+  initial_values.forEach((value) => valuesMap.add(value))
 
   // Keep tab focus on move
   let previousActiveElement: HTMLElement | HTMLLIElement | null = $state(null);
