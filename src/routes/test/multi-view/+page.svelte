@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { OrderedSvelteMap } from '$lib/utils.svelte';
+  import type { PageProps } from './$types';
   import MultiViewer from '$lib/v0.8/MultiViewer.svelte';
   import { MultiView, SingleView } from '$lib/v0.8/views.svelte';
-  import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
@@ -10,27 +9,35 @@
   // multiView.mode.type = "lens"
 
   const viewA = new SingleView();
-  viewA.layers.add("synced-layer-0", {key: "override-00"})
-  // viewA.layers.add("synced-layer-1", {key: "override-10"})
-  // viewA.layers.add("synced-layer-2", {key: "override-20"})
-  // viewA.layers.add("synced-layer-3", {key: "override-30"})
+  viewA.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
 
   const viewB = new SingleView();
-  viewB.layers.add("synced-layer-1", {key: "override-11"})
-  // viewB.layers.add("synced-layer-2", {key: "override-21"})
+  viewB.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
 
+  let _;
   const viewC = new MultiView();
-  viewC.views.add(viewA, {key: "viewA"});
-  viewC.views.add(viewB, {key: "viewB"});
+  _ = new SingleView();
+  _.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
+  viewC.views.add(_);
+  _ = new SingleView();
+  _.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
+  viewC.views.add(_);
 
   const viewD = new MultiView();
-  viewD.views.add(viewA, {key: "viewA"});
-  viewD.views.add(viewB, {key: "viewB"});
+  _ = new SingleView();
+  _.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
+  viewD.views.add(_);
+  _ = new SingleView();
+  _.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
+  viewD.views.add(_);
+  _ = new SingleView();
+  _.layers.add(`synced-maplibre-layer_${crypto.randomUUID()}`)
+  viewD.views.add(_);
 
-  // multiView.views.add(viewA, {key: "view-i"})
-  // multiView.views.add(viewB, {key: "view-ii"})
-  multiView.views.add(viewC, {key: "view-iv"})
-  multiView.views.add(viewD, {key: "view-v"})
+  multiView.views.add(viewA)
+  multiView.views.add(viewB)
+  multiView.views.add(viewC)
+  multiView.views.add(viewD)
 
   let camera = $state({
     zoom: undefined,
