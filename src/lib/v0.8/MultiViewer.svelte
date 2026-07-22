@@ -11,7 +11,7 @@
     camera = $bindable({}),
     mode = $bindable({type: "side-by-side"}),
   }: {
-    views: any,  // FIXME: MultiView.views
+    views: any,  // FIXME: MultiView.views OrderedSvelteMap<ViewKey, SingleView | MultiView>
     camera: any,
     mode: ViewMode,
   } = $props();
@@ -47,29 +47,25 @@
     }
   }
   function onKeyUp(event) {
-    console.log(event)
+    event.stopPropagation()
 		switch (event.key) {
 			case "'":
-					lens.diameter.target = Math.round(lens.diameter.current * lens.scaler);
-					event.preventDefault();
-					break;
+        lens.diameter.target = Math.round(lens.diameter.current * lens.scaler);
+        break;
 			case ";":
-					lens.diameter.target = Math.round(lens.diameter.current / lens.scaler);
-					event.preventDefault();
-					break;
+        lens.diameter.target = Math.round(lens.diameter.current / lens.scaler);
+        break;
 			case "]":
-					lens.i.target -= 1;
-					event.preventDefault();
-					break;
+        lens.i.target -= 1;
+        break;
 			case "[":
-					lens.i.target += 1;
-					event.preventDefault();
-					break;
+        lens.i.target += 1;
+        break;
 			case "l":
         mode.type = mode.type !== "lens" ? "lens" : "side-by-side";
-        event.preventDefault();
         break;
 		}
+    event.preventDefault();
 	}
 </script>
 
@@ -93,6 +89,7 @@
       {@const view = views.map.get(viewKey)}
       <div
         class="view"
+        // animate:/transition: don't work because we neither reorder nor remove.
         style:clip-path={(mode.type !== "lens" || i < 1) ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
       >
         {#if view.type === "multi"}
