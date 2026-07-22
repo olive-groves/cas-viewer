@@ -7,15 +7,16 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
-  import { sourceManager, syncedMapLibreLayers, layerGroups, multiView } from "$lib/shared.svelte";
+  import { sourceManager, syncedMapLibreLayers, layerGroups, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import { LocalPMTilesTileset, LocalSingleImage, RemotePMTilesTileset, RemoteSingleImage, SingleImage, type PMTilesTileset } from "$lib/sources";
-  import { MapLibreSyncedLayer, type AnyLayerSpec, type Background, type LayerOverride, type SyncedMapLibreLayerKey } from "$lib/synced-layer.svelte";
+  import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type LayerOverride, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
   import { PMTiles } from "pmtiles";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
   syncedMapLibreLayers.forEach((_, key) => syncedMapLibreLayers.delete(key));
+  syncedMapLibreSurfaces.forEach((_, key) => syncedMapLibreSurfaces.delete(key));
   layerGroups.map.forEach((_, key) => layerGroups.delete(key));
   multiView.views.map.forEach((_, key) => multiView.views.delete(key))
   // ———————————————————————————————————————————————————————————————————————————————————
@@ -25,12 +26,12 @@
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
   // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localPngUrl];
-  const initialUrls = [localPmtilesUrl, localPngUrl];
+  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
 
   function sourceFromUrl(url: URL): PMTilesTileset | SingleImage {
     const pathname = url.pathname.toLowerCase();
     if (pathname.endsWith(".json")) {
-      // return new TileJSONTileset(url);
+      // TODO: return new TileJSONTileset(url);
       throw Error("JSON not yet supported")
     } else if (pathname.endsWith(".pmtiles")) {
       return new RemotePMTilesTileset(url.toString());
@@ -64,7 +65,7 @@
   import MultiViewer from "$lib/v0.8/MultiViewer.svelte";
 
   // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
-  const nViewers = 3;
+  const nViewers = 6;
   // svelte-ignore state_referenced_locally
   [...Array(nViewers).keys()].map(() => multiView.views.add(new SingleView()))
 
@@ -150,20 +151,57 @@
     }
   }
 
+  async function derivedSyncedSurfaceFromMapLibreSource(
+    mapLibreSourceKey: SourceKey,
+    nOverrides: number,
+  ) {
+    const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
+    if (mapLibreSource === undefined) {
+      return
+    }
+    const sourceSpec = {
+      ...await mapLibreSource.source.spec,
+      ...mapLibreSource?.override
+    }
+    if (sourceSpec.type !== "raster-dem") {
+      return
+    }
+    const surfaceSpec: SurfaceSpec = {
+      source: mapLibreSourceKey,
+      layout: {
+        enabled: true,
+        exaggeration: 10,
+      }
+    }
+    const syncedSurface = new MapLibreSyncedSurface(surfaceSpec)
+    const overrideKeys = [...Array(nOverrides).keys()].map(() => syncedSurface.addOverride({spec: {}}))
+    const syncedSurfaceKey: SyncedMapLibreSurfaceKey = `synced-maplibre-surface_${crypto.randomUUID()}`;
+    syncedMapLibreSurfaces.set(syncedSurfaceKey, syncedSurface);
+    // For each (single)view, set the synced surface with one of the overrides.
+    multiView.views.order.forEach((viewKey, viewIndex) => {
+      const view = multiView.views.map.get(viewKey);
+      if (view?.type === "single") {
+        (view as SingleView).surface.overrideKey = overrideKeys.at(viewIndex);
+        (view as SingleView).surface.syncedSurfaceKey = syncedSurfaceKey;
+      }
+    })
+  }
+
   onMount(() => {
 
     const initialSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
-
     // For each source, create a synced layer derived from its spec with as many
     // overrides as nViewers, to simulate side by side with the same source
     initialSourceKeys.forEach((sourceKey) => {
       deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
     })
-  })
 
-  let mapOptions = $state({
-    zoom: undefined,
-    center: undefined,
+    const sloppySurfaceSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
+    // SLOPPY: For each source, (attempt to) create a synced surface dervied from its
+    // spec with as many overrides as nViewers.
+    sloppySurfaceSourceKeys.forEach((sourceKey) => {
+      derivedSyncedSurfaceFromMapLibreSource(sourceKey, nViewers)
+    })
   })
 
   function handleFiles(files: FileList | null) {
@@ -218,7 +256,9 @@
         <div><h4>Sync</h4></div>
       </div>
       {#each multiView.views.map as [viewKey, view], viewIndex (viewKey)}
-        <div style:grid-column="-1 / 1" style:border-top="1px solid white">
+        {@const syncedSurface = syncedMapLibreSurfaces.get(view?.surface?.syncedSurfaceKey)}
+        {@const overrideSurface = syncedSurface?.overrides.get(view?.surface?.overrideKey)}
+        <div style:grid-column="-1 / 1" style:border-top="2px solid white" style:margin-top=14px>
           <h3>View {viewIndex + 1}</h3>
         </div>
         {#each [...view.layers.order].reverse() as overrideKey (overrideKey)}
@@ -272,6 +312,37 @@
             {/each}
           </div>
         {/each}
+
+        <div style:display=flex style:grid-column="-1 / 1" style:border-top="4px solid oklch(1 0 0 / 0.2)">
+          <div>
+            <input type=checkbox checked={syncedSurface?.spec?.layout?.enabled} onchange={(e) => {
+              syncedSurface.spec.layout.enabled = e.target.checked;
+            }}>
+          </div>
+          <div>
+            surface
+          </div>
+        </div>
+
+        <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:padding-left="6px">
+          <div>exaggeration</div>
+          <div>
+            {#if typeof overrideSurface?.spec?.layout?.exaggeration !== "undefined"}
+              <input type=range max=100 step=1 bind:value={overrideSurface.spec.layout.exaggeration} style:user-select=none/>
+            {:else if typeof syncedSurface?.spec?.layout?.exaggeration !== "undefined"}
+              <input type=range max=100 step=1 bind:value={syncedSurface.spec.layout.exaggeration} style:user-select=none/>
+            {/if}
+          </div>
+          <div style:align-self=center style:justify-self=center>
+            <input type=checkbox checked={overrideSurface?.spec?.layout?.exaggeration === undefined} onchange={(e) => {
+              if (e.target.checked) {
+                delete overrideSurface?.spec?.layout?.exaggeration;
+              } else {
+                overrideSurface.spec.layout = {...overrideSurface?.spec?.layout, exaggeration: syncedSurface.spec.layout.exaggeration}
+              }
+            }}>
+          </div>
+        </div>
       {/each}
     </div>
 

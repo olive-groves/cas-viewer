@@ -1,6 +1,6 @@
 import { SvelteMap } from "svelte/reactivity";
 import { SourceManager } from "./source-manager.svelte";
-import type { MapLibreSyncedLayer, AnyLayerSpec, SyncedMapLibreLayerKey, OverrideMapLibreLayerKey } from "./synced-layer.svelte";
+import type { MapLibreSyncedLayer, AnyLayerSpec, SyncedMapLibreLayerKey, OverrideMapLibreLayerKey, SyncedMapLibreSurfaceKey, MapLibreSyncedSurface } from "./synced-layer.svelte";
 import { OrderedSvelteMap } from "./utils.svelte";
 import { MultiView } from "./v0.8/views.svelte";
 
@@ -10,6 +10,7 @@ export const sourceManager = new SourceManager();
 // All the layers (they're all synced)
 // TODO: SyncedMapLibreLayerManager?
 export const syncedMapLibreLayers: SvelteMap<SyncedMapLibreLayerKey, MapLibreSyncedLayer<AnyLayerSpec>> = new SvelteMap();
+export const syncedMapLibreSurfaces: SvelteMap<SyncedMapLibreSurfaceKey, MapLibreSyncedSurface> = new SvelteMap();
 
 // All the views
 // TODO: ViewManager?

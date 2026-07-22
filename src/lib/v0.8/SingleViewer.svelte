@@ -1,12 +1,12 @@
 <script lang="ts">
   import maplibregl from 'maplibre-gl';
-  import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource } from 'svelte-maplibre-gl';
+  import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView } from './views.svelte';
 
   // TODO: Determine whether to yoink shared sources and layers, or pass them as props?
-  import { sourceManager, syncedMapLibreLayers } from "$lib/shared.svelte";
+  import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import { mergeDeep } from '$lib/utils';
-  let { layers, camera = $bindable({}) }: SingleView = $props();
+  let { layers, surface, camera = $bindable({}), }: SingleView = $props();
 
   let map: maplibregl.Map | undefined = $state.raw();
 
@@ -30,6 +30,8 @@
       new Map()
       )
   )
+
+  // TODO: Force update of map for paint properties that don't play nice with surface.
 
   const MAPLIBRE_TIMEOUT_MILLISECONDS = 100;
   let refreshing: boolean = false;
@@ -195,5 +197,18 @@
       layout={{visibility: layerVisibility}}
     />
   {/each}
+  {#if surface.overrideKey && surface.syncedSurfaceKey}
+    {@const syncedSurface = syncedMapLibreSurfaces.get(surface.syncedSurfaceKey)}
+    {@const sourceKey = syncedSurface?.overrides.get(surface.overrideKey)?.spec?.source ?? syncedSurface?.spec.source}
+    {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+    {#await source?.source.spec then sourceSpecOriginal}
+      {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
+      <RasterDEMTileSource {...sourceSpec}>
+        {@const surfaceSpec = mergeDeep(syncedSurface?.spec, syncedSurface?.overrides.get(surface.overrideKey)?.spec)}
+        <Terrain exaggeration={surfaceSpec.layout.enabled ? surfaceSpec.layout.exaggeration : 0} />
+        <!-- <Terrain exaggeration={10} /> -->
+      </RasterDEMTileSource>
+    {/await}
+  {/if}
 
 </MapLibre>
