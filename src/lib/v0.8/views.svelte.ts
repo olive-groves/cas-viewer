@@ -16,7 +16,7 @@ type LensMode = {
 }
 export type ViewMode = SideBySideMode | LensMode;
 
-type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
+export type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
 
 export class SingleView {
   type = "single";

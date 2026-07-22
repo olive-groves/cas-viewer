@@ -35,16 +35,17 @@ export class MapLibreSyncedLayer<TSpec extends AnyLayerSpec> {
   background?: Background = $state();
   overrides: SvelteMap<OverrideMapLibreLayerKey, LayerOverride<TSpec>> = new SvelteMap();
 
-  constructor(spec: TSpec, background?: Background, overrides: [OverrideMapLibreLayerKey, LayerOverride<TSpec>][] = []) {
+  constructor(spec: TSpec, background?: Background) {
     this.spec = $state(spec);
     this.background = background;
-    overrides.forEach(([key, override]) => this.addOverride(key, override))
   }
 
-  addOverride(key: OverrideMapLibreLayerKey, override: LayerOverride<TSpec>) {
+  addOverride(override: LayerOverride<TSpec>): OverrideMapLibreLayerKey {
+    const key: OverrideMapLibreLayerKey = `override-maplibre-layer_${crypto.randomUUID()}`;
     let spec = $state(override?.spec ?? {});
     let background = $state(override?.background);
-    this.overrides.set(key, {spec, background});
+    this.overrides.set(key, { spec, background });
+    return key;
   }
 }
 
