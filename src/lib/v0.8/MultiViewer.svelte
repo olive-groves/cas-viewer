@@ -47,6 +47,8 @@
     }
   }
   function onKeyUp(event) {
+    // FIXME: Instead of stopping propagation, can we check if keyUp came from itself vs
+    // child MultiView and ignore is yes? I think stopping propagation is a smell.
     event.stopPropagation()
 		switch (event.key) {
 			case "'":
