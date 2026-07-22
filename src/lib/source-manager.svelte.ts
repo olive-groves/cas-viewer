@@ -6,10 +6,12 @@ export type MapLibreSource = {
   override: OverrideMapLibreSourceSpec
 }
 
+export type SourceKey = `source_${string}-${string}-${string}-${string}-${string}`;
+
 export class SourceManager {
   // TODO: Abstract this out with adapters; that is, elect to have mapLibre, openseadragon, etc.?
-  sources: SvelteMap<string, PMTilesTileset | SingleImage> = new SvelteMap();
-  mapLibreSources: SvelteMap<string, MapLibreSource> = new SvelteMap();
+  sources: SvelteMap<SourceKey, PMTilesTileset | SingleImage> = new SvelteMap();
+  mapLibreSources: SvelteMap<SourceKey, MapLibreSource> = new SvelteMap();
 
   add(
     source: PMTilesTileset | SingleImage,
@@ -19,7 +21,7 @@ export class SourceManager {
         override?: OverrideMapLibreSourceSpec,
       }
     }) {
-    const key = crypto.randomUUID();
+    const key: SourceKey = `source_${crypto.randomUUID()}`;
 
     this.sources.set(key, source);
 
@@ -32,7 +34,7 @@ export class SourceManager {
     return key
   }
 
-  delete(key: string) {
+  delete(key: SourceKey) {
     this.sources.delete(key);
     this.mapLibreSources.delete(key);
   }
