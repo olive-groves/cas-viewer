@@ -3,18 +3,22 @@
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
   import { cubicInOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
-  import type { ViewMode } from './views.svelte';
+  import type { ViewMode, ViewLayout } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
 
   let {
     views,
     camera = $bindable({}),
     mode = $bindable({type: "side-by-side"}),
+    layout = $bindable({window: "normal"}),
   }: {
     views: any,  // FIXME: MultiView.views OrderedSvelteMap<ViewKey, SingleView | MultiView>
     camera: any,
     mode: ViewMode,
+    layout: ViewLayout,
   } = $props();
+
+  let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window !== "minimized"))
 
   // Lens
   let lens =$state(
@@ -28,8 +32,12 @@
 			scaler: 1.2,
 			clientX: 0,
 			clientY: 0,
-			containerX: 0,
-			containerY: 0,
+      boundingClientRect: {
+        left: 0,
+        top: 0,
+        width: 0,
+        height: 0,
+      },
 			i: new Tween(1, {
 				duration: 100,
 				easing: cubicInOut
@@ -37,19 +45,21 @@
 		}
 	)
   $effect(() => {
-		lens.x = lens.clientX - lens.containerX;
-		lens.y = lens.clientY - lens.containerY;
+		lens.x = lens.clientX - lens.boundingClientRect.left;
+		lens.y = lens.clientY - lens.boundingClientRect.top;
 	});
   function recordBoundingClientRectToLens(lens): Attachment {
     return (element) => {
-      lens.containerX = element.getBoundingClientRect().left;
-      lens.containerY = element.getBoundingClientRect().top;
+      const {left, top} = element.getBoundingClientRect();
+      lens.boundingClientRect.left = left;
+      lens.boundingClientRect.top = top;
     }
   }
   function onKeyUp(event) {
     // FIXME: Instead of stopping propagation, can we check if keyUp came from itself vs
     // child MultiView and ignore is yes? I think stopping propagation is a smell.
-    event.stopPropagation()
+    // event.stopPropagation()
+    // event.preventDefault();
 		switch (event.key) {
 			case "'":
         lens.diameter.target = Math.round(lens.diameter.current * lens.scaler);
@@ -66,8 +76,13 @@
 			case "l":
         mode.type = mode.type !== "lens" ? "lens" : "side-by-side";
         break;
+			case "b":
+        mode.type = mode.type !== "blink" ? "blink" : "side-by-side";
+        break;
+			case "f":
+        mode.type = mode.type !== "fade" ? "fade" : "side-by-side";
+        break;
 		}
-    event.preventDefault();
 	}
 </script>
 
@@ -77,58 +92,96 @@
   onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
   onkeyup={onKeyUp}
 >
+  <div class=taskbar>
+    <div style:display=flex style:border="1px solid gray" class=unselectable>
+      <label style:display=flex style:align-items=center>
+        <input type=radio value={"side-by-side"} bind:group={mode.type} />
+        Side-by-Side
+      </label>
+      <label style:display=flex style:align-items=center>
+        <input type=radio value={"lens"} bind:group={mode.type} />
+        Lens
+      </label>
+      <label style:display=flex style:align-items=center>
+        <input type=radio value={"blink"} bind:group={mode.type} />
+        Blink
+      </label>
+      <label style:display=flex style:align-items=center>
+        <input type=radio value={"fade"} bind:group={mode.type} />
+        Fade
+      </label>
+    </div>
+    <div style:display=flex class=unselectable>
+      {#each views.order as viewKey, i (viewKey)}
+        {@const view = views.map.get(viewKey)}
+        <div style:display=flex style:border="1px solid gray" style:padding="0 0 0 8px">
+          <label style:display=flex>
+            {view.name || `View ${i + 1}`}
+            <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
+          </label>
+        </div>
+      {/each}
+    </div>
+  </div>
   <div
     class={[
       "views",
       {
         "side-by-side": mode.type === "side-by-side",
-        "lens": mode.type === "lens",
+        lens: mode.type === "lens",
+        blink: mode.type === "blink",
+        fade: mode.type === "fade",
       }
     ]}
     {@attach recordBoundingClientRectToLens(lens)}
+    bind:clientWidth={lens.boundingClientRect.width}
+    bind:clientHeight={lens.boundingClientRect.height}
   >
-    {#each views.order as viewKey, i (viewKey)}
+    {#each visibleViewsOrder as viewKey, i (viewKey)}
       {@const view = views.map.get(viewKey)}
-      <div
-        class="view"
-        // animate:/transition: don't work because we neither reorder nor remove.
-        style:clip-path={(mode.type !== "lens" || i < 1) ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`}
-      >
-        {#if view.type === "multi"}
-          <MultiViewer
-            {...view}
-            bind:camera
-            bind:mode={view.mode}
-          />
-        {:else}
-          <SingleViewer
-            {...view}
-            bind:camera
-          />
-        {/if}
-      </div>
+        <div
+          class=view
+          // animate:/transition: don't work because we neither reorder nor remove.
+          // animate
+          style:clip-path={
+            mode.type !== "lens" ? undefined :
+            i < 1 ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`
+          }
+          style:z-index={
+            mode.type !== "blink" ? undefined :
+            ((i / visibleViewsOrder.length) <= (lens.clientX / lens.boundingClientRect.width) && (lens.clientX / lens.boundingClientRect.width) < ((i + 1) / visibleViewsOrder.length) ? 1 : undefined)
+          }
+          style:opacity={
+            mode.type !== "fade" ? 1 :
+            i < 1 ? 1 :
+              Math.max(0, Math.min(1, (
+                lens.clientX / (lens.boundingClientRect.width / visibleViewsOrder.length) - ( i - 0.5 )
+              )))
+          }
+        >
+          {#if view.type === "multi"}
+            <MultiViewer
+              {...view}
+              bind:camera
+              bind:mode={view.mode}
+            />
+          {:else}
+            <SingleViewer
+              {...view}
+              bind:camera
+            />
+          {/if}
+        </div>
     {/each}
-  </div>
-  <div
-    class=status-bar
-  >
-    <label>
-      <input type=radio value={"side-by-side"} bind:group={mode.type} />
-      side-by-side
-    </label>
-    <label>
-      <input type=radio value={"lens"} bind:group={mode.type} />
-      lens
-    </label>
   </div>
 </div>
 
 <style>
-  .status-bar {
+  .taskbar {
+    gap: 8px;
     display: flex;
-    justify-content: center;
-    border: 1px solid white;
     border-bottom: none;
+    background-color: oklch(0 0 0 / 50%);
   }
   .multi-viewer {
     container: multiViewer / size;
@@ -150,6 +203,18 @@
     }
   }
   .lens {
+    display: grid;
+    .view {
+      grid-area: 1 / 1;
+    }
+  }
+  .blink {
+    display: grid;
+    .view {
+      grid-area: 1 / 1;
+    }
+  }
+  .fade {
     display: grid;
     .view {
       grid-area: 1 / 1;

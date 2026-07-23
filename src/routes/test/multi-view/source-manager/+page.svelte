@@ -65,9 +65,12 @@
   import MultiViewer from "$lib/v0.8/MultiViewer.svelte";
 
   // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
-  const nViewers = 6;
+  const nViewers = 3;
   // svelte-ignore state_referenced_locally
-  [...Array(nViewers).keys()].map(() => multiView.views.add(new SingleView()))
+  [...Array(nViewers).keys()].map(() => {
+    const view = new SingleView();
+    multiView.views.add(view)
+  })
 
   async function deriveSyncedLayerFromMapLibreSource(
     mapLibreSourceKey: SourceKey,
@@ -250,16 +253,15 @@
         <h1>View–Layer Manager Proof</h1>
         <h2>List of views and their respective (override) layers</h2>
       </div>
-      <div style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
-        <div><h4>Property</h4></div>
-        <div><h4>Value</h4></div>
-        <div><h4>Sync</h4></div>
-      </div>
       {#each multiView.views.map as [viewKey, view], viewIndex (viewKey)}
         {@const syncedSurface = syncedMapLibreSurfaces.get(view?.surface?.syncedSurfaceKey)}
         {@const overrideSurface = syncedSurface?.overrides.get(view?.surface?.overrideKey)}
-        <div style:grid-column="-1 / 1" style:border-top="2px solid white" style:margin-top=14px>
-          <h3>View {viewIndex + 1}</h3>
+        <div style:display=flex style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:border-top="2px solid white" style:margin-top=14px>
+          <label>
+            <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
+            View {viewIndex + 1}
+          </label>
+          <input class=inline type=text bind:value={view.name} placeholder="Custom name" onblur={(e) => view.name = view.name?.trim()}>
         </div>
         {#each [...view.layers.order].reverse() as overrideKey (overrideKey)}
           {@const syncedLayerKey = view.layers.map.get(overrideKey)}
@@ -300,13 +302,22 @@
                   {/if}
                 </div>
                 <div style:align-self=center style:justify-self=center>
-                  <input type=checkbox checked={override.spec?.paint?.[property] === undefined} onchange={(e) => {
-                    if (e.target.checked) {
-                      delete override.spec.paint[property];
-                    } else {
-                      override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
-                    }
-                  }}>
+                  <label class={["unselectable", "pseudobutton"]}>
+                    <input
+                      type=checkbox
+                      class=hidden
+                      checked={override.spec?.paint?.[property] === undefined}
+                      onchange={(e) => {
+                        if (e.target.checked) {
+                          delete override.spec.paint[property];
+                        } else {
+                          override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
+                        }
+                      }}>
+                    <span class="material-symbols-outlined">
+                      {override.spec?.paint?.[property] === undefined ? "link" : "link_off"}
+                    </span>
+                  </label>
                 </div>
               </div>
             {/each}
@@ -417,6 +428,38 @@ Class LayerManager
   h4 {
     font-weight: 600;
   }
+
+  /*
+    Utilities
+  */
+
+  .hidden {
+    display: none;
+  }
+  .pseudobutton {
+    &:hover {
+      border: 1px solid gray;
+    }
+    &:hover:active {
+      border: 1px solid white;
+      color: white;
+    }
+  }
+
+  /*
+    Reset
+  */
+  * {
+    padding: 0;
+  }
+  input[type=text].inline {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    color: inherit;
+    background: none;
+    border: none;
+  }
+
   /*
     Josh's Custom CSS Reset
     https://www.joshwcomeau.com/css/custom-css-reset/

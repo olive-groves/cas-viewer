@@ -17,22 +17,36 @@ type SideBySideMode = {
 type LensMode = {
   type: "lens";
 }
-export type ViewMode = SideBySideMode | LensMode;
+type BlinkMode = {
+  type: "blink";
+}
+type FadeMode = {
+  type: "fade";
+}
+export type ViewMode = SideBySideMode | LensMode | BlinkMode | FadeMode;
 
 export type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
 
+export type ViewLayout = {
+  window: "normal" | "maximized" | "minimized";
+}
+
 export class SingleView {
+  name: string | undefined = $state(undefined);
   type = "single";
   layers: OrderedSvelteMap<OverrideMapLibreLayerKey, SyncedMapLibreLayerKey> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `override-maplibre-layer_${crypto.randomUUID()}` });
   surface: {
     overrideKey: OverrideMapLibreSurfaceKey | undefined;
     syncedSurfaceKey: SyncedMapLibreSurfaceKey | undefined;
-  } = $state({ overrideKey: undefined, syncedSurfaceKey: undefined })
+  } = $state({ overrideKey: undefined, syncedSurfaceKey: undefined });
+  layout: ViewLayout = $state({ window: "normal" });
 }
 export class MultiView {
+  name: string | undefined = $state(undefined);
   type = "multi";
   mode: ViewMode = $state({
     type: "side-by-side",
   });
   views: OrderedSvelteMap<ViewKey, SingleView | MultiView> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `view_${crypto.randomUUID()}` });
+  layout: ViewLayout = $state({ window: "normal" });
 }

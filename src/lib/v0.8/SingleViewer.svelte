@@ -97,6 +97,7 @@
   // onload={handleOnData}
   ondata={handleOnData}
   renderWorldCopies={false}
+  attributionControl={false}
   transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
   // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
   zoom={camera.zoom}
@@ -205,8 +206,9 @@
       {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
       <RasterDEMTileSource {...sourceSpec}>
         {@const surfaceSpec = mergeDeep(syncedSurface?.spec, syncedSurface?.overrides.get(surface.overrideKey)?.spec)}
-        <Terrain exaggeration={surfaceSpec.layout.enabled ? surfaceSpec.layout.exaggeration : 0} />
-        <!-- <Terrain exaggeration={10} /> -->
+        {#if surfaceSpec.layout.enabled}
+          <Terrain exaggeration={surfaceSpec.layout.exaggeration} />
+        {/if}
       </RasterDEMTileSource>
     {/await}
   {/if}
