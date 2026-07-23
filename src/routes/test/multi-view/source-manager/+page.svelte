@@ -231,6 +231,8 @@
 
 </script>
 
+<svelte:window onbeforeunload={() => "Leave site? Changes you made may not be saved."} />
+
 <PMTilesProtocol pmtiles={pmtiles} />
 
 
