@@ -58,6 +58,7 @@
   import { SingleView } from "$lib/v0.8/views.svelte";
   import type { SourceKey } from "$lib/source-manager.svelte";
   import MultiViewer from "$lib/v0.8/MultiViewer.svelte";
+  import ToolButton from "$lib/v0.8/ToolButton.svelte";
 
   // >16 in Chromium throws "Too many active WebGL contexts. Oldest context will be lost."
   const nViewers = 3;
@@ -272,16 +273,8 @@
                 }}>
               </div>
               <div>
-                <button onclick={() => view.layers.shiftByKey(overrideKey, 1)}>
-                  <span class="material-symbols-sharp">
-                    keyboard_arrow_up
-                  </span>
-                </button>
-                <button onclick={() => view.layers.shiftByKey(overrideKey, -1)}>
-                  <span class="material-symbols-sharp">
-                    keyboard_arrow_down
-                  </span>
-                </button>
+                <ToolButton symbol=keyboard_arrow_up onclick={() => view.layers.shiftByKey(overrideKey, 1)}/>
+                <ToolButton symbol=keyboard_arrow_down onclick={() => view.layers.shiftByKey(overrideKey, -1)}/>
               </div>
               <div>
                 {syncedLayer?.spec.type}
@@ -299,22 +292,20 @@
                   {/if}
                 </div>
                 <div style:align-self=center style:justify-self=center>
-                  <label class={["unselectable", "pseudobutton"]}>
-                    <input
-                      type=checkbox
-                      class=hidden
-                      checked={override.spec?.paint?.[property] === undefined}
-                      onchange={(e) => {
-                        if (e.target.checked) {
-                          delete override.spec.paint[property];
-                        } else {
-                          override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
-                        }
-                      }}>
-                    <span class="material-symbols-sharp">
-                      {override.spec?.paint?.[property] === undefined ? "link" : "link_off"}
-                    </span>
-                  </label>
+                  <ToolButton
+                    toggle
+                    --font-size=1em
+                    symbol=link
+                    symbolOff=link_off
+                    toggled={override.spec?.paint?.[property] === undefined}
+                    ontoggle={(toggled) => {
+                      if (toggled) {
+                        delete override.spec.paint[property];
+                      } else {
+                        override.spec.paint = {...override.spec?.paint, [property]: syncedLayer.spec.paint[property]}
+                      }
+                    }}
+                  />
                 </div>
               </div>
             {/each}
@@ -389,24 +380,6 @@ Class LayerManager
   h4 {
     font-weight: 600;
   }
-
-  /*
-    Utilities
-  */
-
-  .hidden {
-    display: none;
-  }
-  .pseudobutton {
-    &:hover {
-      border: 1px solid gray;
-    }
-    &:hover:active {
-      border: 1px solid white;
-      color: white;
-    }
-  }
-
   input[type=text].inline {
     padding-left: 0.3rem;
     padding-right: 0.3rem;
