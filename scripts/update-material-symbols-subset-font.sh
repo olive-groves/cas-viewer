@@ -15,7 +15,7 @@ icons+=("settings")
 icons_string=$(IFS=,; echo "${icons[*]}")
 
 css_url="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:FILL,GRAD,opsz@0..1,-25..200,20..48&icon_names=${icons_string}&display=block"
-# Spoof a FILL- and GRAD-supporting user agent
+# Spoof a font-variation-supporting user agent
 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv125.0) Gecko/20100101 Firefox/125.0"
 
 font_url=$(

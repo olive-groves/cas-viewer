@@ -19,6 +19,10 @@
     --font-size
     <ToolButton symbol=drag_indicator --font-size=4rem/>
   </li>
+  <li>
+    draggable
+    <ToolButton draggable symbol=home --font-size=4rem/>
+  </li>
 </ol>
 
 <style lang="css">

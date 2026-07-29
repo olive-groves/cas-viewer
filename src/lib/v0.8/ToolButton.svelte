@@ -33,28 +33,33 @@
 
 <style>
   button {
-    --grad: -100;
+    --opsz: 20;
+    --grad: 0;
     --hover-grad: 100;
     font-size: var(--font-size, 1.25rem);
     display: inline-flex;
     > span {
       line-height: 1;
       font-variation-settings:
+        'opsz' var(--opsz),
         'FILL' var(--off-fill, 0),
         'GRAD' var(--grad);
     }
     &.toggled > span {
       font-variation-settings:
+        'opsz' var(--opsz),
         'FILL' var(--on-fill, 1),
         'GRAD' var(--grad);
     }
     &:hover > span {
       font-variation-settings:
+        'opsz' var(--opsz),
         'FILL' var(--off-fill, 0),
         'GRAD' var(--hover-grad);
     }
     &.toggled:hover > span {
       font-variation-settings:
+        'opsz' var(--opsz),
         'FILL' var(--on-fill, 1),
         'GRAD' var(--hover-grad);
     }
