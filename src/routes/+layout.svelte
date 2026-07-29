@@ -1,5 +1,6 @@
 <script lang="ts">
   import '$lib/maplibre-gl.css'
+  import '$lib/css/index.css'
 
   // import { base } from "$app/paths";
   let { children } = $props()
@@ -17,13 +18,13 @@
   nav {
     display: flex;
     flex-wrap: nowrap;
-  }
-  a, h1, p {
-    font-size: 0.88em;
-    margin: 0.2em;
-  }
-  .home {
-    margin-right: auto;
+    a, h1, p {
+      font-size: 0.88em;
+      margin: 0.2em;
+    }
+    .home {
+      margin-right: auto;
+    }
   }
 </style>
 

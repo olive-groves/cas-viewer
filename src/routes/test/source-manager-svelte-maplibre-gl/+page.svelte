@@ -1,8 +1,3 @@
-<svelte:head>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" /> -->
-</svelte:head>
-
 <script lang="ts">
   // Orchestration of sources, synced layers, and layer groups...
   // Viewer Manager?
@@ -437,7 +432,7 @@
                   refreshBeforeIds(map0);
                 }}
               >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-sharp">
                   keyboard_arrow_up
                 </span>
               </button>
@@ -447,7 +442,7 @@
                   refreshBeforeIds(map0);
                 }}
               >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-sharp">
                   keyboard_arrow_down
                 </span>
               </button>
@@ -547,15 +542,7 @@ Class LayerManager
 -->
 
 <style>
-  .material-symbols-outlined {
-    font-size: 0.8rem;
-    font-variation-settings:
-    'FILL' 0,
-    'wght' 700,
-    'GRAD' 0,
-    'opsz' 24
-  }
-  button:has(>.material-symbols-outlined) {
+  button:has(>.material-symbols-sharp) {
     line-height: 0;
   }
 
@@ -603,52 +590,5 @@ Class LayerManager
   }
   h4 {
     font-weight: 600;
-  }
-  /*
-    Josh's Custom CSS Reset
-    https://www.joshwcomeau.com/css/custom-css-reset/
-  */
-
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-
-  *:not(dialog) {
-    margin: 0;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    html {
-      interpolate-size: allow-keywords;
-    }
-  }
-
-  body {
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  img, picture, video, canvas, svg {
-    display: block;
-    max-width: 100%;
-  }
-
-  input, button, textarea, select {
-    font: inherit;
-  }
-
-  p, h1, h2, h3, h4, h5, h6 {
-    overflow-wrap: break-word;
-  }
-
-  p {
-    text-wrap: pretty;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    text-wrap: balance;
-  }
-
-  #root, #__next {
-    isolation: isolate;
   }
 </style>

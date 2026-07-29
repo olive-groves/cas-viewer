@@ -1,0 +1,20 @@
+@font-face {
+  font-family: "SourceSans3-VariableFont_wght";
+  font-style: normal;
+  src: url('/fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
+}
+@font-face {
+  font-family: "SourceSans3-Italic-VariableFont_wght";
+  font-style: italic;
+  src: url('/fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+}
+@font-face {
+  font-family: "TexgyrepagellaRegular";
+  font-style: normal;
+  src: url("/fonts/TexgyrepagellaRegular.otf");
+}
+@font-face {
+  font-family: "TexgyrepagellaItalic";
+  font-style: italic;
+  src: url("/fonts/TexgyrepagellaItalic.otf");
+}

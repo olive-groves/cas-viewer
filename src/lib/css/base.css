@@ -1,0 +1,21 @@
+html, body {
+  background-color: color-mix(in srgb, Canvas, CanvasText 2.5%);
+  color: color-mix(in srgb, CanvasText, Canvas 15%);
+  color-scheme: dark;
+  height: 100dvh;
+  display: flex;
+  flex-flow: column;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: SourceSans3-VariableFont_wght;
+  font-kerning: normal;
+}
+
+input[type=text].inline {
+  color: inherit;
+  background: none;
+  border: none;
+}
