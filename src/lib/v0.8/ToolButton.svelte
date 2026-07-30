@@ -36,32 +36,51 @@
     --opsz: 20;
     --grad: 0;
     --hover-grad: 100;
+    --active-grad: 0;
+    ---off-fill: var(--off-fill, 0);
+    ---on-fill: var(--on-fill, 1);
     font-size: var(--font-size, 1.25rem);
     display: inline-flex;
     > span {
       line-height: 1;
       font-variation-settings:
         'opsz' var(--opsz),
-        'FILL' var(--off-fill, 0),
+        'FILL' var(--off-fill),
         'GRAD' var(--grad);
     }
     &.toggled > span {
       font-variation-settings:
         'opsz' var(--opsz),
-        'FILL' var(--on-fill, 1),
+        'FILL' var(---on-fill),
         'GRAD' var(--grad);
     }
-    &:hover > span {
-      font-variation-settings:
-        'opsz' var(--opsz),
-        'FILL' var(--off-fill, 0),
-        'GRAD' var(--hover-grad);
-    }
-    &.toggled:hover > span {
-      font-variation-settings:
-        'opsz' var(--opsz),
-        'FILL' var(--on-fill, 1),
-        'GRAD' var(--hover-grad);
+    &:hover, &:focus-visible {
+      > span {
+        font-variation-settings:
+          'opsz' var(--opsz),
+          'FILL' var(---off-fill),
+          'GRAD' var(--hover-grad);
+      }
+      &.toggled > span {
+        font-variation-settings:
+          'opsz' var(--opsz),
+          'FILL' var(---on-fill),
+          'GRAD' var(--hover-grad);
+      }
+      &:active {
+        > span {
+          font-variation-settings:
+            'opsz' var(--opsz),
+            'FILL' var(---off-fill),
+            'GRAD' var(--active-grad);
+        }
+        &.toggled > span {
+          font-variation-settings:
+            'opsz' var(--opsz),
+            'FILL' var(---on-fill),
+            'GRAD' var(--active-grad);
+        }
+      }
     }
   }
 </style>
