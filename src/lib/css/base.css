@@ -25,7 +25,7 @@ button {
   border: 1px solid transparent;
   outline: 1px dotted transparent;
   outline-offset: 1px;
-  &:hover {
+  &:hover, &:focus-visible {
     color: color-mix(in srgb, CanvasText, Canvas 0%);
     background: color-mix(in srgb, Canvas, CanvasText 10%);
     border-color: color-mix(in srgb, CanvasText, Canvas 50%);
@@ -33,7 +33,7 @@ button {
       border-color: currentColor;
     }
   }
-  &:focus {
+  &:focus-visible {
     outline-color: currentColor;
   }
 }
