@@ -84,6 +84,25 @@
         break;
 		}
 	}
+  function onKeyDown(event) {
+		switch (event.key) {
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+      case "0":
+        if (mode.type === "blink" || mode.type === "fade") {
+          const i = Math.min(Number(event.key), visibleViewsOrder.length) - 1;
+          lens.clientX = (i + 0.5) * lens.boundingClientRect.width / visibleViewsOrder.length;
+        }
+        break;
+    }
+  }
 </script>
 
 <div
@@ -91,31 +110,22 @@
   role=presentation
   onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
   onkeyup={onKeyUp}
+  onkeydown={onKeyDown}
 >
   <div class=taskbar>
-    <div style:display=flex style:border="1px solid gray" class=unselectable>
-      <label style:display=flex style:align-items=center>
-        <input type=radio value={"side-by-side"} bind:group={mode.type} />
-        Side-by-Side
-      </label>
-      <label style:display=flex style:align-items=center>
-        <input type=radio value={"lens"} bind:group={mode.type} />
-        Lens
-      </label>
-      <label style:display=flex style:align-items=center>
-        <input type=radio value={"blink"} bind:group={mode.type} />
-        Blink
-      </label>
-      <label style:display=flex style:align-items=center>
-        <input type=radio value={"fade"} bind:group={mode.type} />
-        Fade
-      </label>
+    <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
+      {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
+        <label style:display=flex style:align-items=center style:gap=2px>
+          <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
+          {modeType}
+        </label>
+      {/each}
     </div>
     <div style:display=flex class=unselectable>
       {#each views.order as viewKey, i (viewKey)}
         {@const view = views.map.get(viewKey)}
-        <div style:display=flex style:border="1px solid gray" style:padding="0 0 0 8px">
-          <label style:display=flex>
+        <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+          <label style:display=flex style:gap=2px>
             {view.name || `View ${i + 1}`}
             <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
           </label>
