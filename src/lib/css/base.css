@@ -19,3 +19,21 @@ input[type=text].inline {
   background: none;
   border: none;
 }
+
+button {
+  background: color-mix(in srgb, Canvas, CanvasText 2.5%);
+  border: 1px solid transparent;
+  outline: 1px dotted transparent;
+  outline-offset: 1px;
+  &:hover {
+    color: color-mix(in srgb, CanvasText, Canvas 0%);
+    background: color-mix(in srgb, Canvas, CanvasText 10%);
+    border-color: color-mix(in srgb, CanvasText, Canvas 50%);
+    &:active {
+      border-color: currentColor;
+    }
+  }
+  &:focus {
+    outline-color: currentColor;
+  }
+}
