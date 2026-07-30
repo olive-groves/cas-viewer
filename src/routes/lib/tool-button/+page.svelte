@@ -12,7 +12,7 @@
     <ToolButton toggle symbol=home/>
   </li>
   <li>
-    toggle, symbolOff
+    toggle, symbolOff, --on-fill
     <ToolButton toggle symbol=link symbolOff=link_off --on-fill=0/>
   </li>
   <li>
@@ -20,8 +20,8 @@
     <ToolButton symbol=drag_indicator --font-size=4rem/>
   </li>
   <li>
-    draggable
-    <ToolButton draggable symbol=home --font-size=4rem/>
+    draggable, onclick
+    <ToolButton draggable symbol=home --font-size=4rem onclick={() => console.error("Click em joe")}/>
   </li>
 </ol>
 
