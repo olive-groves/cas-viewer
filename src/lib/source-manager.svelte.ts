@@ -55,6 +55,7 @@ export class SourceManager {
   }
 
   delete(key: SourceKey) {
+    this.sources.get(key)?.destroy();
     this.sources.delete(key);
     this.mapLibreSources.delete(key);
     // TODO: Remove pmtiles?
@@ -63,16 +64,18 @@ export class SourceManager {
   /* Given a URL, like a static or remote image, return a source. **/
   static urlToSource(url: URL): PMTilesTileset | SingleImage {
     const pathname = url.pathname.toLowerCase();
+    let source;
     if (pathname.endsWith(".json")) {
       // TODO: return new TileJSONTileset(url);
       throw Error("JSON not yet supported")
     } else if (pathname.endsWith(".pmtiles")) {
-      return new RemotePMTilesTileset(url.toString());
+      source = new RemotePMTilesTileset(url.toString());
     } else if ([".jpeg", ".jpg", ".png"].some((extension) => pathname.endsWith(extension))) {
-      return new RemoteSingleImage(url.toString());
+      source = new RemoteSingleImage(url.toString());
     } else {
       throw Error(`Source '${pathname}' is not (yet) supported for parsing.`)
     }
+    return source;
   }
 
   /* Given a File, like one from <input type=file/>, return a source. **/

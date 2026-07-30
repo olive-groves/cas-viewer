@@ -38,6 +38,8 @@ interface Source {
 
   header?: MaybePromise<unknown>;  //  Promise<Header>
   metadata?: MaybePromise<unknown>;  //  Promise<unknown>
+
+  destroy: () => void;
 }
 
 interface ImageSource extends Source {
@@ -88,6 +90,8 @@ export class SingleImage implements ImageSource {
   constructor(url: string) {
     this.url = url;
   }
+
+  destroy() {}
 }
 
 export class RemoteSingleImage extends SingleImage {
@@ -102,6 +106,10 @@ export class LocalSingleImage extends SingleImage {
     const url = URL.createObjectURL(file);
     super(url);
     this.file = file;
+  }
+
+  destroy() {
+    URL.revokeObjectURL(this.url);
   }
 }
 
@@ -118,6 +126,8 @@ export class PMTilesTileset implements ImageSource, TilesetSource, VectorType {
     this.header = this._initializeHeader();
     this.metadata = this._initializeMetadata();
   }
+
+  destroy() {}
 
   private async _initializeHeader(): Promise<PMTilesHeader> {
     const header = await this.getHeader();
