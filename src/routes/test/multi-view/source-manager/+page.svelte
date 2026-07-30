@@ -243,16 +243,20 @@
           <div animate:flip={{duration: 200}} style:display=grid style:grid-template-columns=subgrid style:grid-column="-1 / 1">
             <div style:display=flex style:grid-column="-1 / 1" style:border-top="1px solid oklch(1 0 0 / 0.2)">
               <div>
-                <input type=checkbox checked={syncedLayer.spec?.layout?.visibility === "visible"} onchange={(e) => {
-                  syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none";
-                }}>
-              </div>
-              <div>
-                <ToolButton symbol=keyboard_arrow_up onclick={() => view.layers.shiftByKey(overrideKey, 1)}/>
-                <ToolButton symbol=keyboard_arrow_down onclick={() => view.layers.shiftByKey(overrideKey, -1)}/>
+                <ToolButton toggle symbol=visibility symbolOff=visibility_off --on-fill=0 toggled={syncedLayer.spec?.layout?.visibility === "visible"} ontoggle={(toggled) => {
+                  syncedLayer.spec.layout.visibility = toggled ? "visible" : "none";
+                }}/>
               </div>
               <div>
                 {syncedLayer?.spec.type}
+              </div>
+              <div style:display=flex style:margin-left=auto style:justify-content=end>
+                <div>
+                  <ToolButton symbol=keyboard_arrow_up onclick={() => view.layers.shiftByKey(overrideKey, 1)}/>
+                </div>
+                <div>
+                  <ToolButton symbol=keyboard_arrow_down onclick={() => view.layers.shiftByKey(overrideKey, -1)}/>
+                </div>
               </div>
             </div>
 

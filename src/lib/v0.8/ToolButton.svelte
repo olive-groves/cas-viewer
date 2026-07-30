@@ -14,8 +14,7 @@
   let _symbolOn = $derived(symbol)
   let _symbolOff = $derived(symbolOff ?? symbol)
 
-  // On toggle true, show filled
-  function handleClick(event) {
+  function handleClick(event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement }) {
     if (toggleable) {
       toggled = !toggled;
       ontoggle?.(toggled);
