@@ -11,6 +11,8 @@ icons+=("keyboard_arrow_up")
 icons+=("link")
 icons+=("link_off")
 icons+=("settings")
+icons+=("visibility")
+icons+=("visibility_off")
 
 icons_string=$(IFS=,; echo "${icons[*]}")
 
