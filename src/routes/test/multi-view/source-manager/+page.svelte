@@ -1,18 +1,15 @@
 <script lang="ts">
   //////////////////////////////////////////////////////////////////////////////////////
-  // Orchestration of sources, synced layers, and layer groups...
+  // Orchestration of sources, synced layers, and multi-view...
   // Viewer Manager?
-  import { sourceManager, syncedMapLibreLayers, layerGroups, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
-  import { LocalPMTilesTileset, LocalSingleImage, RemotePMTilesTileset, RemoteSingleImage, SingleImage, type PMTilesTileset } from "$lib/sources";
-  import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type LayerOverride, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
+  import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
+  import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
-  import { PMTiles } from "pmtiles";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
   syncedMapLibreLayers.forEach((_, key) => syncedMapLibreLayers.delete(key));
   syncedMapLibreSurfaces.forEach((_, key) => syncedMapLibreSurfaces.delete(key));
-  layerGroups.map.forEach((_, key) => layerGroups.delete(key));
   multiView.views.map.forEach((_, key) => multiView.views.delete(key))
   // ———————————————————————————————————————————————————————————————————————————————————
 
@@ -20,43 +17,19 @@
   const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
   const localJpgUrl = new URL('/local/almond-blossom.jpg', import.meta.url);
   const localPngUrl = new URL('/local/impasto.png', import.meta.url);
-  // const initialUrls = [localPmtilesUrl, localPmtilesDemUrl, localPngUrl];
-  const initialUrls = [localPmtilesUrl, localPmtilesDemUrl];
-
-  function sourceFromUrl(url: URL): PMTilesTileset | SingleImage {
-    const pathname = url.pathname.toLowerCase();
-    if (pathname.endsWith(".json")) {
-      // TODO: return new TileJSONTileset(url);
-      throw Error("JSON not yet supported")
-    } else if (pathname.endsWith(".pmtiles")) {
-      return new RemotePMTilesTileset(url.toString());
-    } else if ([".jpeg", ".jpg", ".png"].some((extension) => pathname.endsWith(extension))) {
-      return new RemoteSingleImage(url.toString());
-    } else {
-      throw Error("Unable to parse source from url")
-    }
-  };
-
-  function addSource(source: PMTilesTileset | SingleImage) {
-    return sourceManager.add(
-      source,
-      {
-        mapLibre: {
-          forceSpecType: undefined,
-          override: {}
-        }
-      }
-    )
-  };
-
-  let pmtiles: PMTiles[] = $state([]);
+  const initialUrls = [
+    localPmtilesUrl,
+    localPmtilesDemUrl,
+    localJpgUrl,
+    localPngUrl,
+  ];
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
   import { onMount } from "svelte";
   import { flip } from "svelte/animate";
   import { SingleView } from "$lib/v0.8/views.svelte";
-  import type { SourceKey } from "$lib/source-manager.svelte";
+  import { SourceManager, type SourceKey } from "$lib/source-manager.svelte";
   import MultiViewer from "$lib/v0.8/MultiViewer.svelte";
   import ToolButton from "$lib/v0.8/ToolButton.svelte";
 
@@ -188,14 +161,14 @@
 
   onMount(() => {
 
-    const initialSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
+    const initialSourceKeys = initialUrls.map((url) => sourceManager.add(SourceManager.urlToSource(url)));
     // For each source, create a synced layer derived from its spec with as many
     // overrides as nViewers, to simulate side by side with the same source
     initialSourceKeys.forEach((sourceKey) => {
       deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
     })
 
-    const sloppySurfaceSourceKeys = initialUrls.map((url) => addSource(sourceFromUrl(url)));
+    const sloppySurfaceSourceKeys = initialUrls.map((url) => sourceManager.add(SourceManager.urlToSource(url)));
     // SLOPPY: For each source, (attempt to) create a synced surface dervied from its
     // spec with as many overrides as nViewers.
     sloppySurfaceSourceKeys.forEach((sourceKey) => {
@@ -206,16 +179,10 @@
   function handleFiles(files: FileList | null) {
     if (files) {
       [...files].forEach((file) => {
-        let source;
-        if (file.name.endsWith("pmtiles")) {
-          source = new LocalPMTilesTileset(file);
-          pmtiles.push(source.archive)
-        } else if ([".jpeg", ".jpg", ".png"].some((extension) => file.name.endsWith(extension))) {
-          source = new LocalSingleImage(file);
-        } else {
-          throw Error(`File not supported: ${file.name}.`)
-        }
-        deriveSyncedLayerFromMapLibreSource(addSource(source), nViewers);
+        deriveSyncedLayerFromMapLibreSource(
+          sourceManager.add(SourceManager.fileToSource(file)),
+          nViewers
+        );
       })
     }
   }
@@ -229,12 +196,20 @@
 
 <svelte:window onbeforeunload={() => "Leave site? Changes you made may not be saved."} />
 
-<PMTilesProtocol pmtiles={pmtiles} />
-
+<!-- We need this component anytime we handle PMTiles. But just once. So not in MultiViewer. -->
+ <!-- For now, here, because it's a sibling of MultiViewer. (If we view stuff, we need it.) -->
+<PMTilesProtocol pmtiles={sourceManager.pmtiles} />
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
 
+  <!-- SingleViews have direct access to shared.svelte.ts (sourceManager et al.) -->
   <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
+
+  <!-- <SideBar
+    {sourceManager}
+    {layerManager}
+    {multiView}
+  /> -->
 
   <div style:display=flex style:flex-direction=column>
 
@@ -249,7 +224,7 @@
     >
       <div style:grid-column="-1 / 1">
         <h1>View–Layer Manager Proof</h1>
-        <h2>List of views and their respective (override) layers</h2>
+        <p>List of views and their respective (override) layers</p>
       </div>
       {#each multiView.views.map as [viewKey, view], viewIndex (viewKey)}
         {@const syncedSurface = syncedMapLibreSurfaces.get(view?.surface?.syncedSurfaceKey)}
@@ -365,21 +340,7 @@ Class LayerManager
     font-weight: unset;
     line-height: 0.9;
   }
-  h3, h4 {
-    text-transform: lowercase;
-    font-variant: small-caps;
-    color: color-mix(in srgb, currentColor, transparent 30%);
-  }
-  h2 {
-    font-family: TexgyrepagellaRegular;
-    font-weight: unset;
-  }
-  h3 {
-    font-weight: 500;
-  }
-  h4 {
-    font-weight: 600;
-  }
+  /* color: color-mix(in srgb, currentColor, transparent 30%); */
   input[type=text].inline {
     padding-left: 0.3rem;
     padding-right: 0.3rem;

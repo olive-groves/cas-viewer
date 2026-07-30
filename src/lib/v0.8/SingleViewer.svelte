@@ -5,6 +5,7 @@
 
   // TODO: Determine whether to yoink shared sources and layers, or pass them as props?
   import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
+
   import { mergeDeep } from '$lib/utils';
   let { layers, surface, camera = $bindable({}), }: SingleView = $props();
 
