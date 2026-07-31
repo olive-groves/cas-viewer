@@ -180,5 +180,6 @@
 <!-- Concept. Wrap the MultiViewer in a dropzone Component that takes care of all it.  -->
   <DropZone>
     <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
+     <!-- <div style:height=100% style:width=100% style:background-color=yellow></div> -->
   </DropZone>
 </div>
