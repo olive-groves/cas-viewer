@@ -338,12 +338,6 @@ Class LayerManager
 
 
 <style>
-  h1 {
-    font-size: 4rem;
-    font-family: TexgyrepagellaItalic;
-    font-weight: unset;
-    line-height: 0.9;
-  }
   /* color: color-mix(in srgb, currentColor, transparent 30%); */
   input[type=text].inline {
     padding-left: 0.3rem;

@@ -9,6 +9,14 @@ html, body {
   padding: 0;
 }
 
+
+h1 {
+  font-size: 4rem;
+  font-family: TexgyrepagellaItalic;
+  font-weight: unset;
+  line-height: 0.9;
+}
+
 body {
   font-family: SourceSans3-VariableFont_wght;
   font-kerning: normal;

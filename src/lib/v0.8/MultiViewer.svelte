@@ -18,6 +18,24 @@
     layout: ViewLayout,
   } = $props();
 
+  // TODO: Instead of fold, separate taskbar from MultiViewer:
+  // MultiViewerWindow(Taskbar(multiView), MultiViewer(multiView))
+  // Have floating taskbar even, with nested taskbar elements:
+  // Multi(View 1, View 2) Multi(Multi(View 3, View 4), View 5)
+  // TODO: Optionally fold multiviews?
+  // Example 1:
+  // I have a multiview.
+  // I pass its views to this.
+  // There is only one view.
+  // That view is a multiview.
+  // That multiview has only one view.
+  // Instead of multiview(multiview(view)), do multiview(view).
+  //
+  // Generic:
+  // I have a multiview.
+  // I pass its views to this.
+  // For each view that is multiview and has just one (multi)view, fold the view:
+  //  MULTIVIEW.VIEWS(..., multiview(view), ...) --> MULTIVIEW.VIEWS(..., view, ...).
   let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window !== "minimized"))
 
   // Lens
@@ -113,14 +131,6 @@
   onkeydown={onKeyDown}
 >
   <div class=taskbar>
-    <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
-      {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
-        <label style:display=flex style:align-items=center style:gap=2px>
-          <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
-          {modeType}
-        </label>
-      {/each}
-    </div>
     <div style:display=flex class=unselectable>
       {#each views.order as viewKey, i (viewKey)}
         {@const view = views.map.get(viewKey)}
@@ -132,6 +142,16 @@
         </div>
       {/each}
     </div>
+    {#if visibleViewsOrder.length > 1}
+      <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
+        {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
+          <label style:display=flex style:align-items=center style:gap=2px>
+            <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
+            {modeType}
+          </label>
+        {/each}
+      </div>
+    {/if}
   </div>
   <div
     class={[
@@ -176,10 +196,16 @@
               bind:mode={view.mode}
             />
           {:else}
-            <SingleViewer
-              {...view}
-              bind:camera
-            />
+            {#if view.layers.order.length < 1}
+              <div style:display=flex style:justify-content=center style:align-items=center style:height=100%>
+                No layers in view.
+              </div>
+            {:else}
+              <SingleViewer
+                {...view}
+                bind:camera
+              />
+            {/if}
           {/if}
         </div>
     {/each}
@@ -187,18 +213,20 @@
 </div>
 
 <style>
-  .taskbar {
-    gap: 8px;
-    display: flex;
-    border-bottom: none;
-    background-color: oklch(0 0 0 / 50%);
-  }
   .multi-viewer {
     container: multiViewer / size;
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
+  }
+  .taskbar {
+    column-gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border-bottom: none;
+    background-color: oklch(0 0 0 / 50%);
   }
   .views {
     height: 100%;
