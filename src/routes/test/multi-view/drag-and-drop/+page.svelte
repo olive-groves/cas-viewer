@@ -21,6 +21,11 @@
   import DropZone from "$lib/v0.8/DropZone.svelte";
 
   let view;
+  view = new SingleView();
+  multiView.views.add(view)
+  view = new SingleView();
+  multiView.views.add(view)
+
   let A = new MultiView();
   A.name = "Multi-View A"
   view = new SingleView();
@@ -28,15 +33,15 @@
   view = new SingleView();
   A.views.add(view);
 
-  let B = new MultiView();
-  B.name = "Multi-View B"
-  view = new SingleView();
-  B.views.add(view);
-  view = new SingleView();
-  B.views.add(view);
+  // let B = new MultiView();
+  // B.name = "Multi-View B"
+  // view = new SingleView();
+  // B.views.add(view);
+  // view = new SingleView();
+  // B.views.add(view);
 
   multiView.views.add(A)
-  multiView.views.add(B)
+  // multiView.views.add(B)
 
   async function deriveSyncedLayerFromMapLibreSource(
     mapLibreSourceKey: SourceKey,
@@ -177,9 +182,5 @@
 <PMTilesProtocol pmtiles={sourceManager.pmtiles} />
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
-<!-- Concept. Wrap the MultiViewer in a dropzone Component that takes care of all it.  -->
-  <DropZone>
-    <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
-     <!-- <div style:height=100% style:width=100% style:background-color=yellow></div> -->
-  </DropZone>
+  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
 </div>

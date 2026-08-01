@@ -71,7 +71,7 @@
   aria-dropeffect=link
 >
   <div
-    ondragentercapture={() => innerDrags += 1}
+    ondragenter={() => innerDrags += 1}
     ondragleave={() => innerDrags -= 1}
     class={["inner", {drag, dragInner}]}
     role=region
@@ -93,7 +93,7 @@
     }
     &.drag {
       > .inner {
-        margin: 10%;
+        margin: 4em;
       }
     }
     .inner {
