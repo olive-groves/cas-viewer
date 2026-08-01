@@ -56,68 +56,23 @@
 		if (files.length > 0) handleFiles(files);
 	}
 
-  let drag = $state(false);
-  let dragInner = $state(false);
+  let drags = $state(0);
+  let innerDrags = $state(0);
+  let drag = $derived(drags > 0);
+  let dragInner = $derived(innerDrags > 0);
   let dragOuter = $derived(drag && !dragInner);
-
-  let dropzone = $state();
-  let inner = $state();
-
-  let dragEnteredSelf = $state(false);
 </script>
 
-<!-- <div
-  bind:this={dropzone}
-  class={["dropzone", "outer", {drag, dragOuter}]}
-  ondragentercapture={(e) => {drag = true; console.log("drag-enter-capture", dragEnteredSelf = (e.target === dropzone))}}
-  ondragenter={(e) => {console.log("drag-enter", (e.target === dropzone) ? "self" : "other")}}
-  ondragleavecapture={(e) => {drag = dragInner; console.log("drag-leave-capture", (e.target === dropzone) ? "self" : "other")}}
-  ondragleave={(e) => {
-    console.log("drag-leave", (e.target === dropzone) ? "self" : (!dragEnteredSelf ? (drag = false) : ""))
-  }}
-  role=region
-  aria-dropeffect=link
->
-  <div
-    bind:this={inner}
-    ondragentercapture={(e) => {console.log("inner drag-enter-capture", (e.target === inner) ? "self" : "other")}}
-    ondragenter={(e) => {dragInner = true; console.log("inner drag-enter", (e.target === inner) ? "self" : "other")}}
-    ondragleavecapture={(e) => {console.log("inner drag-leave-capture", (e.target === inner) ? "self" : "other")}}
-    ondragleave={(e) => {dragInner = false; console.log("inner drag-leave", (e.target === inner) ? "self" : "other")}}
-    class={["inner", {drag, dragInner}]}
-    role=region
-    aria-dropeffect=link
-  >
-    {@render children?.()}
-  </div>
-</div> -->
-
 <div
-  bind:this={dropzone}
   class={["dropzone", "outer", {drag, dragOuter}]}
-  ondragentercapture={(e) => {
-    drag = true;
-    dragEnteredSelf = e.target === dropzone;
-  }}
-  ondragleavecapture={() => {
-    drag = dragInner;
-  }}
-  ondragleave={(e) => {
-    if ((e.target !== dropzone) && !dragEnteredSelf) {
-      drag = false;
-    }
-  }}
+  ondragentercapture={() => drags += 1}
+  ondragleave={() => drags -= 1}
   role=region
   aria-dropeffect=link
 >
   <div
-    bind:this={inner}
-    ondragenter={(e) => {
-      dragInner = true
-    }}
-    ondragleave={(e) => {
-      dragInner = false
-    }}
+    ondragentercapture={() => innerDrags += 1}
+    ondragleave={() => innerDrags -= 1}
     class={["inner", {drag, dragInner}]}
     role=region
     aria-dropeffect=link
