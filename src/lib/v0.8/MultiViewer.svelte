@@ -207,7 +207,7 @@
                 <!-- Inner: Add new view as layer -->
                 <DropZone>
                   {#if view.layers.order.length < 1}
-                    <div style:display=flex style:justify-content=center style:align-items=center style:height=100%>
+                    <div style:display=flex style:justify-content=center style:align-items=center style:height=100% style:background-color=darkslategray>
                       No layers in view.
                     </div>
                   {:else}

@@ -65,14 +65,14 @@
 
 <div
   class={["dropzone", "outer", {drag, dragOuter}]}
-  ondragentercapture={() => drags += 1}
+  ondragenter={() => drags += 1}
   ondragleave={() => drags -= 1}
   role=region
   aria-dropeffect=link
 >
   <div
-    ondragenter={() => innerDrags += 1}
-    ondragleave={() => innerDrags -= 1}
+    ondragentercapture={() => innerDrags += 1}
+    ondragleavecapture={() => innerDrags -= 1}
     class={["inner", {drag, dragInner}]}
     role=region
     aria-dropeffect=link
@@ -85,22 +85,25 @@
 <style>
 	.dropzone {
     display: flex;
-    background-color: lightblue;
     height: 100%;
     width: 100%;
     &.dragOuter {
-      background-color: blue;
+      outline: 1px solid white;
+      outline-offset: -1px;
     }
     &.drag {
       > .inner {
-        margin: 4em;
+        margin: 2rem;
       }
     }
     .inner {
-      background-color: lightcoral;
       width: 100%;
+      box-sizing: border-box;
       &.dragInner {
-        background-color: red;
+        outline: 1px solid white;
+        outline-offset: -1px;
+        /* Box shadow ain't it for inner (content) bro lol because it's behind */
+        box-shadow: 0 0 0 1px oklch(0 0 0 / 100%);
       }
     }
 	}
