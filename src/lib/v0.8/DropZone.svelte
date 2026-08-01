@@ -16,24 +16,15 @@
   } = $props();
 
 	function handleDragenter(e) {
-    drag = true;
-    dragOuter = true;
-    dragInner = false;
     ondragenter?.(e);
 	}
 	function handleDragenterInner(e) {
-    dragOuter = false;
-    dragInner = true;
     ondragenter?.(e);
 	}
 	function handleDragleave(e) {
-    drag = dragInner;
-    dragOuter = false;
     ondragleave?.(e);
 	}
 	function handleDragleaveInner(e) {
-    drag = dragOuter;
-    dragInner = false;
     ondragleave?.(e);
 	}
 	function handleDragover(e) {
@@ -64,16 +55,16 @@
 </script>
 
 <div
-  class={["dropzone", "outer", {drag, dragOuter}]}
+  class={["dropzone", {drag, dragInner, dragOuter}]}
   ondragenter={() => drags += 1}
   ondragleave={() => drags -= 1}
   role=region
   aria-dropeffect=link
 >
   <div
+    class=inner
     ondragentercapture={() => innerDrags += 1}
     ondragleavecapture={() => innerDrags -= 1}
-    class={["inner", {drag, dragInner}]}
     role=region
     aria-dropeffect=link
   >
@@ -87,24 +78,25 @@
     display: flex;
     height: 100%;
     width: 100%;
-    &.dragOuter {
-      outline: 1px solid white;
-      outline-offset: -1px;
+    .inner {
+      width: 100%;
     }
     &.drag {
       > .inner {
         margin: 2rem;
       }
     }
-    .inner {
-      width: 100%;
-      box-sizing: border-box;
-      &.dragInner {
-        outline: 1px solid white;
+    &.dragInner {
+      > .inner {
+        outline: 1px solid oklch(1 0 0 / 50%);
         outline-offset: -1px;
-        /* Box shadow ain't it for inner (content) bro lol because it's behind */
-        box-shadow: 0 0 0 1px oklch(0 0 0 / 100%);
+        box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);
       }
+    }
+    &.dragOuter {
+      outline: 1px solid oklch(1 0 0 / 50%);
+      outline-offset: -1px;
+      box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);
     }
 	}
 </style>
