@@ -207,7 +207,7 @@
                 <!-- Inner: Add new view as layer -->
                 <DropZone>
                   {#if view.layers.order.length < 1}
-                    <div style:display=flex style:justify-content=center style:align-items=center style:height=100% style:background-color=darkslategray>
+                    <div style:display=flex style:justify-content=center style:align-items=center style:height=100% style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
                       No layers in view.
                     </div>
                   {:else}

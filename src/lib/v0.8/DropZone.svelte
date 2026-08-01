@@ -15,6 +15,8 @@
     children?;
   } = $props();
 
+  // TODO: Add props for drag, drop, etc. inner and outer
+
 	function handleDragenter(e) {
     ondragenter?.(e);
 	}
@@ -80,6 +82,7 @@
     width: 100%;
     .inner {
       width: 100%;
+      transition: margin 100ms ease-in-out;
     }
     &.drag {
       > .inner {
