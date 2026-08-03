@@ -92,126 +92,135 @@
 
 </script>
 
-<MapLibre
-  bind:map
-  inlineStyle={`height: var(--height, 100%); width: var(--width, 100%);`}
-  // onload={handleOnData}
-  ondata={handleOnData}
-  renderWorldCopies={false}
-  attributionControl={false}
-  transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
-  // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
-  zoom={camera.zoom}
-  center={camera.center}
-  bearing={camera.bearing}
-  pitch={camera.pitch}
-  roll={camera.roll}
-  elevation={camera.elevation}
-  onmove={
-    (e) => {
-      if (e.originalEvent || e?.sync) {
-        // e.sync is an event prop that we pass if easing or otherwise causing map move,
-        // like the auto-pitch when enabling 3D:
-        //    map.easeTo({zoom: 2}, {sync: true})
-        camera.zoom = map?.getZoom();
-        camera.center = map?.getCenter();
-        camera.bearing = map?.getBearing();
-        camera.pitch = map?.getPitch();
-        camera.roll = map?.getRoll();
-        camera.elevation = map?.getCameraTargetElevation();
+<div class=map-container>
+  <MapLibre
+    bind:map
+    inlineStyle="flex: 1 1;"
+    // onload={handleOnData}
+    ondata={handleOnData}
+    renderWorldCopies={false}
+    // attributionControl={false}
+    transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
+    // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
+    zoom={camera.zoom}
+    center={camera.center}
+    bearing={camera.bearing}
+    pitch={camera.pitch}
+    roll={camera.roll}
+    elevation={camera.elevation}
+    onmove={
+      (e) => {
+        if (e.originalEvent || e?.sync) {
+          // e.sync is an event prop that we pass if easing or otherwise causing map move,
+          // like the auto-pitch when enabling 3D:
+          //    map.easeTo({zoom: 2}, {sync: true})
+          camera.zoom = map?.getZoom();
+          camera.center = map?.getCenter();
+          camera.bearing = map?.getBearing();
+          camera.pitch = map?.getPitch();
+          camera.roll = map?.getRoll();
+          camera.elevation = map?.getCameraTargetElevation();
+        }
       }
     }
-  }
->
-  {#each layers.order as overrideKey (overrideKey)}
-    <BackgroundLayer
-      id={SLOT_PREFIX + overrideKey}
-      layout={{visibility: "none"}}
-    />
-  {/each}
-  {#each layersBySource as [sourceKey, layersOfSource] (sourceKey)}
-    {@const source = sourceManager.mapLibreSources.get(sourceKey)}
-    {#await source?.source.spec then sourceSpecOriginal}
-      {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
-      {#if sourceSpec.type === "raster"}
-        <RasterTileSource {...sourceSpec}>
-          {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
-            {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
-            <!-- This overwrites nested objects: {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
-            <!-- We mergeDeep instead... -->
-            {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-            <RasterLayer
-              id={overrideKey}
-              paint={{...layerSpec.paint}}
-              layout={{...layerSpec.layout}}
-              beforeId={SLOT_PREFIX + overrideKey}
-            />
-          {/each}
-        </RasterTileSource>
-      {:else if sourceSpec.type === "raster-dem"}
-        <RasterDEMTileSource {...sourceSpec}>
-          {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
-            {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
-            {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-            {#if layerSpec.type === "hillshade"}
-              <HillshadeLayer
+  >
+    {#each layers.order as overrideKey (overrideKey)}
+      <BackgroundLayer
+        id={SLOT_PREFIX + overrideKey}
+        layout={{visibility: "none"}}
+      />
+    {/each}
+    {#each layersBySource as [sourceKey, layersOfSource] (sourceKey)}
+      {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+      {#await source?.source.spec then sourceSpecOriginal}
+        {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
+        {#if sourceSpec.type === "raster"}
+          <RasterTileSource {...sourceSpec}>
+            {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
+              {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+              <!-- This overwrites nested objects: {@const layerSpec = {...layer?.spec, ...layer?.overrides.get(overrideKey)?.spec}} -->
+              <!-- We mergeDeep instead... -->
+              {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+              <RasterLayer
                 id={overrideKey}
                 paint={{...layerSpec.paint}}
                 layout={{...layerSpec.layout}}
                 beforeId={SLOT_PREFIX + overrideKey}
               />
-            {:else if layerSpec.type === "color-relief"}
-              <ColorReliefLayer
+            {/each}
+          </RasterTileSource>
+        {:else if sourceSpec.type === "raster-dem"}
+          <RasterDEMTileSource {...sourceSpec}>
+            {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
+              {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+              {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+              {#if layerSpec.type === "hillshade"}
+                <HillshadeLayer
+                  id={overrideKey}
+                  paint={{...layerSpec.paint}}
+                  layout={{...layerSpec.layout}}
+                  beforeId={SLOT_PREFIX + overrideKey}
+                />
+              {:else if layerSpec.type === "color-relief"}
+                <ColorReliefLayer
+                  id={overrideKey}
+                  paint={{...layerSpec.paint}}
+                  layout={{...layerSpec.layout}}
+                  beforeId={SLOT_PREFIX + overrideKey}
+                />
+              {/if}
+            {/each}
+          </RasterDEMTileSource>
+        {:else if sourceSpec.type === "image"}
+          <ImageSource {...sourceSpec}>
+            {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
+              {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+              {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+              <RasterLayer
                 id={overrideKey}
                 paint={{...layerSpec.paint}}
                 layout={{...layerSpec.layout}}
                 beforeId={SLOT_PREFIX + overrideKey}
               />
-            {/if}
-          {/each}
-        </RasterDEMTileSource>
-      {:else if sourceSpec.type === "image"}
-        <ImageSource {...sourceSpec}>
-          {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
-            {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
-            {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
-            <RasterLayer
-              id={overrideKey}
-              paint={{...layerSpec.paint}}
-              layout={{...layerSpec.layout}}
-              beforeId={SLOT_PREFIX + overrideKey}
-            />
-          {/each}
-        </ImageSource>
-      {/if}
-    {/await}
-  {/each}
-  {#each layers.map as [overrideKey, syncedLayerKey] (overrideKey)}
-    {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
-    {@const override = syncedLayer?.overrides.get(overrideKey)}
-    {@const background = mergeDeep(syncedLayer?.background ?? {}, override?.background ?? {}) }
-    {@const layerVisibility = override?.spec?.layout?.visibility ?? syncedLayer?.spec?.layout?.visibility ?? "none"}
-    <!-- TODO: Better default (hidden) background handling -->
-    <BackgroundLayer
-      id={BACKGROUND_PREFIX + overrideKey}
-      beforeId={overrideKey}
-      paint={{"background-color": background?.color ?? "rgb(0, 255, 0)", "background-opacity": background?.opacity ?? 0}}
-      layout={{visibility: layerVisibility}}
-    />
-  {/each}
-  {#if surface.overrideKey && surface.syncedSurfaceKey}
-    {@const syncedSurface = syncedMapLibreSurfaces.get(surface.syncedSurfaceKey)}
-    {@const sourceKey = syncedSurface?.overrides.get(surface.overrideKey)?.spec?.source ?? syncedSurface?.spec.source}
-    {@const source = sourceManager.mapLibreSources.get(sourceKey)}
-    {#await source?.source.spec then sourceSpecOriginal}
-      {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
-      <RasterDEMTileSource {...sourceSpec}>
-        {@const surfaceSpec = mergeDeep(syncedSurface?.spec, syncedSurface?.overrides.get(surface.overrideKey)?.spec)}
-        {#if surfaceSpec.layout.enabled}
-          <Terrain exaggeration={surfaceSpec.layout.exaggeration} />
+            {/each}
+          </ImageSource>
         {/if}
-      </RasterDEMTileSource>
-    {/await}
-  {/if}
+      {/await}
+    {/each}
+    {#each layers.map as [overrideKey, syncedLayerKey] (overrideKey)}
+      {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+      {@const override = syncedLayer?.overrides.get(overrideKey)}
+      {@const background = mergeDeep(syncedLayer?.background ?? {}, override?.background ?? {}) }
+      {@const layerVisibility = override?.spec?.layout?.visibility ?? syncedLayer?.spec?.layout?.visibility ?? "none"}
+      <!-- TODO: Better default (hidden) background handling -->
+      <BackgroundLayer
+        id={BACKGROUND_PREFIX + overrideKey}
+        beforeId={overrideKey}
+        paint={{"background-color": background?.color ?? "rgb(0, 255, 0)", "background-opacity": background?.opacity ?? 0}}
+        layout={{visibility: layerVisibility}}
+      />
+    {/each}
+    {#if surface.overrideKey && surface.syncedSurfaceKey}
+      {@const syncedSurface = syncedMapLibreSurfaces.get(surface.syncedSurfaceKey)}
+      {@const sourceKey = syncedSurface?.overrides.get(surface.overrideKey)?.spec?.source ?? syncedSurface?.spec.source}
+      {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+      {#await source?.source.spec then sourceSpecOriginal}
+        {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
+        <RasterDEMTileSource {...sourceSpec}>
+          {@const surfaceSpec = mergeDeep(syncedSurface?.spec, syncedSurface?.overrides.get(surface.overrideKey)?.spec)}
+          {#if surfaceSpec.layout.enabled}
+            <Terrain exaggeration={surfaceSpec.layout.exaggeration} />
+          {/if}
+        </RasterDEMTileSource>
+      {/await}
+    {/if}
 
-</MapLibre>
+  </MapLibre>
+</div>
+
+<style>
+  .map-container {
+    display: flex;
+    flex: 1;
+  }
+</style>

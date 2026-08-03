@@ -23,16 +23,16 @@
   let view;
   view = new SingleView();
   multiView.views.add(view)
-  view = new SingleView();
-  multiView.views.add(view)
+  // view = new SingleView();
+  // multiView.views.add(view)
 
-  let A = new MultiView();
-  A.name = "Multi-View A"
-  view = new SingleView();
-  A.views.add(view);
-  view = new SingleView();
-  A.views.add(view);
-  multiView.views.add(A)
+  // let A = new MultiView();
+  // A.name = "Multi-View A"
+  // view = new SingleView();
+  // A.views.add(view);
+  // view = new SingleView();
+  // A.views.add(view);
+  // multiView.views.add(A)
 
   // let B = new MultiView();
   // B.name = "Multi-View B"

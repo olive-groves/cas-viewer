@@ -58,27 +58,30 @@
   let dragging = $derived(drags > 0);
   let draggingInner = $derived(innerDrags > 0);
   let draggingOuter = $derived(dragging && !draggingInner);
-
   $effect(() => {
     draggingInnerChanged?.(draggingInner)
   })
   $effect(() => {
     draggingOuterChanged?.(draggingOuter)
   })
+  // TODO: Fix when inner child is removed from DOM while drag is occuring over it.
+  // Likely due to element being destroyed and therefore causing mismatch in enter/leave
+  // $inspect(`dragging: ${dragging} inner: ${draggingInner} outer: ${draggingOuter}`)
+  // $inspect(draggingInner)
 </script>
 
 <div
   // Do not allow drags to exceed 2: Patch for dummy "addMulti" flex element in MultiView
   class={["dropzone", {dragging, draggingInner, draggingOuter}]}
   ondragenter={() => {if (drags < 2) drags += 1}}
-  ondragleave={() => drags -= 1}
+  ondragleave={() => {drags -= 1}}
   role=region
   aria-dropeffect=link
 >
   <div
     class=inner
-    ondragentercapture={() => {if (innerDrags < 2) innerDrags += 1}}
-    ondragleavecapture={() => innerDrags -= 1}
+    ondragenter={() => {if (innerDrags < 2 && (innerDrags - drags < 1)) innerDrags += 1}}
+    ondragleave={() => {innerDrags -= 1;}}
     role=region
     aria-dropeffect=link
   >
@@ -90,10 +93,10 @@
 <style>
 	.dropzone {
     display: flex;
-    height: 100%;
-    width: 100%;
+    flex: 1 1;
     > .inner {
-      width: 100%;
+      display: flex;
+      flex: 1 1;
       transition: margin 200ms ease-out;
     }
     &.dragging {

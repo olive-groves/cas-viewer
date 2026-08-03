@@ -185,7 +185,6 @@
         >
           {#each visibleViewsOrder as viewKey, i (viewKey)}
             {@const view = views.map.get(viewKey)}
-            <div class=view-container>
               <div
                 class=view
                 // animate:/transition: don't work because we neither reorder nor remove.
@@ -217,30 +216,31 @@
                   <DropZone
                     draggingOuterChanged={(dragging) => view.addSubView = dragging}
                   >
-                    {#if view.layers.order.length < 1}
-                      <div style:display=flex style:justify-content=center style:align-items=center style:height=100% style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
-                        No layers in view.
-                      </div>
-                    {:else}
-                      <SingleViewer
-                        {...view}
-                        bind:camera
-                      />
-                    {/if}
+                    <div class=sub-view-container>
+                      {#if view.layers.order.length < 1}
+                        <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
+                          No layers in view.
+                        </div>
+                      {:else}
+                        <SingleViewer
+                          {...view}
+                          bind:camera
+                        />
+                      {/if}
+                      <!-- FIXME: Add to SingleView -->
+                       <!-- FIXME: This seems to cause issues with in-out, probably because its being created and destroyed! -->
+                      {#if view.addSubView}
+                        <div
+                          class=add-sub
+                          in:scale={{duration: 150, easing: cubicInOut}}
+                        >
+                          New sub-view.
+                        </div>
+                      {/if}
+                    </div>
                   </DropZone>
                 {/if}
-                <!-- FIXME: Flickering when hovered over. Fix? -->
-                <!-- FIXME: Add to SingleView, not MultiView -->
-                {#if view.addSubView}
-                  <div
-                    class=add-sub
-                    in:scale={{duration: 150, easing: cubicInOut}}
-                  >
-                    New sub-view.
-                  </div>
-                {/if}
               </div>
-            </div>
           {/each}
           {#if addView}
             <div
@@ -257,7 +257,7 @@
           class=add-multi
           in:scale={{duration: 150, easing: cubicInOut}}
         >
-          New view.
+          New multi-view.
         </div>
       {/if}
     </div>
@@ -266,16 +266,11 @@
 
 <style>
   .add-multi, .add-view, .add-sub {
+    flex: 1 1;
     display: flex;
     justify-content: center;
     align-items: center;
     border: 4px dashed white;
-  }
-  .add-multi, .add-sub {
-    flex: 1 1 100%;
-  }
-  .add-view {
-    flex: 1 1;
   }
   .multi-viewer-container {
     container: multiViewerContainer / size;
@@ -300,19 +295,18 @@
     background-color: oklch(0 0 0 / 50%);
   }
   .views {
-    height: 100%;
+    flex: 1;
   }
-  .view-container {
-    flex: 1 1;
+  .view {
     container: ViewContainer / size;
     display: flex;
   }
-  .view {
+  .sub-view-container {
+    flex: 1;
     display: flex;
-    flex-direction: row;
   }
   @container ViewContainer (max-aspect-ratio: 1 / 1) {
-    .view {
+    .sub-view-container {
       flex-direction: column;
     }
   }
