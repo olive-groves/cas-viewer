@@ -34,15 +34,22 @@
   A.views.add(view);
   multiView.views.add(A)
 
-  let B = new MultiView();
-  B.name = "Multi-View B"
-  view = new SingleView();
-  B.views.add(view);
-  view = new SingleView();
-  B.views.add(view);
-  view = new SingleView();
-  B.views.add(view);
-  multiView.views.add(B)
+  // let B = new MultiView();
+  // B.name = "Multi-View B"
+  // view = new SingleView();
+  // B.views.add(view);
+  // view = new SingleView();
+  // B.views.add(view);
+  // view = new SingleView();
+  // B.views.add(view);
+  // multiView.views.add(B)
+
+  // let BB = new MultiView()
+  // BB.views.add(B);
+  // let BBB = new MultiView()
+  // BBB.views.add(BB);
+
+  // multiView.views.add(BBB)
 
   async function deriveSyncedLayerFromMapLibreSource(
     mapLibreSourceKey: SourceKey,

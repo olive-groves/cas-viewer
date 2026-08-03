@@ -4,6 +4,8 @@
     ondragenter,
     ondragleave,
     ondragover,
+    draggingInnerChanged,
+    draggingOuterChanged,
     dropEffect = "copy",
     children,
   }: {
@@ -11,6 +13,8 @@
     ondragenter?;
     ondragleave?;
     ondragover?;
+    draggingInnerChanged?: (dragging: boolean) => void;
+    draggingOuterChanged?: (dragging: boolean) => void;
     dropEffect?: string;
     children?;
   } = $props();
@@ -34,7 +38,7 @@
     ondragover?.(e);
 	}
 	function handleDrop(e) {
-    drag = false;
+    dragging = false;
     ondrop?.(e);
 	}
 
@@ -51,21 +55,29 @@
 
   let drags = $state(0);
   let innerDrags = $state(0);
-  let drag = $derived(drags > 0);
-  let dragInner = $derived(innerDrags > 0);
-  let dragOuter = $derived(drag && !dragInner);
+  let dragging = $derived(drags > 0);
+  let draggingInner = $derived(innerDrags > 0);
+  let draggingOuter = $derived(dragging && !draggingInner);
+
+  $effect(() => {
+    draggingInnerChanged?.(draggingInner)
+  })
+  $effect(() => {
+    draggingOuterChanged?.(draggingOuter)
+  })
 </script>
 
 <div
-  class={["dropzone", {drag, dragInner, dragOuter}]}
-  ondragenter={() => drags += 1}
+  // Do not allow drags to exceed 2: Patch for dummy "addMulti" flex element in MultiView
+  class={["dropzone", {dragging, draggingInner, draggingOuter}]}
+  ondragenter={() => {if (drags < 2) drags += 1}}
   ondragleave={() => drags -= 1}
   role=region
   aria-dropeffect=link
 >
   <div
     class=inner
-    ondragentercapture={() => innerDrags += 1}
+    ondragentercapture={() => {if (innerDrags < 2) innerDrags += 1}}
     ondragleavecapture={() => innerDrags -= 1}
     role=region
     aria-dropeffect=link
@@ -80,23 +92,23 @@
     display: flex;
     height: 100%;
     width: 100%;
-    .inner {
+    > .inner {
       width: 100%;
-      transition: margin 100ms ease-in-out;
+      transition: margin 200ms ease-out;
     }
-    &.drag {
+    &.dragging {
       > .inner {
         margin: 2rem;
       }
     }
-    &.dragInner {
+    &.draggingInner {
       > .inner {
         outline: 1px solid oklch(1 0 0 / 50%);
         outline-offset: -1px;
         box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);
       }
     }
-    &.dragOuter {
+    &.draggingOuter {
       outline: 1px solid oklch(1 0 0 / 50%);
       outline-offset: -1px;
       box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);

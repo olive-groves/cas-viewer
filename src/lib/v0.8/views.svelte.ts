@@ -40,6 +40,9 @@ export class SingleView {
     syncedSurfaceKey: SyncedMapLibreSurfaceKey | undefined;
   } = $state({ overrideKey: undefined, syncedSurfaceKey: undefined });
   layout: ViewLayout = $state({ window: "normal" });
+  // FIXME: Not the best spot for this. Used to track each'd DropZones in MultiViewer.
+  // Or make this part of SingleViewer instead? Because if I had one SingleViewer, I might want to add directly rather than rely on a MultiViewer for dropzone?
+  addSubView: boolean = $state(false);
 }
 export class MultiView {
   name: string | undefined = $state(undefined);
