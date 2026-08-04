@@ -23,8 +23,8 @@
   let view;
   view = new SingleView();
   multiView.views.add(view)
-  // view = new SingleView();
-  // multiView.views.add(view)
+  view = new SingleView();
+  multiView.views.add(view)
 
   // let A = new MultiView();
   // A.name = "Multi-View A"

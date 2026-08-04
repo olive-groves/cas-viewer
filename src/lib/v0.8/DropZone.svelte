@@ -64,15 +64,13 @@
   $effect(() => {
     draggingOuterChanged?.(draggingOuter)
   })
-  // TODO: Fix when inner child is removed from DOM while drag is occuring over it.
-  // Likely due to element being destroyed and therefore causing mismatch in enter/leave
-  // $inspect(`dragging: ${dragging} inner: ${draggingInner} outer: ${draggingOuter}`)
-  // $inspect(draggingInner)
 </script>
 
 <div
-  // Do not allow drags to exceed 2: Patch for dummy "addMulti" flex element in MultiView
+  // WARNING: Children removed during ondrag- do not consistently propagate ondrag-.
+  // Recommend hiding, not removing (if'ing) children that appear/disappear during drag.
   class={["dropzone", {dragging, draggingInner, draggingOuter}]}
+  // Do not allow drags to exceed 2: Patch for adding/removing child flex elements.
   ondragenter={() => {if (drags < 2) drags += 1}}
   ondragleave={() => {drags -= 1}}
   role=region
@@ -80,8 +78,8 @@
 >
   <div
     class=inner
-    ondragenter={() => {if (innerDrags < 2 && (innerDrags - drags < 1)) innerDrags += 1}}
-    ondragleave={() => {innerDrags -= 1;}}
+    ondragenter={() => {if (innerDrags < 2) innerDrags += 1}}
+    ondragleave={() => {innerDrags -= 1}}
     role=region
     aria-dropeffect=link
   >

@@ -135,7 +135,12 @@
 >
   <div class=multi-viewer-container>
     <div
-      class=multi-viewer
+      class={[
+        "multi-viewer",
+        {
+          add: addMulti,
+        }
+      ]}
       role=presentation
       onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
       onkeyup={onKeyUp}
@@ -177,6 +182,9 @@
               lens: mode.type === "lens",
               blink: mode.type === "blink",
               fade: mode.type === "fade",
+            },
+            {
+              add: addView,
             }
           ]}
           {@attach recordBoundingClientRectToLens(lens)}
@@ -215,8 +223,9 @@
                   <!-- Inner: Add new view as layer -->
                   <DropZone
                     draggingOuterChanged={(dragging) => view.addSubView = dragging}
+                    draggingInnerChanged={(dragging) => view.addLayer = dragging}
                   >
-                    <div class=sub-view-container>
+                    <div class={["sub-view-container", {"add-drag-border": view.addLayer, add: view.addSubView}]}>
                       {#if view.layers.order.length < 1}
                         <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
                           No layers in view.
@@ -227,16 +236,13 @@
                           bind:camera
                         />
                       {/if}
-                      <!-- FIXME: Add to SingleView -->
-                       <!-- FIXME: This seems to cause issues with in-out, probably because its being created and destroyed! -->
-                      {#if view.addSubView}
-                        <div
-                          class=add-sub
-                          in:scale={{duration: 150, easing: cubicInOut}}
-                        >
-                          New sub-view.
-                        </div>
-                      {/if}
+                      <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
+                      <div
+                        class={["add-drag", {collapsed: !view.addSubView}]}
+                        in:scale={{duration: 150, easing: cubicInOut}}
+                      >
+                        + sub-view
+                      </div>
                     </div>
                   </DropZone>
                 {/if}
@@ -244,20 +250,20 @@
           {/each}
           {#if addView}
             <div
-              class=add-view
+              class=add-drag
               in:scale={{duration: 150, easing: cubicInOut}}
             >
-              New view.
+              + view
             </div>
           {/if}
         </div>
       </DropZone>
       {#if addMulti}
         <div
-          class=add-multi
+          class=add-drag
           in:scale={{duration: 150, easing: cubicInOut}}
         >
-          New multi-view.
+          + multi-view
         </div>
       {/if}
     </div>
@@ -265,12 +271,22 @@
 </DropZone>
 
 <style>
-  .add-multi, .add-view, .add-sub {
+  .add {
+    gap: 1em;
+  }
+  .add-drag-border {
+    border: 4px dashed white;
+    padding: 0.5em;
+  }
+  .add-drag {
     flex: 1 1;
     display: flex;
     justify-content: center;
     align-items: center;
     border: 4px dashed white;
+    &.collapsed {
+      display: none;
+    }
   }
   .multi-viewer-container {
     container: multiViewerContainer / size;
@@ -284,7 +300,6 @@
     flex: 1 1;
     display: flex;
     flex-direction: row;
-    gap: 2em;
   }
   .taskbar {
     column-gap: 6px;
