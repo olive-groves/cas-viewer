@@ -1,47 +1,56 @@
 <script lang="ts">
   let {
-    ondrop,
     ondragenter,
     ondragleave,
     ondragover,
+    ondrop,
+    ondragenterInner,
+    ondragleaveInner,
+    ondragoverInner,
+    ondropInner,
+    ondragenterOuter,
+    ondragleaveOuter,
+    ondragoverOuter,
+    ondropOuter,
+    draggingChanged,
     draggingInnerChanged,
     draggingOuterChanged,
-    dropEffect = "copy",
     children,
   }: {
-    ondrop?;
-    ondragenter?;
-    ondragleave?;
-    ondragover?;
+    ondragenter?: (event) => void;
+    ondragleave?: (event) => void;
+    ondragover?: (event) => void;
+    ondrop?: (event) => void;
+    ondragenterInner?: (event) => void;
+    ondragleaveInner?: (event) => void;
+    ondragoverInner?: (event) => void;
+    ondropInner?: (event) => void;
+    ondragenterOuter?: (event) => void;
+    ondragleaveOuter?: (event) => void;
+    ondragoverOuter?: (event) => void;
+    ondropOuter?: (event) => void;
+    draggingChanged?: (dragging: boolean) => void;
     draggingInnerChanged?: (dragging: boolean) => void;
     draggingOuterChanged?: (dragging: boolean) => void;
-    dropEffect?: string;
     children?;
   } = $props();
 
-  // TODO: Add props for drag, drop, etc. inner and outer
-
 	function handleDragenter(e) {
-    ondragenter?.(e);
-	}
-	function handleDragenterInner(e) {
+    if (draggingOuter) ondragenterOuter?.(e);
     ondragenter?.(e);
 	}
 	function handleDragleave(e) {
-    ondragleave?.(e);
-	}
-	function handleDragleaveInner(e) {
+    if (draggingOuter) ondragleaveOuter?.(e);
     ondragleave?.(e);
 	}
 	function handleDragover(e) {
-		e.dataTransfer.dropEffect = dropEffect;  // Trigger native link icon (macOS arrow).
+    if (draggingOuter) ondragoverOuter?.(e);
     ondragover?.(e);
 	}
 	function handleDrop(e) {
-    dragging = false;
+    if (draggingOuter) ondropOuter?.(e);
     ondrop?.(e);
 	}
-
 	function ondropExample(e) {
     function handleFiles(files) {
       for (const file of files) {
@@ -59,10 +68,13 @@
   let draggingInner = $derived(innerDrags > 0);
   let draggingOuter = $derived(dragging && !draggingInner);
   $effect(() => {
-    draggingInnerChanged?.(draggingInner)
+    draggingChanged?.(dragging);
   })
   $effect(() => {
-    draggingOuterChanged?.(draggingOuter)
+    draggingInnerChanged?.(draggingInner);
+  })
+  $effect(() => {
+    draggingOuterChanged?.(draggingOuter);
   })
 </script>
 
@@ -71,15 +83,19 @@
   // Recommend hiding, not removing (if'ing) children that appear/disappear during drag.
   class={["dropzone", {dragging, draggingInner, draggingOuter}]}
   // Do not allow drags to exceed 2: Patch for adding/removing child flex elements.
-  ondragenter={() => {if (drags < 2) drags += 1}}
-  ondragleave={() => {drags -= 1}}
+  ondragenter={(e) => {if (drags < 2) drags += 1; handleDragenter(e);}}
+  ondragleave={(e) => {drags -= 1; handleDragleave(e);}}
+  ondragover={handleDragover}
+  ondrop={(e) => {handleDrop(e); drags = 0;}}
   role=region
   aria-dropeffect=link
 >
   <div
     class=inner
-    ondragenter={() => {if (innerDrags < 2) innerDrags += 1}}
-    ondragleave={() => {innerDrags -= 1}}
+    ondragenter={(e) => {if (innerDrags < 2) innerDrags += 1; ondragenterInner?.(e);}}
+    ondragleave={(e) => {innerDrags -= 1; ondragleaveInner?.(e);}}
+    ondragover={(e) => ondragoverInner?.(e)}
+    ondrop={(e) => {ondropInner?.(e); innerDrags = 0; drags = 0;}}
     role=region
     aria-dropeffect=link
   >

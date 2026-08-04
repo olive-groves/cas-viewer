@@ -7,6 +7,7 @@
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { scale } from 'svelte/transition';
+  import { preventDefault } from 'svelte/legacy';
 
   let {
     views,
@@ -131,6 +132,22 @@
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
 <!-- Inner: Nest... -->
 <DropZone
+  ondropInner={(e) => {
+    console.log("dropped inner");
+    e.stopPropagation();
+  }}
+  ondragoverInner={(e) => {
+    e.preventDefault();
+		e.dataTransfer.dropEffect = "copy";
+  }}
+  ondropOuter={(e) => {
+    console.log("dropped outer");
+    e.stopPropagation();
+  }}
+  ondragoverOuter={(e) => {
+    e.preventDefault();
+		e.dataTransfer.dropEffect = "copy";
+  }}
   draggingOuterChanged={(dragging) => addMulti = dragging}
 >
   <div class=multi-viewer-container>
