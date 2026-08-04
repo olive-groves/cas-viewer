@@ -279,7 +279,7 @@
     padding: 0.5em;
   }
   .add-drag {
-    flex: 1 1;
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -297,7 +297,7 @@
   }
   .multi-viewer {
     container: multiViewer / size;
-    flex: 1 1;
+    flex: 1;
     display: flex;
     flex-direction: row;
   }
@@ -330,7 +330,7 @@
     flex-direction: row;
     flex-wrap: nowrap;
     .view {
-      flex: 1 1;
+      flex: 1;
     }
   }
   .lens {
