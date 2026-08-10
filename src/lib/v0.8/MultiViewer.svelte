@@ -49,7 +49,7 @@
   let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window !== "minimized"))
 
   // Lens
-  let lens =$state(
+  let lens = $state(
 		{
       x: 0,
       y: 0,
