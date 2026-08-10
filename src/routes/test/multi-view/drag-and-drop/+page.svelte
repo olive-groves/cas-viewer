@@ -4,6 +4,7 @@
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
+  import { setSourceManagerContext, setSyncedMapLibreLayersContext, setSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
@@ -11,6 +12,9 @@
   syncedMapLibreSurfaces.forEach((_, key) => syncedMapLibreSurfaces.delete(key));
   multiView.views.map.forEach((_, key) => multiView.views.delete(key))
   // ———————————————————————————————————————————————————————————————————————————————————
+  setSourceManagerContext(sourceManager);
+  setSyncedMapLibreLayersContext(syncedMapLibreLayers);
+  setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof

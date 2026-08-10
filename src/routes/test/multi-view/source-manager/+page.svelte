@@ -3,6 +3,7 @@
   // Orchestration of sources, synced layers, and multi-view...
   // Viewer Manager?
   import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
+  import { setSourceManagerContext, setSyncedMapLibreLayersContext, setSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
   import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
 
@@ -12,6 +13,9 @@
   syncedMapLibreSurfaces.forEach((_, key) => syncedMapLibreSurfaces.delete(key));
   multiView.views.map.forEach((_, key) => multiView.views.delete(key))
   // ———————————————————————————————————————————————————————————————————————————————————
+  setSourceManagerContext(sourceManager);
+  setSyncedMapLibreLayersContext(syncedMapLibreLayers);
+  setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
 
   const localPmtilesUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
@@ -203,7 +207,7 @@
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
 
   <!-- SingleViews have direct access to shared.svelte.ts (sourceManager et al.) -->
-  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
+  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} bind:preview={multiView.preview} />
 
   <!-- <SideBar
     {sourceManager}

@@ -3,8 +3,11 @@
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView } from './views.svelte';
 
-  // TODO: Determine whether to yoink shared sources and layers, or pass them as props?
-  import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
+  // import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
+  import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  const sourceManager = getSourceManagerContext();
+  const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
+  const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
 
   import { mergeDeep } from '$lib/utils';
   let { layers, surface, camera = $bindable({}), }: SingleView = $props();
