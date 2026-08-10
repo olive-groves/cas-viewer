@@ -49,6 +49,7 @@
   let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window !== "minimized"))
 
   // Lens
+  // FIXME: Lens (mouse) alignment issue on nested MultiViewers
   let lens = $state(
 		{
       x: 0,
@@ -139,6 +140,8 @@
       existingViewKeys.forEach((existingViewKey) => {
         existingNestedMultiView.views.add(views.map.get(existingViewKey), {key: existingViewKey});
       })
+      // FIXME: error here when this is called with views = (empty view, multi(empty, height, height))
+      // Might also do something we how we are copying, nesting, clearing etc.
       views.clear();
       views.add(existingNestedMultiView);
       const newNestedMultiView = new MultiView();
