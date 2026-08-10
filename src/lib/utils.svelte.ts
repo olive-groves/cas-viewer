@@ -46,6 +46,10 @@ export class OrderedSvelteMap<K extends string, V = any> {
     return key
   }
 
+  get(key: K): V | undefined {
+    return this.map.get(key)
+  }
+
   // TODO: Add .set()?
 
   delete(keyOrIndex: K | number): boolean {
@@ -60,6 +64,11 @@ export class OrderedSvelteMap<K extends string, V = any> {
     if (index < 0) return false
     this.order.splice(index, 1);
     return key ? this.map.delete(key) : false;
+  }
+
+  clear() {
+    this.order = [];
+    this.map.clear();
   }
 
   move(from: number, to: number) {

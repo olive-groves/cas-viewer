@@ -109,6 +109,7 @@
     display: flex;
     flex: 1 1;
     > .inner {
+      gap: var(--gap);
       display: flex;
       flex-direction: var(--flex-direction);
       flex: 1 1;

@@ -45,7 +45,7 @@
     // TODO: Function to generate the "should-be" order.
     console.warn("Refreshing")
     refreshing = true;
-    const orderedLayerOverrides = layers.order;
+    const orderedLayerOverrides = layers?.order ?? [];
     const currentOrder = target.getLayersOrder();
     // Set slot beforeId backwards, starting from second to last, because we "stack under"
     for (let i = orderedLayerOverrides.length - 2; i > -1; i--) {

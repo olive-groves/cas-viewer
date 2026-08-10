@@ -3,10 +3,16 @@
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
   import { cubicInOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
-  import type { ViewMode, ViewLayout, ViewPreview } from './views.svelte';
+  import { type ViewMode, type ViewLayout, type ViewPreview, SingleView, type ViewKey, MultiView } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { scale } from 'svelte/transition';
+  import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  import { SourceManager, type SourceKey } from '$lib/source-manager.svelte';
+  import { MapLibreSyncedLayer, type AnyLayerSpec, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
+  const sourceManager = getSourceManagerContext();
+  const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
+  const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
 
   let {
     views,
@@ -125,20 +131,187 @@
         break;
     }
   }
+
+  function handleDropSuperOuter(e: DragEvent) {
+    async function handleFiles(files: FileList) {
+      const existingNestedMultiView = new MultiView();
+      const existingViewKeys = views.order;
+      existingViewKeys.forEach((existingViewKey) => {
+        existingNestedMultiView.views.add(views.map.get(existingViewKey), {key: existingViewKey});
+      })
+      views.clear();
+      views.add(existingNestedMultiView);
+      const newNestedMultiView = new MultiView();
+      [...files].forEach(async (file) => {
+        const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
+        const layers = await deriveSyncedLayersFromMapLibreSource(sourceKey);
+        layers.forEach(([syncedLayer, syncedLayerKey, overrideKey]) => {
+          syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+          const view = new SingleView();
+          view.layers.add(syncedLayerKey, {key: overrideKey});
+          newNestedMultiView.views.add(view);
+        })
+      })
+      views.add(newNestedMultiView);
+    }
+    const dataTransfer = e.dataTransfer;
+    const files = dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFiles(files);
+    }
+  }
+
+  function handleDropOuter(e: DragEvent) {
+    async function handleFiles(files: FileList) {
+      [...files].forEach(async (file) => {
+        const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
+        const layers = await deriveSyncedLayersFromMapLibreSource(sourceKey);
+        layers.forEach(([syncedLayer, syncedLayerKey, overrideKey]) => {
+          syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+          const view = new SingleView();
+          view.layers.add(syncedLayerKey, {key: overrideKey});
+          views.add(view);
+        })
+      })
+    }
+    const dataTransfer = e.dataTransfer;
+    const files = dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFiles(files);
+    }
+  }
+
+  function handleDropSubOuter(e: DragEvent, vK: ViewKey) {
+    async function handleFiles(files: FileList, vK: ViewKey) {
+      const nestedMultiView = new MultiView();
+      nestedMultiView.views.add(views.get(vK));
+      [...files].forEach(async (file) => {
+        const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
+        const layers = await deriveSyncedLayersFromMapLibreSource(sourceKey);
+        layers.forEach(([syncedLayer, syncedLayerKey, overrideKey]) => {
+          syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+          const view = new SingleView();
+          view.layers.add(syncedLayerKey, {key: overrideKey});
+          nestedMultiView.views.add(view);
+        })
+      })
+      views.map.set(vK, nestedMultiView);
+    }
+    const dataTransfer = e.dataTransfer;
+    const files = dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFiles(files, vK);
+    }
+  }
+
+  function handleDropSubInner(e: DragEvent, vK: ViewKey) {
+    async function handleFiles(files: FileList, vk: ViewKey) {
+      [...files].forEach(async (file) => {
+        const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
+        const layers = await deriveSyncedLayersFromMapLibreSource(sourceKey);
+        const view = views.map.get(vK);
+        layers.forEach(([syncedLayer, syncedLayerKey, overrideKey]) => {
+          syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+          view.layers.add(syncedLayerKey, {key: overrideKey});
+        })
+      })
+    }
+    const dataTransfer = e.dataTransfer;
+    const files = dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFiles(files, vK);
+    }
+  }
+
+  async function deriveSyncedLayersFromMapLibreSource(mapLibreSourceKey: SourceKey) {
+    const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
+    if (mapLibreSource === undefined) return [];
+    const sourceSpec = {
+      ...await mapLibreSource.source.spec,
+      ...mapLibreSource?.override
+    }
+    const metadata = mapLibreSource.source.source.format === "pmtiles" ? await mapLibreSource.source.source.metadata : undefined;
+
+    if (sourceSpec.type === "raster" || sourceSpec.type === "image") {  // If raster, add a raster layer to each group
+      const layerSpecType = "raster";
+      const initialPaintSpec = {
+        "raster-opacity": 1.0,
+      }
+      const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
+        source: mapLibreSourceKey,
+        type: layerSpecType,
+        layout: {visibility: "visible"},
+        paint: initialPaintSpec,
+      }
+      const syncedLayer = new MapLibreSyncedLayer(layerSpec)
+      const overrideKey = syncedLayer.addOverride({spec: {}})
+      const syncedLayerKey: SyncedMapLibreLayerKey = `synced-maplibre-layer_${crypto.randomUUID()}`;
+      return [[syncedLayer, syncedLayerKey, overrideKey]]
+    } else if (sourceSpec.type === "raster-dem") {  // If raster-dem, add a hillshade AND color-relief layer to each group
+      const layerSpecTypes = ["color-relief", "hillshade"];
+      return layerSpecTypes.map((layerSpecType) => {
+        const initialPaintSpec =
+          layerSpecType === "hillshade" ?
+          {
+            "hillshade-illumination-direction": 315,
+            "hillshade-exaggeration": 0.5,
+          } :
+          {
+            'color-relief-color': [
+              'interpolate',
+              ['linear'],
+              ['elevation'],
+              0, 'rgba(0, 0, 0, 1)',
+              metadata?.maximum ?? 5000, 'rgba(0, 255, 0, 1)'
+            ]
+          }
+        const initialBackgroundSpec: Background | undefined =
+          layerSpecType === "hillshade" ?
+          {
+            color: "#7f7f7f",
+            opacity: 1.0,
+            visibility: true,
+          } :
+          undefined
+        const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual MapLibreSyncedLayer.spec is.
+          source: mapLibreSourceKey,
+          type: layerSpecType,
+          layout: {visibility: "visible"},
+          paint: initialPaintSpec,
+        }
+
+        const syncedLayer = new MapLibreSyncedLayer(layerSpec, initialBackgroundSpec)
+        const overrideKey = syncedLayer.addOverride({spec: {}})
+        const syncedLayerKey: SyncedMapLibreLayerKey = `synced-maplibre-layer_${crypto.randomUUID()}`;
+        return [syncedLayer, syncedLayerKey, overrideKey]
+      })
+    } else {
+      return []
+    }
+  }
 </script>
 
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
 <!-- Inner: Nest... -->
 <DropZone
   ondropOuter={(e) => {
-    console.log("dropped outer");
-    e.stopPropagation();
+    e.preventDefault();
+    if (views.order.length) {
+      handleDropSuperOuter(e);
+    } else {
+      handleDropOuter(e);
+    }
+    // e.stopPropagation();  // WARNING: stopPropagation disrupts drag count handling
   }}
   ondragoverOuter={(e) => {
     e.preventDefault();
 		e.dataTransfer.dropEffect = "copy";
   }}
-  draggingOuterChanged={(dragging) => {preview.addSibling = dragging; preview.nest = dragging;}}
+  draggingOuterChanged={(dragging) => {
+    preview.addSibling = dragging && views.order.length;
+    preview.nest = dragging && views.order.length;
+    preview.addChild = dragging && (views.order.length < 1);
+  }}
 >
   <div class=multi-viewer-size-container>
     <div
@@ -156,8 +329,30 @@
       <!-- Outer: Add add new view to views -->
       <!-- Inner: Nest... -->
       <DropZone
+        --gap={preview.addChild ? "1em" : ""}
         --flex-direction=column
-        draggingOuterChanged={(dragging) => preview.addChild = dragging}
+        ondropOuter={(e) => {
+          e.preventDefault();
+          handleDropOuter(e);
+        }}
+        ondragoverOuter={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        ondropInner={(e) => {
+          if (views.order.length < 1) {
+            e.preventDefault();
+            handleDropOuter(e);
+          }
+        }}
+        ondragoverInner={(e) => {
+          if (views.order.length < 1) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }
+        }}
+        draggingOuterChanged={(dragging) => preview.addChild = dragging || (views.order.length < 1)}
+        draggingInnerChanged={() => preview.addChild = views.order.length < 1}
       >
         <div class=taskbar>
           <div style:display=flex class=unselectable>
@@ -170,6 +365,9 @@
                 </label>
               </div>
             {/each}
+            <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+              + view
+            </div>
           </div>
           {#if visibleViewsOrder.length > 1}
             <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
@@ -233,6 +431,22 @@
                 <DropZone
                   draggingOuterChanged={(dragging) => {view.preview.nest = dragging; view.preview.addSibling = dragging;}}
                   draggingInnerChanged={(dragging) => view.preview.addChild = dragging}
+                  ondropOuter={(e) => {
+                    e.preventDefault();
+                    handleDropSubOuter(e, viewKey);
+                  }}
+                  ondragoverOuter={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "copy";
+                  }}
+                  ondropInner={(e) => {
+                    e.preventDefault();
+                    handleDropSubInner(e, viewKey);
+                  }}
+                  ondragoverInner={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "copy";
+                  }}
                 >
                   <div class={["sub-view-container", {"add-drag-border": view.preview.addChild, add: view.preview.addSibling}]}>
                     {#if view.layers.order.length < 1}
@@ -315,7 +529,6 @@
     column-gap: 6px;
     display: flex;
     flex-wrap: wrap;
-    /* justify-content: space-between; */
     border-bottom: none;
     background-color: oklch(0 0 0 / 50%);
   }
