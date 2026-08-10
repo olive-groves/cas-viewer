@@ -45,7 +45,15 @@
     // TODO: Function to generate the "should-be" order.
     console.warn("Refreshing")
     refreshing = true;
-    const orderedLayerOverrides = layers?.order ?? [];
+    // FIXME: This rigmarole is needed when nesting a multiview that itself has a nested multiview
+    // const orderedLayerOverrides = layers?.order ?? [];
+    let orderedLayerOverrides;
+    try {
+      orderedLayerOverrides = layers?.order ?? [];
+    } catch (error) {
+      console.warn("FIXME:", error);
+      orderedLayerOverrides = [];
+    }
     const currentOrder = target.getLayersOrder();
     // Set slot beforeId backwards, starting from second to last, because we "stack under"
     for (let i = orderedLayerOverrides.length - 2; i > -1; i--) {

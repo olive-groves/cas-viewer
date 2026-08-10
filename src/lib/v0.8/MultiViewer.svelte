@@ -140,7 +140,7 @@
       existingViewKeys.forEach((existingViewKey) => {
         existingNestedMultiView.views.add(views.map.get(existingViewKey), {key: existingViewKey});
       })
-      // FIXME: error here when this is called with views = (empty view, multi(empty, height, height))
+      // FIXME: error here when this is called with views containing a multiview of view(s)
       // Might also do something we how we are copying, nesting, clearing etc.
       views.clear();
       views.add(existingNestedMultiView);
