@@ -18,7 +18,6 @@
   import { SourceManager, type SourceKey } from "$lib/source-manager.svelte";
   import MultiViewer from "$lib/v0.8/MultiViewer.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
-  import DropZone from "$lib/v0.8/DropZone.svelte";
 
   let view;
   view = new SingleView();
@@ -190,5 +189,10 @@
 <PMTilesProtocol pmtiles={sourceManager.pmtiles} />
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
-  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} />
+  <MultiViewer
+    {...multiView}
+    bind:camera
+    bind:mode={multiView.mode}
+    bind:preview={multiView.preview}
+  />
 </div>

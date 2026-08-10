@@ -3,7 +3,7 @@
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
   import { cubicInOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
-  import type { ViewMode, ViewLayout } from './views.svelte';
+  import type { ViewMode, ViewLayout, ViewPreview } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { scale } from 'svelte/transition';
@@ -13,11 +13,13 @@
     camera = $bindable({}),
     mode = $bindable({type: "side-by-side"}),
     layout = $bindable({window: "normal"}),
+    preview = $bindable({}),
   }: {
     views: any,  // FIXME: MultiView.views OrderedSvelteMap<ViewKey, SingleView | MultiView>
     camera: any,
     mode: ViewMode,
     layout: ViewLayout,
+    preview: ViewPreview,
   } = $props();
 
   // TODO: Instead of fold, separate taskbar from MultiViewer:
@@ -123,9 +125,6 @@
         break;
     }
   }
-
-  let draggingOuterSuper = $state(false);
-  let draggingOuter = $state(false);
 </script>
 
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
@@ -139,14 +138,14 @@
     e.preventDefault();
 		e.dataTransfer.dropEffect = "copy";
   }}
-  draggingOuterChanged={(dragging) => draggingOuterSuper = dragging}
+  draggingOuterChanged={(dragging) => {preview.addSibling = dragging; preview.nest = dragging;}}
 >
   <div class=multi-viewer-size-container>
     <div
       class={[
         "multi-viewer",
         {
-          add: draggingOuterSuper,
+          add: preview.addSibling,
         }
       ]}
       role=presentation
@@ -158,7 +157,7 @@
       <!-- Inner: Nest... -->
       <DropZone
         --flex-direction=column
-        draggingOuterChanged={(dragging) => draggingOuter = dragging}
+        draggingOuterChanged={(dragging) => preview.addChild = dragging}
       >
         <div class=taskbar>
           <div style:display=flex class=unselectable>
@@ -193,7 +192,7 @@
               fade: mode.type === "fade",
             },
             {
-              add: draggingOuter,
+              add: preview.addChild,
             }
           ]}
           {@attach recordBoundingClientRectToLens(lens)}
@@ -226,15 +225,16 @@
                   {...view}
                   bind:camera
                   bind:mode={view.mode}
+                  bind:preview={view.preview}
                 />
               {:else}
                 <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
                 <!-- Inner: Add new view as layer -->
                 <DropZone
-                  draggingOuterChanged={(dragging) => view.draggingOuter = dragging}
-                  draggingInnerChanged={(dragging) => view.draggingInner = dragging}
+                  draggingOuterChanged={(dragging) => {view.preview.nest = dragging; view.preview.addSibling = dragging;}}
+                  draggingInnerChanged={(dragging) => view.preview.addChild = dragging}
                 >
-                  <div class={["sub-view-container", {"add-drag-border": view.draggingInner, add: view.draggingOuter}]}>
+                  <div class={["sub-view-container", {"add-drag-border": view.preview.addChild, add: view.preview.addSibling}]}>
                     {#if view.layers.order.length < 1}
                       <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
                         No layers in view.
@@ -243,11 +243,12 @@
                       <SingleViewer
                         {...view}
                         bind:camera
+                        bind:preview={view.preview}
                       />
                     {/if}
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
                     <div
-                      class={["add-drag", {collapsed: !view.draggingOuter}]}
+                      class={["add-drag", {collapsed: !view.preview.addSibling}]}
                       in:scale={{duration: 150, easing: cubicInOut}}
                     >
                       + sub-view
@@ -257,7 +258,7 @@
               {/if}
             </div>
           {/each}
-          {#if draggingOuter}
+          {#if preview.addChild}
             <div
               class=add-drag
               in:scale={{duration: 150, easing: cubicInOut}}
@@ -267,7 +268,7 @@
           {/if}
         </div>
       </DropZone>
-      {#if draggingOuterSuper}
+      {#if preview.addSibling}
         <div
           class=add-drag
           in:scale={{duration: 150, easing: cubicInOut}}

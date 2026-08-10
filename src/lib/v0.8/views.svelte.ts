@@ -31,6 +31,13 @@ export type ViewLayout = {
   window: "normal" | "maximized" | "minimized";
 }
 
+// Preview states for nesting views, adding views, adding layers
+export type ViewPreview = {
+  nest: boolean;
+  addSibling: boolean;
+  addChild: boolean;
+}
+
 export class SingleView {
   name: string | undefined = $state(undefined);
   type = "single";
@@ -42,8 +49,11 @@ export class SingleView {
   layout: ViewLayout = $state({ window: "normal" });
   // FIXME: Not the best spot for this. Used to track each'd DropZones in MultiViewer.
   // Or make this part of SingleViewer instead? Because if I had one SingleViewer, I might want to add directly rather than rely on a MultiViewer for dropzone?
-  draggingOuter: boolean = $state(false);
-  draggingInner: boolean = $state(false);
+  preview: ViewPreview = $state({
+    nest: false,
+    addSibling: false,
+    addChild: false,
+  })
 }
 export class MultiView {
   name: string | undefined = $state(undefined);
@@ -53,4 +63,9 @@ export class MultiView {
   });
   views: OrderedSvelteMap<ViewKey, SingleView | MultiView> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `view_${crypto.randomUUID()}` });
   layout: ViewLayout = $state({ window: "normal" });
+  preview: ViewPreview = $state({
+    nest: false,
+    addSibling: false,
+    addChild: false,
+  })
 }
