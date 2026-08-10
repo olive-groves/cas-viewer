@@ -110,6 +110,7 @@
     flex: 1 1;
     > .inner {
       display: flex;
+      flex-direction: var(--flex-direction);
       flex: 1 1;
       transition: margin 200ms ease-out;
     }

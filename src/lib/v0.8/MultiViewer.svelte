@@ -7,7 +7,6 @@
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { scale } from 'svelte/transition';
-  import { preventDefault } from 'svelte/legacy';
 
   let {
     views,
@@ -125,21 +124,13 @@
     }
   }
 
-  let addMulti = $state(false);
-  let addView = $state(false);
+  let draggingOuterSuper = $state(false);
+  let draggingOuter = $state(false);
 </script>
 
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
 <!-- Inner: Nest... -->
 <DropZone
-  ondropInner={(e) => {
-    console.log("dropped inner");
-    e.stopPropagation();
-  }}
-  ondragoverInner={(e) => {
-    e.preventDefault();
-		e.dataTransfer.dropEffect = "copy";
-  }}
   ondropOuter={(e) => {
     console.log("dropped outer");
     e.stopPropagation();
@@ -148,14 +139,14 @@
     e.preventDefault();
 		e.dataTransfer.dropEffect = "copy";
   }}
-  draggingOuterChanged={(dragging) => addMulti = dragging}
+  draggingOuterChanged={(dragging) => draggingOuterSuper = dragging}
 >
-  <div class=multi-viewer-container>
+  <div class=multi-viewer-size-container>
     <div
       class={[
         "multi-viewer",
         {
-          add: addMulti,
+          add: draggingOuterSuper,
         }
       ]}
       role=presentation
@@ -163,34 +154,35 @@
       onkeyup={onKeyUp}
       onkeydown={onKeyDown}
     >
-      <!-- <div class=taskbar>
-        <div style:display=flex class=unselectable>
-          {#each views.order as viewKey, i (viewKey)}
-            {@const view = views.map.get(viewKey)}
-            <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
-              <label style:display=flex style:gap=2px>
-                {view.name || `View ${i + 1}`}
-                <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
-              </label>
-            </div>
-          {/each}
-        </div>
-        {#if visibleViewsOrder.length > 1}
-          <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
-            {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
-              <label style:display=flex style:align-items=center style:gap=2px>
-                <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
-                {modeType}
-              </label>
-            {/each}
-          </div>
-        {/if}
-      </div> -->
       <!-- Outer: Add add new view to views -->
       <!-- Inner: Nest... -->
       <DropZone
-        draggingOuterChanged={(dragging) => addView = dragging}
+        --flex-direction=column
+        draggingOuterChanged={(dragging) => draggingOuter = dragging}
       >
+        <div class=taskbar>
+          <div style:display=flex class=unselectable>
+            {#each views.order as viewKey, i (viewKey)}
+              {@const view = views.map.get(viewKey)}
+              <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+                <label style:display=flex style:gap=2px>
+                  {view.name || `View ${i + 1}`}
+                  <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
+                </label>
+              </div>
+            {/each}
+          </div>
+          {#if visibleViewsOrder.length > 1}
+            <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
+              {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
+                <label style:display=flex style:align-items=center style:gap=2px>
+                  <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
+                  {modeType}
+                </label>
+              {/each}
+            </div>
+          {/if}
+        </div>
         <div
           class={[
             "views",
@@ -201,7 +193,7 @@
               fade: mode.type === "fade",
             },
             {
-              add: addView,
+              add: draggingOuter,
             }
           ]}
           {@attach recordBoundingClientRectToLens(lens)}
@@ -210,62 +202,62 @@
         >
           {#each visibleViewsOrder as viewKey, i (viewKey)}
             {@const view = views.map.get(viewKey)}
-              <div
-                class=view
-                // animate:/transition: don't work because we neither reorder nor remove.
-                style:clip-path={
-                  mode.type !== "lens" ? undefined :
-                  i < 1 ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`
-                }
-                style:z-index={
-                  mode.type !== "blink" ? undefined :
-                  ((i / visibleViewsOrder.length) <= (lens.clientX / lens.boundingClientRect.width) && (lens.clientX / lens.boundingClientRect.width) < ((i + 1) / visibleViewsOrder.length) ? 1 : undefined)
-                }
-                style:opacity={
-                  mode.type !== "fade" ? 1 :
-                  i < 1 ? 1 :
-                    Math.max(0, Math.min(1, (
-                      lens.clientX / (lens.boundingClientRect.width / visibleViewsOrder.length) - ( i - 0.5 )
-                    )))
-                }
-              >
-                {#if view.type === "multi"}
-                  <MultiViewer
-                    {...view}
-                    bind:camera
-                    bind:mode={view.mode}
-                  />
-                {:else}
-                  <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
-                  <!-- Inner: Add new view as layer -->
-                  <DropZone
-                    draggingOuterChanged={(dragging) => view.addSubView = dragging}
-                    draggingInnerChanged={(dragging) => view.addLayer = dragging}
-                  >
-                    <div class={["sub-view-container", {"add-drag-border": view.addLayer, add: view.addSubView}]}>
-                      {#if view.layers.order.length < 1}
-                        <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
-                          No layers in view.
-                        </div>
-                      {:else}
-                        <SingleViewer
-                          {...view}
-                          bind:camera
-                        />
-                      {/if}
-                      <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
-                      <div
-                        class={["add-drag", {collapsed: !view.addSubView}]}
-                        in:scale={{duration: 150, easing: cubicInOut}}
-                      >
-                        + sub-view
+            <div
+              class=view
+              // animate:/transition: don't work because we neither reorder nor remove.
+              style:clip-path={
+                mode.type !== "lens" ? undefined :
+                i < 1 ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`
+              }
+              style:z-index={
+                mode.type !== "blink" ? undefined :
+                ((i / visibleViewsOrder.length) <= (lens.clientX / lens.boundingClientRect.width) && (lens.clientX / lens.boundingClientRect.width) < ((i + 1) / visibleViewsOrder.length) ? 1 : undefined)
+              }
+              style:opacity={
+                mode.type !== "fade" ? 1 :
+                i < 1 ? 1 :
+                  Math.max(0, Math.min(1, (
+                    lens.clientX / (lens.boundingClientRect.width / visibleViewsOrder.length) - ( i - 0.5 )
+                  )))
+              }
+            >
+              {#if view.type === "multi"}
+                <MultiViewer
+                  {...view}
+                  bind:camera
+                  bind:mode={view.mode}
+                />
+              {:else}
+                <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
+                <!-- Inner: Add new view as layer -->
+                <DropZone
+                  draggingOuterChanged={(dragging) => view.draggingOuter = dragging}
+                  draggingInnerChanged={(dragging) => view.draggingInner = dragging}
+                >
+                  <div class={["sub-view-container", {"add-drag-border": view.draggingInner, add: view.draggingOuter}]}>
+                    {#if view.layers.order.length < 1}
+                      <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
+                        No layers in view.
                       </div>
+                    {:else}
+                      <SingleViewer
+                        {...view}
+                        bind:camera
+                      />
+                    {/if}
+                    <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
+                    <div
+                      class={["add-drag", {collapsed: !view.draggingOuter}]}
+                      in:scale={{duration: 150, easing: cubicInOut}}
+                    >
+                      + sub-view
                     </div>
-                  </DropZone>
-                {/if}
-              </div>
+                  </div>
+                </DropZone>
+              {/if}
+            </div>
           {/each}
-          {#if addView}
+          {#if draggingOuter}
             <div
               class=add-drag
               in:scale={{duration: 150, easing: cubicInOut}}
@@ -275,7 +267,7 @@
           {/if}
         </div>
       </DropZone>
-      {#if addMulti}
+      {#if draggingOuterSuper}
         <div
           class=add-drag
           in:scale={{duration: 150, easing: cubicInOut}}
@@ -305,7 +297,7 @@
       display: none;
     }
   }
-  .multi-viewer-container {
+  .multi-viewer-size-container {
     container: multiViewerContainer / size;
     height: 100%;
     width: 100%;
@@ -322,7 +314,7 @@
     column-gap: 6px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    /* justify-content: space-between; */
     border-bottom: none;
     background-color: oklch(0 0 0 / 50%);
   }
