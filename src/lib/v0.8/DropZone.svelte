@@ -1,5 +1,7 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   let {
+    enabled = $bindable(true),
     ondragenter,
     ondragleave,
     ondragover,
@@ -17,22 +19,23 @@
     draggingOuterChanged,
     children,
   }: {
-    ondragenter?: (event) => void;
-    ondragleave?: (event) => void;
-    ondragover?: (event) => void;
-    ondrop?: (event) => void;
-    ondragenterInner?: (event) => void;
-    ondragleaveInner?: (event) => void;
-    ondragoverInner?: (event) => void;
-    ondropInner?: (event) => void;
-    ondragenterOuter?: (event) => void;
-    ondragleaveOuter?: (event) => void;
-    ondragoverOuter?: (event) => void;
-    ondropOuter?: (event) => void;
+    enabled?: boolean;
+    ondragenter?: (event: DragEvent) => void;
+    ondragleave?: (event: DragEvent) => void;
+    ondragover?: (event: DragEvent) => void;
+    ondrop?: (event: DragEvent) => void;
+    ondragenterInner?: (event: DragEvent) => void;
+    ondragleaveInner?: (event: DragEvent) => void;
+    ondragoverInner?: (event: DragEvent) => void;
+    ondropInner?: (event: DragEvent) => void;
+    ondragenterOuter?: (event: DragEvent) => void;
+    ondragleaveOuter?: (event: DragEvent) => void;
+    ondragoverOuter?: (event: DragEvent) => void;
+    ondropOuter?: (event: DragEvent) => void;
     draggingChanged?: (dragging: boolean) => void;
     draggingInnerChanged?: (dragging: boolean) => void;
     draggingOuterChanged?: (dragging: boolean) => void;
-    children?;
+    children?: Snippet;
   } = $props();
 
 	function handleDragenter(e) {
