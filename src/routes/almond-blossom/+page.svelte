@@ -22,7 +22,8 @@
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
   import { Underzoom } from 'maplibre-xy';
-  import maplibregl from 'maplibre-gl';
+  import 'svelte-maplibre-gl/vite';
+  import * as maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
   import ScaleBar from '$lib/ScaleBar.svelte';
 

@@ -1,5 +1,5 @@
 
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 
 let defaultOptions = {
 	id: "maplibregl-minimap",
@@ -43,7 +43,7 @@ class Minimap {
 		// super();
 		this.options = defaultOptions;
 		Object.assign(this.options, _options);
-		
+
 		this._ticking = false;
 		this._lastMouseMoveEvent = null;
 		this._parentMap = null;
@@ -287,7 +287,7 @@ class Minimap {
 	}
 
 	_zoomAdjust()
-	{	
+	{
 		var miniMap = this._miniMap;
 		var parentMap = this._parentMap;
 		var miniZoom = parseInt(miniMap.getZoom(), 10);
@@ -345,11 +345,11 @@ class Minimap {
 		controlContainer.classList.add("collapse")
 		controlContainer.classList.add("active")
 		controlContainer.setAttribute('style', 'display: grid; grid-template: auto 1fr / auto 1fr; background-color: transparent; overflow: hidden;')
-		
+
 		const mapContainer = document.createElement("div");
 		mapContainer.classList.add("minimap")
 		mapContainer.setAttribute('style', `display: ${this._isVisible ? "revert" : "none"}; box-sizing: border-box; width: ${opts.width}; height: ${opts.height}; grid-area: 1 / 1 / -1 / -1;`);
-		
+
 		const button = document.createElement("button");
 		button.type = "button";
 		button.textContent = "Minimap";
@@ -359,14 +359,14 @@ class Minimap {
 			mapContainer.style.display = this._isVisible ? "revert" : "none";
 			button.style.color = this._isVisible ? "#1b9fd0" : "#555";
 			// setZoom because canvas reverts to 400x300 when display: none, causing a slight zoom-in that remains when display: revert
-			// FIXME: This works for the Viewer, but excessively zooms out on test/minimap. So this isn't really a fix. 
+			// FIXME: This works for the Viewer, but excessively zooms out on test/minimap. So this isn't really a fix.
 			setTimeout(() => {
 				this._miniMap?.setZoom(this.options.zoom);
 			}, 0);
 		})
 		button.setAttribute('style', `width: fit-content; padding-left: 4px; padding-right: 4px; color: #333; background-color: #fff; grid-area: 1 / 1; border-radius: 4px; z-index: 0;`);
 		button.style.color = this._isVisible ? "#1b9fd0" : "#555";
-		
+
 		controlContainer.appendChild(mapContainer);
 		controlContainer.appendChild(button);
 

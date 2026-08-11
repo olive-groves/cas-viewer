@@ -1,5 +1,6 @@
 <script lang="ts">
-  import maplibregl from 'maplibre-gl';
+  import 'svelte-maplibre-gl/vite';
+  import * as maplibregl from 'maplibre-gl';
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView } from './views.svelte';
 
@@ -161,7 +162,8 @@
             {/each}
           </RasterTileSource>
         {:else if sourceSpec.type === "raster-dem"}
-          <RasterDEMTileSource {...sourceSpec}>
+          {@const {scheme, ...maplibreSpec} = sourceSpec}
+          <RasterDEMTileSource {...maplibreSpec}>
             {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
               {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
               {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
@@ -217,7 +219,8 @@
       {@const source = sourceManager.mapLibreSources.get(sourceKey)}
       {#await source?.source.spec then sourceSpecOriginal}
         {@const sourceSpec = {...sourceSpecOriginal, ...source?.override, id: sourceKey}}
-        <RasterDEMTileSource {...sourceSpec}>
+        {@const {scheme, ...maplibreSpec} = sourceSpec}
+        <RasterDEMTileSource {...maplibreSpec}>
           {@const surfaceSpec = mergeDeep(syncedSurface?.spec, syncedSurface?.overrides.get(surface.overrideKey)?.spec)}
           {#if surfaceSpec.layout.enabled}
             <Terrain exaggeration={surfaceSpec.layout.exaggeration} />

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import 'svelte-maplibre-gl/vite';
   import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, ColorReliefLayer } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';

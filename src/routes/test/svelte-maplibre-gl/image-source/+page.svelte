@@ -1,4 +1,5 @@
 <script lang="ts">
+  import 'svelte-maplibre-gl/vite';
   import {
     MapLibre,
     RasterLayer,
