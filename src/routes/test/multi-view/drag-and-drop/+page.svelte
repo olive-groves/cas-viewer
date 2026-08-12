@@ -45,7 +45,7 @@
   // B.views.add(view);
   // view = new SingleView();
   // B.views.add(view);
-  // multiView.views.add(B)
+  // // multiView.views.add(B)
 
   // let BB = new MultiView()
   // BB.views.add(B);

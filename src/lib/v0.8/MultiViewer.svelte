@@ -370,7 +370,7 @@
           }
         }}
       >
-        <div class=taskbar>
+        <!-- <div class=taskbar>
           <div style:display=flex class=unselectable>
             <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
               Taskbar
@@ -395,7 +395,7 @@
               {/each}
             </div>
           {/if}
-        </div>
+        </div> -->
         <div
           class={[
             "views",
@@ -445,7 +445,6 @@
                 <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
                 <!-- Inner: Add new view as layer -->
                 <DropZone
-                  // --dragging-margin=initial
                   // If there is only one view, we want users to add a view, not view-nest.
                   // If there are no layers in the view, we want users to add a layer, not view-nest.
                   // Only enable view-nesting if there are multiple views AND if the view itself has 1 layer.
@@ -479,7 +478,7 @@
                 >
                   <div class={["sub-view-container", {"add-drag-border": view.preview.addChild, add: view.preview.addSibling}]}>
                     {#if view.layers.order.length < 1}
-                      <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center>
+                      <div class=views-notice>
                         No layers in this view.
                       </div>
                     {:else}
@@ -514,7 +513,7 @@
               </div>
             {:else if views.order.length < 1}
               <div class=views-notice>
-                Drag and drop to add views.
+                Empty viewer. Drag and drop to add views.
               </div>
             {/if}
           {/if}

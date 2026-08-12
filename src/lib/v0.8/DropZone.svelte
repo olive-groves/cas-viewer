@@ -99,9 +99,11 @@
 <style>
 	.dropzone {
     --sc-2-5-5: 44px;
-    --_dragging-margin: var(--dragging-margin, var(--sc-2-5-5));
+    --_dragging-margin: var(--dragging-margin, calc(2 * var(--sc-2-5-5)));
     display: flex;
     flex: 1 1;
+    --width: 100%;
+    --height: 100%;
     > .inner {
       gap: var(--inner-gap);
       display: flex;
@@ -111,7 +113,9 @@
     }
     &.dragging.enabled {
       > .inner {
-        margin: min(var(--_dragging-margin), min(calc(100vw / 3), calc(100vh / 3)));
+        --margin-left-right: min(var(--_dragging-margin), calc(0.2 * var(--width)));
+        --margin-top-bottom: min(var(--_dragging-margin), calc(0.2 * var(--height)));
+        margin: var(--margin-top-bottom) var(--margin-left-right);
       }
     }
     &.draggingInner.enabled {
