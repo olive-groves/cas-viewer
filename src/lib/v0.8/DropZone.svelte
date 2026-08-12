@@ -32,46 +32,35 @@
     ondragleaveOuter?: (event: DragEvent) => void;
     ondragoverOuter?: (event: DragEvent) => void;
     ondropOuter?: (event: DragEvent) => void;
-    draggingChanged?: (dragging: boolean) => void;
+    draggingChanged?: (dragging: boolean, draggingInner: boolean) => void;
     draggingInnerChanged?: (dragging: boolean) => void;
     draggingOuterChanged?: (dragging: boolean) => void;
     children?: Snippet;
   } = $props();
 
-	function handleDragenter(e) {
+	function handleDragenter(e: DragEvent) {
     if (draggingOuter) ondragenterOuter?.(e);
     ondragenter?.(e);
 	}
-	function handleDragleave(e) {
+	function handleDragleave(e: DragEvent) {
     if (draggingOuter) ondragleaveOuter?.(e);
     ondragleave?.(e);
 	}
-	function handleDragover(e) {
+	function handleDragover(e: DragEvent) {
     if (draggingOuter) ondragoverOuter?.(e);
     ondragover?.(e);
 	}
-	function handleDrop(e) {
+	function handleDrop(e: DragEvent) {
     if (draggingOuter) ondropOuter?.(e);
     ondrop?.(e);
 	}
-	function ondropExample(e) {
-    function handleFiles(files) {
-      for (const file of files) {
-        console.log(URL.createObjectURL(file));
-      }
-    }
-	  const dt = e.dataTransfer;
-	  const files = dt.files;
-		if (files.length > 0) handleFiles(files);
-	}
-
   let drags = $state(0);
   let innerDrags = $state(0);
   let dragging = $derived(drags > 0);
   let draggingInner = $derived(innerDrags > 0);
   let draggingOuter = $derived(dragging && !draggingInner);
   $effect(() => {
-    draggingChanged?.(dragging);
+    draggingChanged?.(dragging, draggingInner);
   })
   $effect(() => {
     draggingInnerChanged?.(draggingInner);
@@ -84,7 +73,7 @@
 <div
   // WARNING: Children removed during ondrag- do not consistently propagate ondrag-.
   // Recommend hiding, not removing (if'ing) children that appear/disappear during drag.
-  class={["dropzone", {dragging, draggingInner, draggingOuter}]}
+  class={["dropzone", {dragging, draggingInner, draggingOuter, enabled}]}
   // Do not allow drags to exceed 2: Patch for adding/removing child flex elements.
   ondragenter={(e) => {if (drags < 2) drags += 1; handleDragenter(e);}}
   ondragleave={(e) => {drags -= 1; handleDragleave(e);}}
@@ -109,28 +98,30 @@
 
 <style>
 	.dropzone {
+    --sc-2-5-5: 44px;
+    --_dragging-margin: var(--dragging-margin, var(--sc-2-5-5));
     display: flex;
     flex: 1 1;
     > .inner {
-      gap: var(--gap);
+      gap: var(--inner-gap);
       display: flex;
       flex-direction: var(--flex-direction);
       flex: 1 1;
-      transition: margin 200ms ease-out;
+      transition: margin 150ms ease-out;
     }
-    &.dragging {
+    &.dragging.enabled {
       > .inner {
-        margin: 2rem;
+        margin: min(var(--_dragging-margin), min(calc(100vw / 3), calc(100vh / 3)));
       }
     }
-    &.draggingInner {
+    &.draggingInner.enabled {
       > .inner {
         outline: 1px solid oklch(1 0 0 / 50%);
         outline-offset: -1px;
         box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);
       }
     }
-    &.draggingOuter {
+    &.draggingOuter.enabled {
       outline: 1px solid oklch(1 0 0 / 50%);
       outline-offset: -1px;
       box-shadow: 0 0 0 1px oklch(0 0 0 / 50%);

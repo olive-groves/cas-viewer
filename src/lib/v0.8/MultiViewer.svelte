@@ -297,13 +297,11 @@
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
 <!-- Inner: Nest... -->
 <DropZone
+  // Only enable nesting if there are multiple views because we should just addChild instead
+  enabled={views.order.length > 1}
   ondropOuter={(e) => {
     e.preventDefault();
-    if (views.order.length) {
-      handleDropSuperOuter(e);
-    } else {
-      handleDropOuter(e);
-    }
+    handleDropSuperOuter(e);
     // e.stopPropagation();  // WARNING: stopPropagation disrupts drag count handling
   }}
   ondragoverOuter={(e) => {
@@ -311,9 +309,8 @@
 		e.dataTransfer.dropEffect = "copy";
   }}
   draggingOuterChanged={(dragging) => {
-    preview.addSibling = dragging && views.order.length;
-    preview.nest = dragging && views.order.length;
-    preview.addChild = dragging && (views.order.length < 1);
+    preview.addSibling = dragging;
+    preview.nest = dragging;
   }}
 >
   <div class=multi-viewer-size-container>
@@ -332,32 +329,48 @@
       <!-- Outer: Add add new view to views -->
       <!-- Inner: Nest... -->
       <DropZone
-        --gap={preview.addChild ? "1em" : ""}
+        --inner-gap={preview.addChild ? "1em" : ""}
         --flex-direction=column
-        ondropOuter={(e) => {
-          e.preventDefault();
-          handleDropOuter(e);
-        }}
-        ondragoverOuter={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "copy";
-        }}
-        ondropInner={(e) => {
-          if (views.order.length < 1) {
-            e.preventDefault();
+        ondrop={(e) => {
+          // Accept drops everywhere if there are no views.
+          if ((views.order.length < 1)) {
             handleDropOuter(e);
+            e.preventDefault();
           }
         }}
-        ondragoverInner={(e) => {
+        ondragover={(e) => {
           if (views.order.length < 1) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
           }
         }}
-        draggingOuterChanged={(dragging) => preview.addChild = dragging || (views.order.length < 1)}
-        draggingInnerChanged={() => preview.addChild = views.order.length < 1}
+        ondropOuter={(e) => {
+          // Since we accept drops everywhere if there are no views, only handle outer if that's not the case.
+          if ((views.order.length > 0)) {
+            handleDropOuter(e);
+            e.preventDefault();
+          }
+        }}
+        ondragoverOuter={(e) => {
+          if ((views.order.length > 0)) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }
+        }}
+        draggingChanged={(dragging, draggingInner) => {
+          // If views < 1, then I want to signal I will addChild regardless of where my dragging is
+          if (views.order.length < 1) {
+            preview.addChild = dragging;
+          // If views > 0, then I want to signal I will addChild only if I'm NOT dragging inside
+          } else if (!draggingInner) {
+            preview.addChild = dragging;
+          // If I'm dragging inside and views > 0, I will not addChild
+          } else {
+            preview.addChild = false;
+          }
+        }}
       >
-        <div class=taskbar>
+        <!-- <div class=taskbar>
           <div style:display=flex class=unselectable>
             {#each views.order as viewKey, i (viewKey)}
               {@const view = views.map.get(viewKey)}
@@ -382,7 +395,7 @@
               {/each}
             </div>
           {/if}
-        </div>
+        </div> -->
         <div
           class={[
             "views",
@@ -432,11 +445,24 @@
                 <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
                 <!-- Inner: Add new view as layer -->
                 <DropZone
-                  draggingOuterChanged={(dragging) => {view.preview.nest = dragging; view.preview.addSibling = dragging;}}
-                  draggingInnerChanged={(dragging) => view.preview.addChild = dragging}
+                  // --dragging-margin=initial
+                  // If there is only one view, we want users to add a view, not view-nest.
+                  // If there are no layers in the view, we want users to add a layer, not view-nest.
+                  // Only enable view-nesting if there are multiple views AND if the view itself has 1 layer.
+                  enabled={views.order.length > 1 && view.layers.order.length > 0}
+                  draggingChanged={(dragging, draggingInner) => {
+                    const allowDropOuter = views.order.length > 1 && view.layers.order.length > 0;
+                    const allowDropInner = views.order.length > 0;
+                    const draggingOuter = dragging && !draggingInner;
+                    view.preview.nest = allowDropOuter && draggingOuter;
+                    view.preview.addSibling = allowDropOuter && draggingOuter;
+                    view.preview.addChild = allowDropInner && draggingInner;
+                  }}
                   ondropOuter={(e) => {
                     e.preventDefault();
-                    handleDropSubOuter(e, viewKey);
+                    if (views.order.length > 1) {
+                      handleDropSubOuter(e, viewKey);
+                    }
                   }}
                   ondragoverOuter={(e) => {
                     e.preventDefault();
@@ -453,14 +479,13 @@
                 >
                   <div class={["sub-view-container", {"add-drag-border": view.preview.addChild, add: view.preview.addSibling}]}>
                     {#if view.layers.order.length < 1}
-                      <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center style:background-color={`oklch(0.5623 0.0939 ${Math.random()*360})`}>
-                        No layers in view.
+                      <div style:display=flex style:flex=1 style:justify-content=center style:align-items=center>
+                        Drag and drop to add layers and views.
                       </div>
                     {:else}
                       <SingleViewer
                         {...view}
                         bind:camera
-                        bind:preview={view.preview}
                       />
                     {/if}
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
