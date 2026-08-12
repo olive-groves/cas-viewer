@@ -24,8 +24,8 @@
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
 
   let view;
-  view = new SingleView();
-  multiView.views.add(view)
+  // view = new SingleView();
+  // multiView.views.add(view)
   // view = new SingleView();
   // multiView.views.add(view)
 

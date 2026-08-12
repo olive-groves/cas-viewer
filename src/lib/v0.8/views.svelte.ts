@@ -23,6 +23,7 @@ type BlinkMode = {
 type FadeMode = {
   type: "fade";
 }
+// TODO: Blink - Radial (raking light simulator, basically)
 export type ViewMode = SideBySideMode | LensMode | BlinkMode | FadeMode;
 
 export type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
