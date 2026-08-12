@@ -44,10 +44,11 @@
   function _refreshBeforeIds(target: maplibregl.Map) {
     // TODO: Refresh only if the "should-be" order differs from the current.
     // TODO: Function to generate the "should-be" order.
-    console.warn("Refreshing")
+    console.warn("Aggressively refreshing layer order.")
     refreshing = true;
-    // FIXME: This rigmarole is needed when nesting a multiview that itself has a nested multiview
-    // const orderedLayerOverrides = layers?.order ?? [];
+    // FIXME: This rigmarole with `orderedLayerOverrides` is needed when nesting a
+    // multiview that itself has a nested multiview. We can't simply use:
+    //    const orderedLayerOverrides = layers?.order ?? [];
     let orderedLayerOverrides;
     try {
       orderedLayerOverrides = layers?.order ?? [];
