@@ -34,9 +34,9 @@ export type ViewLayout = {
 
 // Preview states for nesting views, adding views, adding layers
 export type ViewPreview = {
-  nest: number;
-  addSibling: number;
-  addChild: number;
+  nest: boolean;
+  addSibling: boolean;
+  addChild: boolean;
 }
 
 export class SingleView {
