@@ -108,7 +108,7 @@
       display: flex;
       flex-direction: var(--flex-direction);
       flex: 1 1;
-      transition: margin 50ms ease-out;
+      transition: margin 100ms ease-out;
     }
     &.dragging.enabled {
       --_dragging-margin: var(--dragging-margin, calc(3 * var(--sc-2-5-5)));
