@@ -112,7 +112,7 @@
     // onload={handleOnData}
     ondata={handleOnData}
     renderWorldCopies={false}
-    // attributionControl={false}
+    attributionControl={false}
     transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
     // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
     zoom={camera.zoom}

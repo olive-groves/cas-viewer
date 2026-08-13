@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   let {
     enabled = $bindable(true),
+    preferInner = $bindable(true),
     ondragenter,
     ondragleave,
     ondragover,
@@ -20,6 +21,7 @@
     children,
   }: {
     enabled?: boolean;
+    preferInner?: boolean;
     ondragenter?: (event: DragEvent) => void;
     ondragleave?: (event: DragEvent) => void;
     ondragover?: (event: DragEvent) => void;
@@ -73,7 +75,7 @@
 <div
   // WARNING: Children removed during ondrag- do not consistently propagate ondrag-.
   // Recommend hiding, not removing (if'ing) children that appear/disappear during drag.
-  class={["dropzone", {dragging, draggingInner, draggingOuter, enabled}]}
+  class={["dropzone", {dragging, draggingInner, draggingOuter, enabled, preferOuter: !preferInner}]}
   // Do not allow drags to exceed 2: Patch for adding/removing child flex elements.
   ondragenter={(e) => {if (drags < 2) drags += 1; handleDragenter(e);}}
   ondragleave={(e) => {drags -= 1; handleDragleave(e);}}
@@ -99,22 +101,25 @@
 <style>
 	.dropzone {
     --sc-2-5-5: 44px;
-    --_dragging-margin: var(--dragging-margin, calc(2 * var(--sc-2-5-5)));
     display: flex;
     flex: 1 1;
-    --width: 100%;
-    --height: 100%;
     > .inner {
       gap: var(--inner-gap);
       display: flex;
       flex-direction: var(--flex-direction);
       flex: 1 1;
-      transition: margin 150ms ease-out;
+      transition: margin 50ms ease-out;
     }
     &.dragging.enabled {
+      --_dragging-margin: var(--dragging-margin, calc(3 * var(--sc-2-5-5)));
       > .inner {
-        --margin-left-right: min(var(--_dragging-margin), calc(0.2 * var(--width)));
-        --margin-top-bottom: min(var(--_dragging-margin), calc(0.2 * var(--height)));
+        --margin-left-right: min(var(--_dragging-margin), calc(0.5 * 50cqw));
+        --margin-top-bottom: min(var(--_dragging-margin), calc(0.5 * 50cqh));
+        margin: var(--margin-top-bottom) var(--margin-left-right);
+      }
+      &.preferOuter > .inner {
+        --margin-left-right: max(calc(50cqw - var(--_dragging-margin)), calc(0.5 * 50cqw));
+        --margin-top-bottom: max(calc(50cqh - var(--_dragging-margin)), calc(0.5 * 50cqh));
         margin: var(--margin-top-bottom) var(--margin-left-right);
       }
     }
