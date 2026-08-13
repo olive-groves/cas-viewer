@@ -1,7 +1,7 @@
 <script lang="ts">
   import MultiViewer from '$lib/v0.8/MultiViewer.svelte';
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
-  import { cubicInOut } from 'svelte/easing';
+  import { cubicInOut, cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
   import { type ViewMode, type ViewLayout, type ViewPreview, SingleView, type ViewKey, MultiView } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
@@ -292,6 +292,7 @@
       return []
     }
   }
+  let viewDraggingInner: boolean = $state(false);
 </script>
 
 <!-- Outer: Dump existing views into multi-view, add new view as sibling (multi)view -->
@@ -299,6 +300,7 @@
 <DropZone
   // Only enable multiview-nesting if there are multiple views because we should just addChild instead
   enabled={views.order.length > 1}
+  --dragging-margin=44px
   ondropOuter={(e) => {
     e.preventDefault();
     handleDropSuperOuter(e);
@@ -329,42 +331,41 @@
       <!-- Outer: Add add new view to views -->
       <!-- Inner: Nest... -->
       <DropZone
+        preferInner={views.order.length > 1}
+        --dragging-margin=initial
         --inner-gap={preview.addChild ? "1em" : ""}
         --flex-direction=column
-        ondrop={(e) => {
+        ondropInner={(e) => {
           // Accept drops everywhere if there are no views.
-          if ((visibleViewsOrder.length < 1)) {
+          if ((visibleViewsOrder.length <= 1)) {
             handleDropOuter(e);
             e.preventDefault();
           }
         }}
-        ondragover={(e) => {
-          if (visibleViewsOrder.length < 1) {
+        ondragoverInner={(e) => {
+          if (visibleViewsOrder.length <= 1) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
           }
         }}
         ondropOuter={(e) => {
           // Since we accept drops everywhere if there are no views, only handle outer if that's not the case.
-          if ((visibleViewsOrder.length > 0)) {
+          if ((visibleViewsOrder.length > 1)) {
             handleDropOuter(e);
             e.preventDefault();
           }
         }}
         ondragoverOuter={(e) => {
-          if ((visibleViewsOrder.length > 0)) {
+          if ((visibleViewsOrder.length > 1)) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
           }
         }}
         draggingChanged={(dragging, draggingInner) => {
-          // If views < 1, then I want to signal I will addChild regardless of where my dragging is
-          if (visibleViewsOrder.length < 1) {
+          // If views <= 1, then I want to signal I will addChild regardless of where my dragging is because we only offer adding child, not immediately nesting a subchild
+          // Or, if views > 1, I want to signal I will addChild only if I'm NOT dragging inside
+          if ((visibleViewsOrder.length <= 1 && !viewDraggingInner) || !draggingInner) {
             preview.addChild = dragging;
-          // If views > 0, then I want to signal I will addChild only if I'm NOT dragging inside
-          } else if (!draggingInner) {
-            preview.addChild = dragging;
-          // If I'm dragging inside and views > 0, I will not addChild
           } else {
             preview.addChild = false;
           }
@@ -445,11 +446,16 @@
                 <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
                 <!-- Inner: Add new view as layer -->
                 <DropZone
+                  preferInner={false}
+                  --dragging-margin=initial
+                  // TODO: Real problem: Views should be easier to add than layers.
                   // If there is only one view, we want users to add a view, not view-nest.
                   // If there are no layers in the view, we want users to add a layer, not view-nest.
                   // Only enable view-nesting if there are multiple views AND if the view itself has 1 layer.
                   enabled={visibleViewsOrder.length > 1 && view.layers.order.length > 0}
                   draggingChanged={(dragging, draggingInner) => {
+                    viewDraggingInner = draggingInner;
+                    preview.addChild = (dragging && !draggingInner) && visibleViewsOrder.length <= 1;
                     const allowDropOuter = visibleViewsOrder.length > 1 && view.layers.order.length > 0;
                     const allowDropInner = visibleViewsOrder.length > 0;
                     const draggingOuter = dragging && !draggingInner;
@@ -490,7 +496,7 @@
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
                     <div
                       class={["add-drag", {collapsed: !view.preview.addSibling}]}
-                      in:scale={{duration: 150, easing: cubicInOut}}
+                      // in:scale={{duration: 250, easing: cubicOut}}
                     >
                       + sub-view
                     </div>
@@ -502,7 +508,7 @@
           {#if preview.addChild}
             <div
               class=add-drag
-              in:scale={{duration: 150, easing: cubicInOut}}
+              // in:scale={{duration: 250, easing: cubicOut}}
             >
               + view
             </div>
@@ -513,7 +519,12 @@
               </div>
             {:else if views.order.length < 1}
               <div class=views-notice>
-                Empty viewer. Drag and drop to add views.
+                <p>
+                  Drag and drop to add views.
+                </p>
+                <p>
+                  PMTiles · JPEG, PNG
+                </p>
               </div>
             {/if}
           {/if}
@@ -522,7 +533,7 @@
       {#if preview.addSibling}
         <div
           class=add-drag
-          in:scale={{duration: 150, easing: cubicInOut}}
+          // in:scale={{duration: 250, easing: cubicOut}}
         >
           + multi-view
         </div>
@@ -536,15 +547,16 @@
     gap: 1em;
   }
   .add-drag-border {
-    border: 4px dashed white;
+    border: 2px dashed white;
     padding: 0.5em;
   }
   .add-drag {
+    overflow: hidden;
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 4px dashed white;
+    border: 2px dashed white;
     &.collapsed {
       display: none;
     }
@@ -554,6 +566,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
   }
   .multi-viewer-size-container {
     container: multiViewerContainer / size;
