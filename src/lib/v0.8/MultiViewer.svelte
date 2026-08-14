@@ -308,11 +308,12 @@
     if (allowMultiViewNesting) {
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
+      preview.nest = e.dataTransfer?.items?.length ?? 1;
     }
   }}
   draggingOuterChanged={(dragging) => {
-    preview.addSibling = dragging;
-    preview.nest = dragging;
+    preview.addSibling = dragging ? 1 : 0;
+    preview.nest = dragging ? 1 : 0;
   }}
 >
   <div class=multi-viewer-size-container>
@@ -320,7 +321,7 @@
       class={[
         "multi-viewer",
         {
-          add: preview.addSibling,
+          add: preview.addSibling > 0,
         }
       ]}
       role=presentation
@@ -338,6 +339,7 @@
         }}
         ondragoverOuter={(e) => {
           e.preventDefault();
+          preview.addChild = e.dataTransfer?.items?.length ?? 1;
           e.dataTransfer.dropEffect = "copy";
         }}
         ondropInner={(e) => {
@@ -349,12 +351,13 @@
         ondragoverInner={(e) => {
           if (visibleViewsOrder.length < 1) {
             e.preventDefault();
+            preview.addChild = e.dataTransfer?.items?.length ?? 1;
             e.dataTransfer.dropEffect = "copy";
           }
         }}
         draggingChanged={(dragging, draggingInner) => {
           const draggingOuter = dragging && !draggingInner;
-          preview.addChild = draggingOuter || (dragging && (visibleViewsOrder.length < 1));
+          preview.addChild = (draggingOuter || (dragging && (visibleViewsOrder.length < 1))) ? 1 : 0;
         }}
       >
         <!-- <div class=taskbar>
@@ -393,7 +396,7 @@
               fade: mode.type === "fade",
             },
             {
-              add: preview.addChild,
+              add: preview.addChild > 0,
             }
           ]}
           {@attach recordBoundingClientRectToLens(lens)}
@@ -436,9 +439,9 @@
                   enabled={allowSubViewNesting}
                   draggingChanged={(dragging, draggingInner) => {
                     const draggingOuter = dragging && !draggingInner;
-                    view.preview.nest = draggingOuter;
-                    view.preview.addSibling = draggingOuter;
-                    view.preview.addChild = draggingInner;
+                    view.preview.nest = draggingOuter ? 1 : 0;
+                    view.preview.addSibling = draggingOuter ? 1 : 0;
+                    view.preview.addChild = draggingInner ? 1 : 0;
                   }}
                   ondropOuter={(e) => {
                     e.preventDefault();
@@ -446,6 +449,7 @@
                   }}
                   ondragoverOuter={(e) => {
                     e.preventDefault();
+                    view.preview.addSibling = e.dataTransfer?.items?.length ?? 1;
                     e.dataTransfer.dropEffect = "copy";
                   }}
                   ondropInner={(e) => {
@@ -454,10 +458,11 @@
                   }}
                   ondragoverInner={(e) => {
                     e.preventDefault();
+                    view.preview.addChild = e.dataTransfer?.items?.length ?? 1;
                     e.dataTransfer.dropEffect = "copy";
                   }}
                 >
-                  <div class={["sub-view-container", {"add-drag-border": view.preview.addChild, add: view.preview.addSibling}]}>
+                  <div class={["sub-view-container", {"add-drag-border": view.preview.addChild > 0, add: view.preview.addSibling > 0}]}>
                     {#if view.layers.order.length < 1}
                       <div class=views-notice>
                         No layers in this view.
@@ -469,19 +474,22 @@
                       />
                     {/if}
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
-                    <div class={["add-drag", {collapsed: !view.preview.addSibling}]}>
-                      + sub-view
-                    </div>
+                    {#each {length: view.preview.addSibling}}
+                      <div class=add-drag>
+                        + sub-view
+                      </div>
+                    {/each}
                   </div>
                 </DropZone>
               {/if}
             </div>
           {/each}
-          {#if preview.addChild}
+          {#each {length: preview.addChild} }
             <div class=add-drag>
               + view
             </div>
-          {:else}
+          {/each}
+          {#if !(preview.addChild > 0)}
             {#if views.order.length < 1}
               <div class=views-notice>
                 No views in this multi-view.
@@ -494,11 +502,23 @@
           {/if}
         </div>
       </DropZone>
-      {#if preview.addSibling}
+      {#each {length: preview.addSibling}}
         <div class=add-drag>
-          + multi-view
+        {#if preview.nest > 0}
+           <div class=multi-viewer-size-container>
+            <div class={["multi-viewer", "add"]} style:margin=1em>
+              {#each {length: preview.nest}}
+                <div class=add-drag>
+                  + view
+                </div>
+              {/each}
+            </div>
+           </div>
+        {:else}
+           + multi-view
+        {/if}
         </div>
-      {/if}
+      {/each}
     </div>
   </div>
 </DropZone>
