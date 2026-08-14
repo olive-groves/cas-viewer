@@ -330,7 +330,7 @@
     >
       <DropZone
         --dragging-margin=initial
-        preferInner={visibleViewsOrder.length > 1}
+        preferInner={visibleViewsOrder.length !== 1}
         --flex-direction=column
         ondropOuter={(e) => {
           handleDropOuter(e);
