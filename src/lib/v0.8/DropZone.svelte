@@ -112,7 +112,7 @@
     }
     &.dragging.enabled {
       > .inner {
-        --_dragging-margin: var(--dragging-margin, calc(2 * var(--sc-2-5-5)));
+        --_dragging-margin: var(--dragging-margin, calc(1 * var(--sc-2-5-5)));
         --margin-left-right: min(var(--_dragging-margin), calc(0.5 * 50cqw));
         --margin-top-bottom: min(var(--_dragging-margin), calc(0.5 * 50cqh));
         margin: var(--margin-top-bottom) var(--margin-left-right);
