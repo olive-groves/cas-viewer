@@ -1,12 +1,12 @@
 <script lang="ts">
   import MultiViewer from '$lib/v0.8/MultiViewer.svelte';
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
+  import { scale } from 'svelte/transition';
   import { cubicInOut, cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
   import { type ViewMode, type ViewLayout, type ViewPreview, SingleView, type ViewKey, MultiView } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
-  import { scale } from 'svelte/transition';
   import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
   import { SourceManager, type SourceKey } from '$lib/source-manager.svelte';
   import { MapLibreSyncedLayer, type AnyLayerSpec, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
@@ -474,8 +474,8 @@
                       />
                     {/if}
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
-                    {#each {length: view.preview.addSibling}}
-                      <div class=add-drag>
+                    {#each {length: view.preview.addSibling}, i}
+                      <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.preview.addSibling > 1 ? i*(75/(view.preview.addSibling - 1)) : 0}}>
                         + sub-view
                       </div>
                     {/each}
@@ -484,8 +484,8 @@
               {/if}
             </div>
           {/each}
-          {#each {length: preview.addChild} }
-            <div class=add-drag>
+          {#each {length: preview.addChild}, i}
+            <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.addChild > 1 ? i*(75/(preview.addChild - 1)) : 0}}>
               + view
             </div>
           {/each}
@@ -502,13 +502,13 @@
           {/if}
         </div>
       </DropZone>
-      {#each {length: preview.addSibling}}
-        <div class=add-drag>
+      {#each {length: preview.addSibling}, i}
+        <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.addSibling > 1 ? i*(75/(preview.addSibling - 1)) : 0}}>
         {#if preview.nest > 0}
            <div class=multi-viewer-size-container>
             <div class={["multi-viewer", "add"]} style:margin=1em>
-              {#each {length: preview.nest}}
-                <div class=add-drag>
+              {#each {length: preview.nest}, ii}
+                <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.nest > 1 ? ii*(75/(preview.nest - 1)) : 0}}>
                   + view
                 </div>
               {/each}
