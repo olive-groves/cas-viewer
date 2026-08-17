@@ -1,4 +1,5 @@
 <script lang="ts">
+  import 'svelte-maplibre-gl/vite';
   // Adapted from https://svelte-maplibre-gl.mierune.dev/examples/terradraw
   import { MapLibre, GlobeControl, RasterTileSource, RasterLayer } from 'svelte-maplibre-gl';
   import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
@@ -188,7 +189,7 @@
     />
 
     <!-- Draw controls -->
-    <div id=controls>
+    <div class=controls>
       <label>
         <input type="checkbox" bind:checked={autoEdit} /> Auto-edit
       </label>
@@ -215,7 +216,7 @@
 </div>
 
 <style>
-    #controls {
+    .controls {
         display: flex;
         flex-direction: column;
         position: absolute;
