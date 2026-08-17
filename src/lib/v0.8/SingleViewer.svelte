@@ -57,6 +57,8 @@
       orderedLayerOverrides = [];
     }
     const currentOrder = target.getLayersOrder();
+
+    // Layer slots
     // Set slot beforeId backwards, starting from second to last, because we "stack under"
     for (let i = orderedLayerOverrides.length - 2; i > -1; i--) {
       const id = `${SLOT_PREFIX}${orderedLayerOverrides.at(i)}`;
@@ -65,6 +67,8 @@
         target.moveLayer(id, beforeId)
       }
     }
+
+    // Layers belonging to those slots
     orderedLayerOverrides.forEach(override => {
       if (currentOrder.includes(override) && currentOrder.includes(SLOT_PREFIX + override)) {
         target.moveLayer(override, SLOT_PREFIX + override);
@@ -99,7 +103,11 @@
   $effect(() => {
     layers.order;
     if (map) {
-      refreshBeforeIds(map);
+      setTimeout(
+        refreshBeforeIds,
+        MAPLIBRE_TIMEOUT_MILLISECONDS,
+        map,
+      );
     }
   })
 
