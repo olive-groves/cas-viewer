@@ -4,8 +4,10 @@ set -euox pipefail
 icons=()
 
 # Alphabetical order!
+icons+=("close")
 icons+=("drag_indicator")
 icons+=("home")
+icons+=("horizontal_rule")
 icons+=("keyboard_arrow_down")
 icons+=("keyboard_arrow_up")
 icons+=("link")
