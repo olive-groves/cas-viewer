@@ -204,7 +204,7 @@
  <!-- For now, here, because it's a sibling of MultiViewer. (If we view stuff, we need it.) -->
 <PMTilesProtocol pmtiles={sourceManager.pmtiles} />
 
-<div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
+<div style:display=flex style:overflow=hidden>
 
   <!-- SingleViews have direct access to shared.svelte.ts (sourceManager et al.) -->
   <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} bind:layout={multiView.layout} />
@@ -215,7 +215,7 @@
     {multiView}
   /> -->
 
-  <div style:display=flex style:flex-direction=column>
+  <div style:display=flex style:flex-direction=column style:width=min-content>
 
     <input type=file multiple onchange={(e) => handleFiles((e.target as HTMLInputElement).files)}/>
 
