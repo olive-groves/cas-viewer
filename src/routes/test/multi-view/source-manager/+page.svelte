@@ -207,7 +207,7 @@
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
 
   <!-- SingleViews have direct access to shared.svelte.ts (sourceManager et al.) -->
-  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} bind:preview={multiView.preview} />
+  <MultiViewer {...multiView} bind:camera bind:mode={multiView.mode} bind:layout={multiView.layout} />
 
   <!-- <SideBar
     {sourceManager}
@@ -235,7 +235,7 @@
         {@const overrideSurface = syncedSurface?.overrides.get(view?.surface?.overrideKey)}
         <div style:display=flex style:grid-template-columns=subgrid style:grid-column="-1 / 1" style:border-top="2px solid white" style:margin-top=14px>
           <label>
-            <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
+            <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
             View {viewIndex + 1}
           </label>
           <input class=inline type=text bind:value={view.name} placeholder="Custom name" onblur={(e) => view.name = view.name?.trim()}>

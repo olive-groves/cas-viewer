@@ -28,15 +28,24 @@ export type ViewMode = SideBySideMode | LensMode | BlinkMode | FadeMode;
 
 export type ViewKey = `view_${string}-${string}-${string}-${string}-${string}`;
 
-export type ViewLayout = {
-  window: "normal" | "maximized" | "minimized";
-}
-
 // Preview states for nesting views, adding views, adding layers
-export type ViewPreview = {
+export type Preview = {
   nest: number;
   addSibling: number;
   addChild: number;
+}
+// Window states for the title, the close/minimize buttons, drag buttons
+export type Window = {
+  state: "normal" | "maximized" | "minimized";
+  frame: boolean,  // Visual bordered area around the document
+  titlebar: boolean,  // Title of the window
+  control: boolean,  // Maximize, minimize, roll up, drag, and other window controls
+  document: boolean,  // The content itself
+}
+// Cumalative layout of interface elements
+export type ViewLayout = {
+  preview: Preview,
+  window: Window,
 }
 
 export class SingleView {
@@ -47,14 +56,20 @@ export class SingleView {
     overrideKey: OverrideMapLibreSurfaceKey | undefined;
     syncedSurfaceKey: SyncedMapLibreSurfaceKey | undefined;
   } = $state({ overrideKey: undefined, syncedSurfaceKey: undefined });
-  layout: ViewLayout = $state({ window: "normal" });
-  // FIXME: Not the best spot for this. Used to track each'd DropZones in MultiViewer.
-  // Or make this part of SingleViewer instead? Because if I had one SingleViewer, I might want to add directly rather than rely on a MultiViewer for dropzone?
-  preview: ViewPreview = $state({
-    nest: false,
-    addSibling: false,
-    addChild: false,
-  })
+  layout: ViewLayout = $state({
+    preview: {
+      nest: 0,
+      addSibling: 0,
+      addChild: 0,
+    },
+    window: {
+      state: "normal",
+      frame: true,
+      titlebar: true,
+      control: true,
+      document: true,
+    }
+  });
 }
 export class MultiView {
   name: string | undefined = $state(undefined);
@@ -63,10 +78,18 @@ export class MultiView {
     type: "side-by-side",
   });
   views: OrderedSvelteMap<ViewKey, SingleView | MultiView> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `view_${crypto.randomUUID()}` });
-  layout: ViewLayout = $state({ window: "normal" });
-  preview: ViewPreview = $state({
-    nest: false,
-    addSibling: false,
-    addChild: false,
-  })
+  layout: ViewLayout = $state({
+    preview: {
+      nest: 0,
+      addSibling: 0,
+      addChild: 0,
+    },
+    window: {
+      state: "normal",
+      frame: true,
+      titlebar: true,
+      control: true,
+      document: true,
+    }
+  });
 }

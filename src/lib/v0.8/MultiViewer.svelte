@@ -4,7 +4,8 @@
   import { scale } from 'svelte/transition';
   import { cubicInOut, cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
-  import { type ViewMode, type ViewLayout, type ViewPreview, SingleView, type ViewKey, MultiView } from './views.svelte';
+  import type { ViewMode, ViewLayout, ViewKey } from './views.svelte';
+  import { SingleView, MultiView } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
@@ -18,14 +19,12 @@
     views,
     camera = $bindable({}),
     mode = $bindable({type: "side-by-side"}),
-    layout = $bindable({window: "normal"}),
-    preview = $bindable({}),
+    layout = $bindable(),
   }: {
     views: any,  // FIXME: MultiView.views OrderedSvelteMap<ViewKey, SingleView | MultiView>
     camera: any,
     mode: ViewMode,
     layout: ViewLayout,
-    preview: ViewPreview,
   } = $props();
 
   // TODO: Instead of fold, separate taskbar from MultiViewer:
@@ -46,7 +45,7 @@
   // I pass its views to this.
   // For each view that is multiview and has just one (multi)view, fold the view:
   //  MULTIVIEW.VIEWS(..., multiview(view), ...) --> MULTIVIEW.VIEWS(..., view, ...).
-  let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window !== "minimized"))
+  let visibleViewsOrder = $derived(views.order.filter((viewKey) => views.map.get(viewKey)?.layout.window.state !== "minimized"))
 
   // Lens
   // FIXME: Lens (mouse) alignment issue on nested MultiViewers
@@ -308,12 +307,12 @@
     if (allowMultiViewNesting) {
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
-      preview.nest = e.dataTransfer?.items?.length ?? 1;
+      layout.preview.nest = e.dataTransfer?.items?.length ?? 1;
     }
   }}
   draggingOuterChanged={(dragging) => {
-    preview.addSibling = dragging ? 1 : 0;
-    preview.nest = dragging ? 1 : 0;
+    layout.preview.addSibling = dragging ? 1 : 0;
+    layout.preview.nest = dragging ? 1 : 0;
   }}
 >
   <div class=multi-viewer-size-container>
@@ -321,7 +320,7 @@
       class={[
         "multi-viewer",
         {
-          add: preview.addSibling > 0,
+          add: layout.preview.addSibling > 0,
         }
       ]}
       role=presentation
@@ -339,7 +338,7 @@
         }}
         ondragoverOuter={(e) => {
           e.preventDefault();
-          preview.addChild = e.dataTransfer?.items?.length ?? 1;
+          layout.preview.addChild = e.dataTransfer?.items?.length ?? 1;
           e.dataTransfer.dropEffect = "copy";
         }}
         ondropInner={(e) => {
@@ -351,16 +350,16 @@
         ondragoverInner={(e) => {
           if (visibleViewsOrder.length < 1) {
             e.preventDefault();
-            preview.addChild = e.dataTransfer?.items?.length ?? 1;
+            layout.preview.addChild = e.dataTransfer?.items?.length ?? 1;
             e.dataTransfer.dropEffect = "copy";
           }
         }}
         draggingChanged={(dragging, draggingInner) => {
           const draggingOuter = dragging && !draggingInner;
-          preview.addChild = (draggingOuter || (dragging && (visibleViewsOrder.length < 1))) ? 1 : 0;
+          layout.preview.addChild = (draggingOuter || (dragging && (visibleViewsOrder.length < 1))) ? 1 : 0;
         }}
       >
-        <!-- <div class=taskbar>
+        <div class=taskbar>
           <div style:display=flex class=unselectable>
             <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
               Taskbar
@@ -370,7 +369,7 @@
               <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
                 <label style:display=flex style:gap=2px>
                   {view.name || `View ${i + 1}`}
-                  <input type=checkbox checked={view.layout.window !== "minimized"} onchange={(e) => view.layout.window = e.target.checked ? "normal" : "minimized"}>
+                  <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
                 </label>
               </div>
             {/each}
@@ -385,7 +384,7 @@
               {/each}
             </div>
           {/if}
-        </div> -->
+        </div>
         <div
           class={[
             "views",
@@ -396,7 +395,7 @@
               fade: mode.type === "fade",
             },
             {
-              add: preview.addChild > 0,
+              add: layout.preview.addChild > 0,
             }
           ]}
           {@attach recordBoundingClientRectToLens(lens)}
@@ -407,7 +406,6 @@
             {@const view = views.map.get(viewKey)}
             <div
               class=view
-              // animate:/transition: don't work because we neither reorder nor remove.
               style:clip-path={
                 mode.type !== "lens" ? undefined :
                 i < 1 ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`
@@ -429,7 +427,7 @@
                   {...view}
                   bind:camera
                   bind:mode={view.mode}
-                  bind:preview={view.preview}
+                  bind:layout={view.preview}
                 />
               {:else}
                 <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
@@ -439,9 +437,9 @@
                   enabled={allowSubViewNesting}
                   draggingChanged={(dragging, draggingInner) => {
                     const draggingOuter = dragging && !draggingInner;
-                    view.preview.nest = draggingOuter ? 1 : 0;
-                    view.preview.addSibling = draggingOuter ? 1 : 0;
-                    view.preview.addChild = draggingInner ? 1 : 0;
+                    view.layout.preview.nest = draggingOuter ? 1 : 0;
+                    view.layout.preview.addSibling = draggingOuter ? 1 : 0;
+                    view.layout.preview.addChild = draggingInner ? 1 : 0;
                   }}
                   ondropOuter={(e) => {
                     e.preventDefault();
@@ -449,7 +447,7 @@
                   }}
                   ondragoverOuter={(e) => {
                     e.preventDefault();
-                    view.preview.addSibling = e.dataTransfer?.items?.length ?? 1;
+                    view.layout.preview.addSibling = e.dataTransfer?.items?.length ?? 1;
                     e.dataTransfer.dropEffect = "copy";
                   }}
                   ondropInner={(e) => {
@@ -458,11 +456,11 @@
                   }}
                   ondragoverInner={(e) => {
                     e.preventDefault();
-                    view.preview.addChild = e.dataTransfer?.items?.length ?? 1;
+                    view.layout.preview.addChild = e.dataTransfer?.items?.length ?? 1;
                     e.dataTransfer.dropEffect = "copy";
                   }}
                 >
-                  <div class={["sub-view-container", {"add-drag-border": view.preview.addChild > 0, add: view.preview.addSibling > 0}]}>
+                  <div class={["sub-view-container", {"add-drag-border": view.layout.preview.addChild > 0, add: view.layout.preview.addSibling > 0}]}>
                     {#if view.layers.order.length < 1}
                       <div class=views-notice>
                         No layers in this view.
@@ -474,8 +472,8 @@
                       />
                     {/if}
                     <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
-                    {#each {length: view.preview.addSibling}, i}
-                      <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.preview.addSibling > 1 ? i*(75/(view.preview.addSibling - 1)) : 0}}>
+                    {#each {length: view.layout.preview.addSibling}, i}
+                      <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.layout.preview.addSibling > 1 ? i*(75/(view.layout.preview.addSibling - 1)) : 0}}>
                         + sub-view
                       </div>
                     {/each}
@@ -484,14 +482,14 @@
               {/if}
             </div>
           {/each}
-          {#each {length: preview.addChild}, i}
-            <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.addChild > 1 ? i*(75/(preview.addChild - 1)) : 0}}>
+          {#each {length: layout.preview.addChild}, i}
+            <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: layout.preview.addChild > 1 ? i*(75/(layout.preview.addChild - 1)) : 0}}>
               + view
             </div>
           {/each}
-          {#if !(preview.addChild > 0)}
+          {#if !(layout.preview.addChild > 0)}
             {#if views.order.length < 1}
-              <div class=views-notice>
+              <div class={["views-notice", "add-drag"]}>
                 No views in this multi-view.
               </div>
             {:else if visibleViewsOrder.length < 1}
@@ -502,13 +500,13 @@
           {/if}
         </div>
       </DropZone>
-      {#each {length: preview.addSibling}, i}
-        <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.addSibling > 1 ? i*(75/(preview.addSibling - 1)) : 0}}>
-        {#if preview.nest > 0}
+      {#each {length: layout.preview.addSibling}, i}
+        <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: layout.preview.addSibling > 1 ? i*(75/(layout.preview.addSibling - 1)) : 0}}>
+        {#if layout.preview.nest > 0}
            <div class=multi-viewer-size-container>
             <div class={["multi-viewer", "add"]} style:margin=1em>
-              {#each {length: preview.nest}, ii}
-                <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: preview.nest > 1 ? ii*(75/(preview.nest - 1)) : 0}}>
+              {#each {length: layout.preview.nest}, ii}
+                <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: layout.preview.nest > 1 ? ii*(75/(layout.preview.nest - 1)) : 0}}>
                   + view
                 </div>
               {/each}
@@ -539,9 +537,6 @@
     justify-content: center;
     align-items: center;
     border: 2px dashed white;
-    &.collapsed {
-      display: none;
-    }
   }
   .views-notice {
     pointer-events: none;
