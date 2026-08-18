@@ -12,16 +12,20 @@ import { OrderedSvelteMap } from "$lib/utils.svelte";
 // responsibility is on someone else to create 3 single views and arrange them
 // side by side.
 type SideBySideMode = {
-  type: "side-by-side";
+  type: "side-by-side";  // Side-by-side as a type means "next to each other along a single axis, the axis of which closest keeps 1:1 aspect ratio"
+  // arrangement: "side-by-side";
 }
 type LensMode = {
   type: "lens";
+  // arrangement: "overlay";
 }
 type BlinkMode = {
   type: "blink";
+  // arrangement: "overlay";
 }
 type FadeMode = {
   type: "fade";
+  // arrangement: "overlay";
 }
 // TODO: Blink - Radial (raking light simulator, basically)
 export type ViewMode = SideBySideMode | LensMode | BlinkMode | FadeMode;
@@ -40,7 +44,7 @@ export type Window = {
   frame: boolean,  // Visual bordered area around the document
   titlebar: boolean,  // Title of the window
   control: boolean,  // Maximize, minimize, roll up, drag, and other window controls
-  document: boolean,  // The content itself
+  clientArea: boolean,  // The content itself
 }
 // Cumalative layout of interface elements
 export type ViewLayout = {
@@ -67,7 +71,7 @@ export class SingleView {
       frame: true,
       titlebar: true,
       control: true,
-      document: true,
+      clientArea: true,
     }
   });
 }
@@ -89,7 +93,7 @@ export class MultiView {
       frame: true,
       titlebar: true,
       control: true,
-      document: true,
+      clientArea: true,
     }
   });
 }

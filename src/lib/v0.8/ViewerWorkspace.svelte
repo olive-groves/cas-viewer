@@ -1,0 +1,57 @@
+<!-- Root-level container for a MultiView with taskbars, cross-view controls, and other orchestration -->
+<script lang="ts">
+  import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
+
+  import { getSourceManagerContext } from "$lib/shared-context.svelte";
+  import MultiViewer from "./MultiViewer.svelte";
+  import type { MultiView } from "./views.svelte";
+
+  let {
+    multiView,
+  }: {
+    multiView: MultiView,
+  } = $props();
+
+  const sourceManager = getSourceManagerContext();
+
+  let camera = $state({
+    zoom: undefined,
+    center: undefined,
+  })
+
+  // A mode where I only see images. That's it.
+  // A mode where I see images and most settings.
+  // A mode where I see images as framed windows and all settings.
+  let mode: "full" | "lite" | "presentation" = $state("full");
+  let lights: "on" | "dim" | "out" = $state("on");
+
+</script>
+
+<PMTilesProtocol pmtiles={sourceManager.pmtiles} />
+
+<!-- Side panel is not here. Yet. -->
+<!-- Container to hold taskbar, MultiViewer, status bar, etc. -->
+<div class=workspace>
+  <div class=taskbar>
+    Taskbar
+  </div>
+  <MultiViewer
+    {...multiView}
+    bind:camera
+    bind:mode={multiView.mode}
+    bind:layout={multiView.layout}
+  />
+</div>
+
+<style>
+  .workspace {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    background: black;
+    .taskbar {
+      flex: 0 0;
+      background-color: color-mix(in srgb, Canvas, CanvasText 10%);
+    }
+  }
+</style>

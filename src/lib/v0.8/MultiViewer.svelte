@@ -1,6 +1,7 @@
 <script lang="ts">
   import MultiViewer from '$lib/v0.8/MultiViewer.svelte';
   import SingleViewer from '$lib/v0.8/SingleViewer.svelte';
+  import ViewerWindow from '$lib/v0.8/ViewerWindow.svelte';
   import { scale } from 'svelte/transition';
   import { cubicInOut, cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
@@ -126,7 +127,7 @@
       case "0":
         if (mode.type === "blink" || mode.type === "fade") {
           const i = Math.min(Number(event.key), visibleViewsOrder.length) - 1;
-          lens.clientX = (i + 0.5) * lens.boundingClientRect.width / visibleViewsOrder.length;
+          lens.x = (i + 0.5) * lens.boundingClientRect.width / visibleViewsOrder.length;
         }
         break;
     }
@@ -293,6 +294,7 @@
   }
   let allowMultiViewNesting = $derived(views.order.length > 1);
   let allowSubViewNesting = $derived(views.order.length > 1);
+  let modeArrangement: "side-by-side" | "overlay" = $derived(mode.type === "side-by-side" ? "side-by-side" : "overlay")
 </script>
 
 <DropZone
@@ -359,7 +361,7 @@
           layout.preview.addChild = (draggingOuter || (dragging && (visibleViewsOrder.length < 1))) ? 1 : 0;
         }}
       >
-        <div class=taskbar>
+        <!-- <div class=taskbar>
           <div style:display=flex class=unselectable>
             <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
               Taskbar
@@ -384,16 +386,11 @@
               {/each}
             </div>
           {/if}
-        </div>
+        </div> -->
         <div
           class={[
             "views",
-            {
-              "side-by-side": mode.type === "side-by-side",
-              lens: mode.type === "lens",
-              blink: mode.type === "blink",
-              fade: mode.type === "fade",
-            },
+            modeArrangement,
             {
               add: layout.preview.addChild > 0,
             }
@@ -412,74 +409,76 @@
               }
               style:z-index={
                 mode.type !== "blink" ? undefined :
-                ((i / visibleViewsOrder.length) <= (lens.clientX / lens.boundingClientRect.width) && (lens.clientX / lens.boundingClientRect.width) < ((i + 1) / visibleViewsOrder.length) ? 1 : undefined)
+                ((i / visibleViewsOrder.length) <= (lens.x / lens.boundingClientRect.width) && (lens.x / lens.boundingClientRect.width) < ((i + 1) / visibleViewsOrder.length) ? 1 : undefined)
               }
               style:opacity={
                 mode.type !== "fade" ? 1 :
                 i < 1 ? 1 :
                   Math.max(0, Math.min(1, (
-                    lens.clientX / (lens.boundingClientRect.width / visibleViewsOrder.length) - ( i - 0.5 )
+                    lens.x / (lens.boundingClientRect.width / visibleViewsOrder.length) - ( i - 0.5 )
                   )))
               }
             >
-              {#if view.type === "multi"}
-                <MultiViewer
-                  {...view}
-                  bind:camera
-                  bind:mode={view.mode}
-                  bind:layout={view.preview}
-                />
-              {:else}
-                <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
-                <!-- Inner: Add new view as layer -->
-                <DropZone
-                  --dragging-margin=initial
-                  enabled={allowSubViewNesting}
-                  draggingChanged={(dragging, draggingInner) => {
-                    const draggingOuter = dragging && !draggingInner;
-                    view.layout.preview.nest = draggingOuter ? 1 : 0;
-                    view.layout.preview.addSibling = draggingOuter ? 1 : 0;
-                    view.layout.preview.addChild = draggingInner ? 1 : 0;
-                  }}
-                  ondropOuter={(e) => {
-                    e.preventDefault();
-                    handleDropSubOuter(e, viewKey);
-                  }}
-                  ondragoverOuter={(e) => {
-                    e.preventDefault();
-                    view.layout.preview.addSibling = e.dataTransfer?.items?.length ?? 1;
-                    e.dataTransfer.dropEffect = "copy";
-                  }}
-                  ondropInner={(e) => {
-                    e.preventDefault();
-                    handleDropSubInner(e, viewKey);
-                  }}
-                  ondragoverInner={(e) => {
-                    e.preventDefault();
-                    view.layout.preview.addChild = e.dataTransfer?.items?.length ?? 1;
-                    e.dataTransfer.dropEffect = "copy";
-                  }}
-                >
-                  <div class={["sub-view-container", {"add-drag-border": view.layout.preview.addChild > 0, add: view.layout.preview.addSibling > 0}]}>
-                    {#if view.layers.order.length < 1}
-                      <div class=views-notice>
-                        No layers in this view.
-                      </div>
-                    {:else}
-                      <SingleViewer
-                        {...view}
-                        bind:camera
-                      />
-                    {/if}
-                    <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
-                    {#each {length: view.layout.preview.addSibling}, i}
-                      <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.layout.preview.addSibling > 1 ? i*(75/(view.layout.preview.addSibling - 1)) : 0}}>
-                        + sub-view
-                      </div>
-                    {/each}
-                  </div>
-                </DropZone>
-              {/if}
+              <ViewerWindow >
+                {#if view.type === "multi"}
+                  <MultiViewer
+                    {...view}
+                    bind:camera
+                    bind:mode={view.mode}
+                    bind:layout={view.layout}
+                  />
+                {:else}
+                  <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
+                  <!-- Inner: Add new view as layer -->
+                  <DropZone
+                    --dragging-margin=initial
+                    enabled={allowSubViewNesting}
+                    draggingChanged={(dragging, draggingInner) => {
+                      const draggingOuter = dragging && !draggingInner;
+                      view.layout.preview.nest = draggingOuter ? 1 : 0;
+                      view.layout.preview.addSibling = draggingOuter ? 1 : 0;
+                      view.layout.preview.addChild = draggingInner ? 1 : 0;
+                    }}
+                    ondropOuter={(e) => {
+                      e.preventDefault();
+                      handleDropSubOuter(e, viewKey);
+                    }}
+                    ondragoverOuter={(e) => {
+                      e.preventDefault();
+                      view.layout.preview.addSibling = e.dataTransfer?.items?.length ?? 1;
+                      e.dataTransfer.dropEffect = "copy";
+                    }}
+                    ondropInner={(e) => {
+                      e.preventDefault();
+                      handleDropSubInner(e, viewKey);
+                    }}
+                    ondragoverInner={(e) => {
+                      e.preventDefault();
+                      view.layout.preview.addChild = e.dataTransfer?.items?.length ?? 1;
+                      e.dataTransfer.dropEffect = "copy";
+                    }}
+                  >
+                    <div class={["sub-view-container", {"add-drag-border": view.layout.preview.addChild > 0, add: view.layout.preview.addSibling > 0}]}>
+                      {#if view.layers.order.length < 1}
+                        <div class=views-notice>
+                          No layers in this view.
+                        </div>
+                      {:else}
+                        <SingleViewer
+                          {...view}
+                          bind:camera
+                        />
+                      {/if}
+                      <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
+                      {#each {length: view.layout.preview.addSibling}, i}
+                        <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.layout.preview.addSibling > 1 ? i*(75/(view.layout.preview.addSibling - 1)) : 0}}>
+                          + sub-view
+                        </div>
+                      {/each}
+                    </div>
+                  </DropZone>
+                {/if}
+              </ViewerWindow>
             </div>
           {/each}
           {#each {length: layout.preview.addChild}, i}
@@ -568,6 +567,21 @@
   }
   .views {
     flex: 1;
+    gap: var(--gap);
+  }
+  .side-by-side {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    .view {
+      flex: 1;
+    }
+  }
+  .overlay {
+    display: grid;
+    .view {
+      grid-area: 1 / 1;
+    }
   }
   .view {
     container: ViewContainer / size;
@@ -580,32 +594,6 @@
   @container ViewContainer (max-aspect-ratio: 1 / 1) {
     .sub-view-container {
       flex-direction: column;
-    }
-  }
-  .side-by-side {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    .view {
-      flex: 1;
-    }
-  }
-  .lens {
-    display: grid;
-    .view {
-      grid-area: 1 / 1;
-    }
-  }
-  .blink {
-    display: grid;
-    .view {
-      grid-area: 1 / 1;
-    }
-  }
-  .fade {
-    display: grid;
-    .view {
-      grid-area: 1 / 1;
     }
   }
   @container multiViewer (max-aspect-ratio: 1 / 1) {

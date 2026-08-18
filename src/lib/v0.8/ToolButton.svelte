@@ -39,7 +39,9 @@
     ---off-fill: var(--off-fill, 0);
     ---on-fill: var(--on-fill, 1);
     font-size: var(--font-size, 1.25rem);
+    width: var(--width, 1em);
     display: inline-flex;
+    justify-content: center;
     > span {
       line-height: 1;
       font-variation-settings:
