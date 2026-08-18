@@ -206,6 +206,19 @@
               />
             {/each}
           </ImageSource>
+        {:else if typeof sourceKey === "undefined"}
+          {#each layersOfSource.entries() as [overrideKey, syncedLayerKey]}
+            {@const layer = syncedMapLibreLayers.get(syncedLayerKey)}
+            {@const layerSpec = mergeDeep(layer?.spec, layer?.overrides.get(overrideKey)?.spec)}
+            {#if layerSpec.type === "background"}
+              <BackgroundLayer
+                id={overrideKey}
+                paint={{...layerSpec.paint}}
+                layout={{...layerSpec.layout}}
+                beforeId={SLOT_PREFIX + overrideKey}
+              />
+            {/if}
+          {/each}
         {/if}
       {/await}
     {/each}
