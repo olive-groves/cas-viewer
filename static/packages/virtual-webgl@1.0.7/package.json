@@ -1,0 +1,32 @@
+{
+  "name": "virtual-webgl",
+  "version": "1.0.7",
+  "description": "Virtualize WebGL",
+  "main": "src/virtual-webgl2.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greggman/virtual-webgl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greggman/virtual-webgl/issues"
+  },
+  "homepage": "https://github.com/greggman/virtual-webgl",
+  "files": [
+    "src/**/*.js"
+  ],
+  "keywords": [
+    "webgl",
+    "webgl2"
+  ],
+  "author": "Gregg Tavares",
+  "devDependencies": {
+    "eslint": "^8.11.0",
+    "eslint-plugin-html": "^6.2.0",
+    "eslint-plugin-optional-comma-spacing": "^0.0.4",
+    "eslint-plugin-require-trailing-comma": "^0.0.1"
+  }
+}
