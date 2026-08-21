@@ -81,7 +81,7 @@
     return (element) => {
       const observer = new ResizeObserver(() => callback(element.getBoundingClientRect()))
       observer.observe(element);
-      return observer.disconnect;
+      return () => observer.unobserve(element);
     }
   }
   function onKeyUp(event) {
