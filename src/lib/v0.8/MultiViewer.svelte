@@ -77,11 +77,11 @@
 		lens.x = lens.clientX - lens.boundingClientRect.left;
 		lens.y = lens.clientY - lens.boundingClientRect.top;
 	});
-  function recordBoundingClientRectToLens(lens): Attachment {
+  function observeResizeBoundingClientRect(callback: (rect) => void): Attachment {
     return (element) => {
-      const {left, top} = element.getBoundingClientRect();
-      lens.boundingClientRect.left = left;
-      lens.boundingClientRect.top = top;
+      const observer = new ResizeObserver(() => callback(element.getBoundingClientRect()))
+      observer.observe(element);
+      return observer.disconnect;
     }
   }
   function onKeyUp(event) {
@@ -395,7 +395,7 @@
               add: layout.preview.addChild > 0,
             }
           ]}
-          {@attach recordBoundingClientRectToLens(lens)}
+          {@attach observeResizeBoundingClientRect((r) => {lens.boundingClientRect.left = r.left; lens.boundingClientRect.top = r.top;})}
           bind:clientWidth={lens.boundingClientRect.width}
           bind:clientHeight={lens.boundingClientRect.height}
         >
