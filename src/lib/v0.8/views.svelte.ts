@@ -5,6 +5,7 @@ import type {
   OverrideMapLibreSurfaceKey,
 } from "$lib/synced-layer.svelte";
 import { OrderedSvelteMap } from "$lib/utils.svelte";
+import type { WindowState } from "$lib/v0.8/viewer-window";
 
 // A single view is a set of layers that are "fused".
 // They MUST be presented as a single view, not side by side.
@@ -38,18 +39,10 @@ export type Preview = {
   addSibling: number;
   addChild: number;
 }
-// Window states for the title, the close/minimize buttons, drag buttons
-export type Window = {
-  state: "normal" | "maximized" | "minimized";
-  frame: boolean,  // Visual bordered area around the document
-  titlebar: boolean,  // Title of the window
-  control: boolean,  // Maximize, minimize, roll up, drag, and other window controls
-  clientArea: boolean,  // The content itself
-}
 // Cumalative layout of interface elements
 export type ViewLayout = {
   preview: Preview,
-  window: Window,
+  window: WindowState,
 }
 
 export class SingleView {
