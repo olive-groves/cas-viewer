@@ -419,7 +419,7 @@
                   )))
               }
             >
-              <ViewerWindow >
+              <ViewerWindow state={{...view.layout.window, ...((modeArrangement === "overlay") && {titlebar: false, frame: false})}}>
                 {#if view.type === "multi"}
                   <MultiViewer
                     {...view}
