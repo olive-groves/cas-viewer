@@ -52,6 +52,18 @@
   A.views.add(view);
   multiView.views.add(A)
 
+  let B = new MultiView();
+  B.name = "Multi-View B"
+  view = new SingleView();
+  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "cyan"}}});
+  view.layers.add(syncedLayerKey, {key: overrideKey});
+  B.views.add(view);
+  view = new SingleView();
+  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "magenta"}}});
+  view.layers.add(syncedLayerKey, {key: overrideKey});
+  B.views.add(view);
+  multiView.views.add(B)
+
 </script>
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>

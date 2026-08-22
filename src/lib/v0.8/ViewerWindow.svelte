@@ -3,13 +3,14 @@
   import ToolButton from "./ToolButton.svelte";
   import type {WindowState} from "./viewer-window";
   let {
-    state = {
+    state = $bindable({
       state: "normal",
       frame: true,
       titlebar: true,
-      control: true,
+      title: "Title",
+      controls: true,
       clientArea: true,
-    },
+    }),
     children,
   }: {
     state: WindowState;
@@ -21,16 +22,22 @@
 <div class={["window", {frame: state.frame}]}>
   {#if state.titlebar}
     <div class=titlebar>
-      <!-- <span class={["material-symbols-sharp", "unselectable"]}>
-        drag_indicator
-      </span> -->
-      Titlebar
-    </div>
-  {/if}
-  {#if state.control}
-    <div class=control>
-      <ToolButton symbol=horizontal_rule --width=1.5em/>
-      <ToolButton symbol=close --width=1.5em/>
+      <div class=drag>
+        <span class={["material-symbols-sharp", "unselectable"]}>
+          drag_indicator
+        </span>
+      </div>
+      {#if state.title}
+        <div class=title>
+          <span>{state.title}</span>
+        </div>
+      {/if}
+      {#if state.controls}
+        <div class=controls>
+          <ToolButton symbol=horizontal_rule --width=1.5em/>
+          <ToolButton symbol=close --width=1.5em/>
+        </div>
+      {/if}
     </div>
   {/if}
   {#if state.clientArea}
@@ -45,16 +52,14 @@
     flex: 1 1;
     display: grid;
 
-    grid-template-rows: 0fr 1fr;
-    grid-template-columns: 1fr;
+    grid-template: 0fr 1fr / 1fr;
     &.frame {
       border-radius: var(--gap);
       border: 1px solid color-mix(in srgb, Canvas, CanvasText 25%);
       padding: var(--gap);
-      &:has(.titlebar, .control) {
+      &:has(.titlebar) {
         padding-top: 0;
       }
-      /* Bundle titlebar and controls together into a topbar? */
       &:hover {
         border-color: color-mix(in srgb, Canvas, CanvasText 50%);
       }
@@ -65,12 +70,33 @@
     }
     .titlebar {
       grid-area: 1 / 1;
-    }
-    .control {
-      grid-area: 1 / 1;
-      display: flex;
-      justify-self: end;
-      align-items: baseline;
+      display: grid;
+      grid-template: 1fr / 0fr 1fr 0fr;
+      align-items: center;
+      .drag {
+        grid-area: 1 / 1;
+        display: flex;
+        justify-self: end;
+        align-items: baseline;
+        padding-right: 0.2em;
+        span {
+          margin-left: -0.2em;
+        }
+      }
+      .title {
+        grid-area: 1 / 2;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .controls {
+        align-self: start;
+        grid-area: 1 / 3;
+        display: flex;
+        justify-self: end;
+        align-items: baseline;
+      }
     }
     .client-area {
       grid-area: 2 / 1;

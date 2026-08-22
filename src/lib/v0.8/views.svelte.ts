@@ -63,7 +63,8 @@ export class SingleView {
       state: "normal",
       frame: true,
       titlebar: true,
-      control: true,
+      title: "View",
+      controls: true,
       clientArea: true,
     }
   });
@@ -85,7 +86,8 @@ export class MultiView {
       state: "normal",
       frame: true,
       titlebar: true,
-      control: true,
+      title: "Multiview",
+      controls: true,
       clientArea: true,
     }
   });

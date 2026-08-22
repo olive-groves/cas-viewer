@@ -2,7 +2,8 @@
 export type WindowState = {
   state: "normal" | "maximized" | "minimized";
   frame: boolean,  // Visual bordered area around the document
-  titlebar: boolean,  // Title of the window
-  control: boolean,  // Maximize, minimize, roll up, drag, and other window controls
+  titlebar: boolean,
+  title: string,
+  controls: boolean,  // Maximize, minimize, roll up, drag, and other window controls
   clientArea: boolean,  // The content itself
 }
