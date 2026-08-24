@@ -1,7 +1,7 @@
 @font-face {
   font-family: 'Material Symbols Sharp';
   font-style: normal;
-  src: url(/fonts/material-symbols-sharp.subset.woff2) format('woff2');
+  src: url(./fonts/material-symbols-sharp.subset.woff2) format('woff2');
 }
 .material-symbols-sharp {
   font-family: 'Material Symbols Sharp';
