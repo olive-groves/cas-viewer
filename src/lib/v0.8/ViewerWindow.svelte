@@ -11,9 +11,11 @@
       controls: true,
       clientArea: true,
     }),
+    titlebarChildren,
     children,
   }: {
     state: WindowState;
+    titlebarChildren?: Snippet;
     children?: Snippet;
   } = $props();
 
@@ -32,6 +34,7 @@
           <span>{state.title}</span>
         </div>
       {/if}
+      {@render titlebarChildren?.()}
       {#if state.controls}
         <div class=controls>
           <ToolButton symbol=horizontal_rule --width=1.5em/>
@@ -70,13 +73,10 @@
     }
     .titlebar {
       grid-area: 1 / 1;
-      display: grid;
-      grid-template: 1fr / 0fr 1fr 0fr;
+      display: flex;
       align-items: center;
       .drag {
-        grid-area: 1 / 1;
         display: flex;
-        justify-self: end;
         align-items: baseline;
         padding-right: 0.2em;
         span {
@@ -84,7 +84,6 @@
         }
       }
       .title {
-        grid-area: 1 / 2;
         min-width: 0;
         white-space: nowrap;
         overflow: hidden;
@@ -92,10 +91,10 @@
       }
       .controls {
         align-self: start;
-        grid-area: 1 / 3;
         display: flex;
         justify-self: end;
         align-items: baseline;
+        margin-inline-start: auto;
       }
     }
     .client-area {

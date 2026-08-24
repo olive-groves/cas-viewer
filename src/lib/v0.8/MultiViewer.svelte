@@ -404,7 +404,7 @@
             <div
               class=view
               style:clip-path={
-                mode.type !== "lens" ? undefined :
+                mode.type !== "lens" ? "none" :
                 i < 1 ? undefined : `circle(${lens.diameter.current}px at ${lens.x + lens.diameter.current*2*(100/100)*(i-lens.i.current)}px ${lens.y}px)`
               }
               style:z-index={
@@ -419,7 +419,20 @@
                   )))
               }
             >
-              <ViewerWindow state={{...view.layout.window, ...((modeArrangement === "overlay") && {titlebar: false, frame: false})}}>
+              <ViewerWindow state={{...view.layout.window, ...((modeArrangement === "overlay" && view.type === "single") && {titlebar: false, frame: false})}}>
+                {#snippet titlebarChildren()}
+                  {#if view.type === "multi"}
+                    <div>
+                      <select bind:value={view.mode.type}>
+                        {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
+                          <option value={modeType.toLowerCase()}>
+                            {modeType}
+                          </option>
+                        {/each}
+                      </select>
+                    </div>
+                  {/if}
+                {/snippet}
                 {#if view.type === "multi"}
                   <MultiViewer
                     {...view}
@@ -553,17 +566,11 @@
     flex-direction: row;
   }
   .multi-viewer {
+    /* DO NOT REMOVE CONTAINER: Necessary for showing nested side-by-side when switching from overlay in Chromium. I warned you. */
     container: multiViewer / size;
     flex: 1;
     display: flex;
     flex-direction: row;
-  }
-  .taskbar {
-    column-gap: 6px;
-    display: flex;
-    flex-wrap: wrap;
-    border-bottom: none;
-    background-color: oklch(0 0 0 / 50%);
   }
   .views {
     flex: 1;
@@ -586,6 +593,7 @@
   .view {
     container: ViewContainer / size;
     display: flex;
+    overflow: hidden;
   }
   .sub-view-container {
     flex: 1;
@@ -596,12 +604,16 @@
       flex-direction: column;
     }
   }
+  /* See note on .multi-viewer. Keep this to show original intention for .side-by-side.
   @container multiViewer (max-aspect-ratio: 1 / 1) {
     .side-by-side {
       flex-direction: column;
     }
-  }
+  } */
   @container multiViewerContainer (max-aspect-ratio: 1 / 1) {
+    .side-by-side {
+      flex-direction: column;
+    }
     .multi-viewer {
       flex-direction: column;
     }
