@@ -33,12 +33,6 @@
 <!-- Container to hold taskbar, MultiViewer, status bar, etc. -->
 <div class=workspace>
   <div class=taskbar>
-    <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
-      <label style:display=flex style:gap=2px class=unselectable>
-        <input type=checkbox checked={multiView.layout.window.frame} onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
-        Presentation Mode
-      </label>
-    </div>
     <div>
       <select bind:value={multiView.mode.type}>
         {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
@@ -47,6 +41,12 @@
           </option>
         {/each}
       </select>
+    </div>
+    <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:margin-inline-start=auto>
+      <label style:display=flex style:gap=2px class=unselectable>
+        <input type=checkbox checked={multiView.layout.window.frame} onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
+        Windowed
+      </label>
     </div>
   </div>
   <MultiViewer
