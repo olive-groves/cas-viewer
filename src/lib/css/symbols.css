@@ -1,10 +1,15 @@
 @font-face {
   font-family: 'Material Symbols Sharp';
   font-style: normal;
+  src: url(/fonts/material-symbols-sharp.subset.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'build-fallback--Material Symbols Sharp';
+  font-style: normal;
   src: url(./fonts/material-symbols-sharp.subset.woff2) format('woff2');
 }
 .material-symbols-sharp {
-  font-family: 'Material Symbols Sharp';
+  font-family: 'Material Symbols Sharp', 'build-fallback--Material Symbols Sharp';
   font-weight: normal;
   font-style: normal;
   font-size: 1em;

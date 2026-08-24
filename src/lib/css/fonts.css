@@ -1,20 +1,41 @@
 @font-face {
   font-family: "SourceSans3-VariableFont_wght";
   font-style: normal;
-  src: url(./fonts/SourceSans3-VariableFont_wght.ttf) format('truetype');
+  src: url(/fonts/SourceSans3-VariableFont_wght.ttf) format('truetype');
 }
 @font-face {
   font-family: "SourceSans3-Italic-VariableFont_wght";
   font-style: italic;
-  src: url(./fonts/SourceSans3-Italic-VariableFont_wght.ttf) format('truetype');
+  src: url(/fonts/SourceSans3-Italic-VariableFont_wght.ttf) format('truetype');
 }
 @font-face {
   font-family: "TexgyrepagellaRegular";
   font-style: normal;
-  src: url(./fonts/TexgyrepagellaRegular.otf);
+  src: url(/fonts/TexgyrepagellaRegular.otf);
 }
 @font-face {
   font-family: "TexgyrepagellaItalic";
+  font-style: italic;
+  src: url(/fonts/TexgyrepagellaItalic.otf);
+}
+
+@font-face {
+  font-family: "build-fallback--SourceSans3-VariableFont_wght";
+  font-style: normal;
+  src: url(./fonts/SourceSans3-VariableFont_wght.ttf) format('truetype');
+}
+@font-face {
+  font-family: "build-fallback--SourceSans3-Italic-VariableFont_wght";
+  font-style: italic;
+  src: url(./fonts/SourceSans3-Italic-VariableFont_wght.ttf) format('truetype');
+}
+@font-face {
+  font-family: "build-fallback--TexgyrepagellaRegular";
+  font-style: normal;
+  src: url(./fonts/TexgyrepagellaRegular.otf);
+}
+@font-face {
+  font-family: "build-fallback--TexgyrepagellaItalic";
   font-style: italic;
   src: url(./fonts/TexgyrepagellaItalic.otf);
 }

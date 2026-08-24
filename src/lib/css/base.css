@@ -12,13 +12,13 @@ html, body {
 
 h1 {
   font-size: 4rem;
-  font-family: TexgyrepagellaItalic;
+  font-family: TexgyrepagellaItalic, build-fallback--TexgyrepagellaItalic;
   font-weight: unset;
   line-height: 0.9;
 }
 
 body {
-  font-family: SourceSans3-VariableFont_wght;
+  font-family: SourceSans3-VariableFont_wght, build-fallback--SourceSans3-VariableFont_wght;
   font-kerning: normal;
 }
 
