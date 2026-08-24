@@ -33,7 +33,21 @@
 <!-- Container to hold taskbar, MultiViewer, status bar, etc. -->
 <div class=workspace>
   <div class=taskbar>
-    Taskbar
+    <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+      <label style:display=flex style:gap=2px class=unselectable>
+        <input type=checkbox checked={multiView.layout.window.frame} onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
+        Presentation Mode
+      </label>
+    </div>
+    <div>
+      <select bind:value={multiView.mode.type}>
+        {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
+          <option value={modeType.toLowerCase()}>
+            {modeType}
+          </option>
+        {/each}
+      </select>
+    </div>
   </div>
   <MultiViewer
     {...multiView}
@@ -50,6 +64,8 @@
     flex-direction: column;
     background: black;
     .taskbar {
+      display: flex;
+      gap: var(--gap);
       flex: 0 0;
       background-color: color-mix(in srgb, Canvas, CanvasText 10%);
     }

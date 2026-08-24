@@ -419,7 +419,7 @@
                   )))
               }
             >
-              <ViewerWindow state={{...view.layout.window, ...((modeArrangement === "overlay" && view.type === "single") && {titlebar: false, frame: false})}}>
+              <ViewerWindow state={{...view.layout.window, ...(((modeArrangement === "overlay" && view.type === "single") || !layout.window.frame) && {titlebar: false, frame: false})}}>
                 {#snippet titlebarChildren()}
                   {#if view.type === "multi"}
                     <div>
@@ -438,7 +438,7 @@
                     {...view}
                     bind:camera
                     bind:mode={view.mode}
-                    bind:layout={view.layout}
+                    layout={{preview: view.layout.preview, window: {...view.layout.window, ...((!layout.window.frame) && {titlebar: false, frame: false})}}}
                   />
                 {:else}
                   <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
@@ -574,7 +574,6 @@
   }
   .views {
     flex: 1;
-    gap: var(--gap);
   }
   .side-by-side {
     display: flex;
