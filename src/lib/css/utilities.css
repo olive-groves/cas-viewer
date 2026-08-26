@@ -2,3 +2,13 @@
   user-select: none;
   -webkit-user-select: none;
 }
+
+.stack {
+  display: grid;
+  grid-template-areas: "stack";
+  place-items: center;
+
+  > * {
+    grid-area: stack;
+  }
+}

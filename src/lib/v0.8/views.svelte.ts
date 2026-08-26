@@ -43,6 +43,7 @@ export type Preview = {
 export type ViewLayout = {
   preview: Preview,
   window: WindowState,
+  minimap: boolean,
 }
 
 export class SingleView {
@@ -66,7 +67,8 @@ export class SingleView {
       title: "View",
       controls: true,
       clientArea: true,
-    }
+    },
+    minimap: false,
   });
 }
 export class MultiView {
@@ -89,6 +91,7 @@ export class MultiView {
       title: "Multiview",
       controls: true,
       clientArea: true,
-    }
+    },
+    minimap: false,
   });
 }

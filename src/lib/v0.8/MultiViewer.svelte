@@ -317,7 +317,7 @@
     layout.preview.nest = dragging ? 1 : 0;
   }}
 >
-  <div class=multi-viewer-size-container>
+  <div class="multi-viewer-size-container stack">
     <div
       class={[
         "multi-viewer",
@@ -515,10 +515,23 @@
         </div>
       {/each}
     </div>
+    {#if layout.minimap}
+      <div class=minimap>
+      </div>
+    {/if}
   </div>
 </DropZone>
 
 <style>
+  .minimap {
+    z-index: 1;
+    justify-self: start;
+    align-self: end;
+    width: 200px;
+    height: 200px;
+    border: 1px solid white;
+    pointer-events: none;
+  }
   .add {
     gap: 1em;
   }
@@ -547,13 +560,14 @@
     container: multiViewerContainer / size;
     height: 100%;
     width: 100%;
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-areas: 1fr;
   }
   .multi-viewer {
     /* DO NOT REMOVE CONTAINER: Necessary for showing nested side-by-side when switching from overlay in Chromium. I warned you. */
     container: multiViewer / size;
-    flex: 1;
+    justify-self: stretch;
+    align-self: stretch;
     display: flex;
     flex-direction: row;
   }

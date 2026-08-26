@@ -39,8 +39,15 @@
   view.layers.add(syncedLayerKey, {key: overrideKey});
   multiView.views.add(view);
 
+  // Minimap uses a requested layer or the first raster layer from the list of views
+  // It places the minimap at the bottom left of the multi-view window.
+  // We only turn the minimap for the root multiView on, because otherwise we'd get
+  // multiple minimaps across the views which would overlap and be squeezed within their
+  // windows, rather than be an interface element above all the views regardless of orientation
+  multiView.layout.minimap = true;
+
   let A = new MultiView();
-  A.mode.type = "lens";
+  // A.mode.type = "lens";
   A.name = "Multi-View A"
   view = new SingleView();
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
@@ -53,6 +60,7 @@
   multiView.views.add(A)
 
   let B = new MultiView();
+  B.mode.type = "lens";
   B.name = "Multi-View B"
   view = new SingleView();
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "cyan"}}});
@@ -62,7 +70,7 @@
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "magenta"}}});
   view.layers.add(syncedLayerKey, {key: overrideKey});
   B.views.add(view);
-  multiView.views.add(B)
+  A.views.add(B)
 
 </script>
 
