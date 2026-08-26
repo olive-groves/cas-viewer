@@ -361,32 +361,6 @@
           layout.preview.addChild = (draggingOuter || (dragging && (visibleViewsOrder.length < 1))) ? 1 : 0;
         }}
       >
-        <!-- <div class=taskbar>
-          <div style:display=flex class=unselectable>
-            <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
-              Taskbar
-            </div>
-            {#each views.order as viewKey, i (viewKey)}
-              {@const view = views.map.get(viewKey)}
-              <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
-                <label style:display=flex style:gap=2px>
-                  {view.name || `View ${i + 1}`}
-                  <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
-                </label>
-              </div>
-            {/each}
-          </div>
-          {#if visibleViewsOrder.length > 1}
-            <div style:display=flex style:border="1px solid gray" class=unselectable style:gap=4px style:padding="0 4px">
-              {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
-                <label style:display=flex style:align-items=center style:gap=2px>
-                  <input type=radio value={modeType.toLowerCase()} bind:group={mode.type} />
-                  {modeType}
-                </label>
-              {/each}
-            </div>
-          {/if}
-        </div> -->
         <div
           class={[
             "views",
@@ -419,7 +393,7 @@
                   )))
               }
             >
-              <ViewerWindow state={{...view.layout.window, ...(((modeArrangement === "overlay" && view.type === "single") || !layout.window.frame) && {titlebar: false, frame: false})}}>
+              <ViewerWindow onminimize={() => view.layout.window.state = "minimized"} state={{...view.layout.window, ...(((modeArrangement === "overlay" && view.type === "single") || !layout.window.frame) && {titlebar: false, frame: false})}}>
                 {#snippet titlebarChildren()}
                   {#if view.type === "multi"}
                     <div>
@@ -430,6 +404,17 @@
                           </option>
                         {/each}
                       </select>
+                    </div>
+                    <div style:display=flex class=unselectable>
+                      {#each view.views.order as childViewKey, i (childViewKey)}
+                        {@const childView = view.views.map.get(childViewKey)}
+                        <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+                          <label style:display=flex style:gap=2px>
+                            {childView.name || `View ${i + 1}`}
+                            <input type=checkbox checked={childView.layout.window.state !== "minimized"} onchange={(e) => childView.layout.window.state = e.target.checked ? "normal" : "minimized"}>
+                          </label>
+                        </div>
+                      {/each}
                     </div>
                   {/if}
                 {/snippet}

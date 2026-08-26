@@ -32,7 +32,7 @@
 <!-- Side panel is not here. Yet. -->
 <!-- Container to hold taskbar, MultiViewer, status bar, etc. -->
 <div class=workspace>
-  <div class=taskbar>
+  <div class="taskbar unselectable">
     <div>
       <select bind:value={multiView.mode.type}>
         {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
@@ -41,6 +41,17 @@
           </option>
         {/each}
       </select>
+    </div>
+    <div style:display=flex>
+      {#each multiView.views.order as viewKey, i (viewKey)}
+        {@const view = multiView.views.map.get(viewKey)}
+        <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+          <label style:display=flex style:gap=2px>
+            {view.name || `View ${i + 1}`}
+            <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
+          </label>
+        </div>
+      {/each}
     </div>
     <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:margin-inline-start=auto>
       <label style:display=flex style:gap=2px class=unselectable>

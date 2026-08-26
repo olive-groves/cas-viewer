@@ -3,6 +3,7 @@
   import ToolButton from "./ToolButton.svelte";
   import type {WindowState} from "./viewer-window";
   let {
+    onminimize,
     state = $bindable({
       state: "normal",
       frame: true,
@@ -14,6 +15,7 @@
     titlebarChildren,
     children,
   }: {
+    onminimize?: () => void;
     state: WindowState;
     titlebarChildren?: Snippet;
     children?: Snippet;
@@ -23,7 +25,7 @@
 
 <div class={["window", {frame: state.frame}]}>
   {#if state.titlebar}
-    <div class=titlebar>
+    <div class="titlebar">
       <div class=drag>
         <span class={["material-symbols-sharp", "unselectable"]}>
           drag_indicator
@@ -37,8 +39,8 @@
       {@render titlebarChildren?.()}
       {#if state.controls}
         <div class=controls>
-          <ToolButton symbol=horizontal_rule --width=1.5em/>
-          <ToolButton symbol=close --width=1.5em/>
+          <ToolButton onclick={() => onminimize?.()} symbol=horizontal_rule --width=1.5em/>
+          <!-- <ToolButton symbol=close --width=1.5em/> -->
         </div>
       {/if}
     </div>
@@ -75,6 +77,7 @@
       grid-area: 1 / 1;
       display: flex;
       align-items: center;
+      gap: var(--gap);
       .drag {
         display: flex;
         align-items: baseline;
