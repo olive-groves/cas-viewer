@@ -50,7 +50,9 @@ export class OrderedSvelteMap<K extends string, V = any> {
     return this.map.get(key)
   }
 
-  // TODO: Add .set()?
+  set(key: K, value: V) {
+    this.map.set(key, value);
+  }
 
   delete(keyOrIndex: K | number): boolean {
     let key, index;
