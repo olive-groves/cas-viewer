@@ -76,7 +76,7 @@ export type ViewLayout = {
 }
 
 export class SingleView {
-  name: string | undefined = $state(undefined);
+  name: string | undefined = $state("View Name");
   readonly type = "single";
   layers: OrderedSvelteMap<OverrideMapLibreLayerKey, SyncedMapLibreLayerKey> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `override-maplibre-layer_${crypto.randomUUID()}` });
   surface: {
@@ -93,7 +93,7 @@ export class SingleView {
       state: "normal",
       frame: true,
       titlebar: true,
-      title: "View",
+      title: "View Title",
       controls: true,
       clientArea: true,
     },
@@ -111,7 +111,7 @@ export class SingleView {
   });
 }
 export class MultiView {
-  name: string | undefined = $state(undefined);
+  name: string | undefined = $state("Multiview Name");
   readonly type = "multi";
   mode: ViewMode = $state({
     type: "side-by-side",
@@ -127,7 +127,7 @@ export class MultiView {
       state: "normal",
       frame: true,
       titlebar: true,
-      title: "Multiview",
+      title: "Multiview Title",
       controls: true,
       clientArea: true,
     },

@@ -42,11 +42,11 @@
         {/each}
       </select>
     </div>
-    <div style:display=flex>
+    <div style:display=flex style:overflow-x=auto>
       {#each multiView.views.order as viewKey, i (viewKey)}
         {@const view = multiView.views.map.get(viewKey)}
-        <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
-          <label style:display=flex style:gap=2px>
+        <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:align-items=center>
+          <label style:display=flex style:gap=2px style:white-space=nowrap>
             {view.name || `View ${i + 1}`}
             <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
           </label>
@@ -54,7 +54,7 @@
       {/each}
     </div>
     <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:margin-inline-start=auto>
-      <label style:display=flex style:gap=2px class=unselectable>
+      <label style:display=flex style:gap=2px class=unselectable style:align-items=center>
         <input type=checkbox checked={multiView.layout.window.frame} onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
         Windowed
       </label>
@@ -79,6 +79,7 @@
       gap: var(--gap);
       flex: 0 0;
       background-color: color-mix(in srgb, Canvas, CanvasText 10%);
+      align-items: flex-start;
     }
   }
 </style>

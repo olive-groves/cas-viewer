@@ -27,7 +27,7 @@
   {#if state.titlebar}
     <div class="titlebar">
       <div class=drag>
-        <span class={["material-symbols-sharp", "unselectable"]}>
+        <span class="material-symbols-sharp unselectable">
           drag_indicator
         </span>
       </div>
@@ -78,6 +78,7 @@
       display: flex;
       align-items: center;
       gap: var(--gap);
+      min-width: 0;
       .drag {
         display: flex;
         align-items: baseline;
@@ -87,9 +88,9 @@
         }
       }
       .title {
-        min-width: 0;
+        flex: 0 1 auto;
+        overflow-x: hidden;
         white-space: nowrap;
-        overflow: hidden;
         text-overflow: ellipsis;
       }
       .controls {
