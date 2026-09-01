@@ -2,7 +2,7 @@
   import 'svelte-maplibre-gl/vite';
   import * as maplibregl from 'maplibre-gl';
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
-  import type { SingleView } from './views.svelte';
+  import type { SingleView, CameraState } from './views.svelte';
 
   // import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
@@ -11,7 +11,41 @@
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
 
   import { mergeDeep } from '$lib/utils';
-  let { layers, surface, camera = $bindable({}), }: SingleView = $props();
+  let {
+    layers,
+    surface,
+    zoom = $bindable(),
+    lng = $bindable(0),
+    lat = $bindable(0),
+    bearing = $bindable(),
+    pitch = $bindable(),
+    roll = $bindable(),
+    elevation = $bindable(),
+    onzoomchange,
+    onlngchange,
+    onlatchange,
+    onbearingchange,
+    onpitchchange,
+    onrollchange,
+    onelevationchange,
+  }: {
+    layers: SingleView["layers"];
+    surface?: SingleView["surface"];
+    zoom?: SingleView["camera"]["zoom"];
+    lng?: SingleView["camera"]["lng"];
+    lat?: SingleView["camera"]["lat"];
+    bearing?: SingleView["camera"]["bearing"];
+    pitch?: SingleView["camera"]["pitch"];
+    roll?: SingleView["camera"]["roll"];
+    elevation?: SingleView["camera"]["elevation"];
+    onzoomchange?: (zoom: CameraState["zoom"]) => void;
+    onlngchange?: (lng: CameraState["lng"]) => void;
+    onlatchange?: (lat: CameraState["lat"]) => void;
+    onbearingchange?: (bearing: CameraState["bearing"]) => void;
+    onpitchchange?: (pitch: CameraState["pitch"]) => void;
+    onrollchange?: (roll: CameraState["roll"]) => void;
+    onelevationchange?: (elevation: CameraState["elevation"]) => void;
+  } = $props();
 
   let map: maplibregl.Map | undefined = $state.raw();
 
@@ -111,6 +145,30 @@
     }
   })
 
+  $effect(() => {
+    onzoomchange?.(zoom);
+  })
+  $effect(() => {
+    onlngchange?.(lng);
+  })
+  $effect(() => {
+    onlatchange?.(lat);
+  })
+  $effect(() => {
+    onbearingchange?.(bearing);
+  })
+  $effect(() => {
+    onpitchchange?.(pitch);
+  })
+  $effect(() => {
+    onrollchange?.(roll);
+  })
+  $effect(() => {
+    onelevationchange?.(elevation);
+  })
+
+  const center = $derived({lng, lat});
+
 </script>
 
 <div class=map-container>
@@ -123,24 +181,26 @@
     attributionControl={false}
     transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
     // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
-    zoom={camera.zoom}
-    center={camera.center}
-    bearing={camera.bearing}
-    pitch={camera.pitch}
-    roll={camera.roll}
-    elevation={camera.elevation}
+    {zoom}
+    {center}
+    {bearing}
+    {pitch}
+    {roll}
+    {elevation}
     onmove={
       (e) => {
         if (e.originalEvent || e?.sync) {
           // e.sync is an event prop that we pass if easing or otherwise causing map move,
           // like the auto-pitch when enabling 3D:
           //    map.easeTo({zoom: 2}, {sync: true})
-          camera.zoom = map?.getZoom();
-          camera.center = map?.getCenter();
-          camera.bearing = map?.getBearing();
-          camera.pitch = map?.getPitch();
-          camera.roll = map?.getRoll();
-          camera.elevation = map?.getCameraTargetElevation();
+          zoom = map?.getZoom();
+          const _center = map?.getCenter();
+          lng = _center?.lng;
+          lat = _center?.lat;
+          bearing = map?.getBearing();
+          pitch = map?.getPitch();
+          roll = map?.getRoll();
+          elevation = map?.getCameraTargetElevation();
         }
       }
     }
@@ -166,7 +226,7 @@
                 id={overrideKey}
                 paint={{...layerSpec.paint}}
                 layout={{...layerSpec.layout}}
-                beforeId={SLOT_PREFIX + overrideKey}
+                // beforeId={SLOT_PREFIX + overrideKey}
               />
             {/each}
           </RasterTileSource>
@@ -181,14 +241,14 @@
                   id={overrideKey}
                   paint={{...layerSpec.paint}}
                   layout={{...layerSpec.layout}}
-                  beforeId={SLOT_PREFIX + overrideKey}
+                  // beforeId={SLOT_PREFIX + overrideKey}
                 />
               {:else if layerSpec.type === "color-relief"}
                 <ColorReliefLayer
                   id={overrideKey}
                   paint={{...layerSpec.paint}}
                   layout={{...layerSpec.layout}}
-                  beforeId={SLOT_PREFIX + overrideKey}
+                  // beforeId={SLOT_PREFIX + overrideKey}
                 />
               {/if}
             {/each}
@@ -202,7 +262,7 @@
                 id={overrideKey}
                 paint={{...layerSpec.paint}}
                 layout={{...layerSpec.layout}}
-                beforeId={SLOT_PREFIX + overrideKey}
+                // beforeId={SLOT_PREFIX + overrideKey}
               />
             {/each}
           </ImageSource>
@@ -215,7 +275,7 @@
                 id={overrideKey}
                 paint={{...layerSpec.paint}}
                 layout={{...layerSpec.layout}}
-                beforeId={SLOT_PREFIX + overrideKey}
+                // beforeId={SLOT_PREFIX + overrideKey}
               />
             {/if}
           {/each}
@@ -230,12 +290,12 @@
       <!-- TODO: Better default (hidden) background handling -->
       <BackgroundLayer
         id={BACKGROUND_PREFIX + overrideKey}
-        beforeId={overrideKey}
+        // beforeId={overrideKey}
         paint={{"background-color": background?.color ?? "rgb(0, 255, 0)", "background-opacity": background?.opacity ?? 0}}
         layout={{visibility: layerVisibility}}
       />
     {/each}
-    {#if surface.overrideKey && surface.syncedSurfaceKey}
+    {#if surface?.overrideKey && surface?.syncedSurfaceKey}
       {@const syncedSurface = syncedMapLibreSurfaces.get(surface.syncedSurfaceKey)}
       {@const sourceKey = syncedSurface?.overrides.get(surface.overrideKey)?.spec?.source ?? syncedSurface?.spec.source}
       {@const source = sourceManager.mapLibreSources.get(sourceKey)}

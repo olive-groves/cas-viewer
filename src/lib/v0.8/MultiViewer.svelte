@@ -449,10 +449,10 @@
                         {/each}
                       </select>
                     </div>
-                    <div style:display=flex class=unselectable>
+                    <div style:display=flex class=unselectable style:min-width=0 style:flex-basis=0>
                       {#each view.views.order as childViewKey, i (childViewKey)}
                         {@const childView = view.views.map.get(childViewKey)}
-                        <div style:display=flex style:border="1px solid gray" style:padding="0 6px">
+                        <div style:display=flex style:border="1px solid gray" style:white-space=nowrap style:padding="0 6px">
                           <label style:display=flex style:gap=2px>
                             {childView.name || `View ${i + 1}`}
                             <input type=checkbox checked={childView.layout.window.state !== "minimized"} onchange={(e) => childView.layout.window.state = e.target.checked ? "normal" : "minimized"}>
@@ -465,7 +465,7 @@
                 {#if view.type === "multi"}
                   <MultiViewer
                     {...view}
-                    bind:camera
+                    camera={camera}
                     bind:mode={view.mode}
                     layout={{preview: view.layout.preview, minimap: view.layout.minimap, window: {...view.layout.window, ...((!layout.window.frame) && {titlebar: false, frame: false})}}}
                   />
@@ -508,7 +508,21 @@
                       {:else}
                         <SingleViewer
                           {...view}
-                          bind:camera
+                          layers={view.layers}
+                          zoom={["sync", "receive-only"].includes(view.sync.zoom.type) ? camera.zoom : view.camera.zoom}
+                          lng={["sync", "receive-only"].includes(view.sync.lng.type) ? camera.lng : view.camera.lng}
+                          lat={["sync", "receive-only"].includes(view.sync.lat.type) ? camera.lat : view.camera.lat}
+                          bearing={["sync", "receive-only"].includes(view.sync.bearing.type) ? camera.bearing : view.camera.bearing}
+                          pitch={["sync", "receive-only"].includes(view.sync.pitch.type) ? camera.pitch : view.camera.pitch}
+                          roll={["sync", "receive-only"].includes(view.sync.roll.type) ? camera.roll : view.camera.roll}
+                          elevation={["sync", "receive-only"].includes(view.sync.elevation.type) ? camera.elevation : view.camera.elevation}
+                          onzoomchange={(v) => {view.camera.zoom = v; if (["sync", "send-only"].includes(view.sync.zoom.type)) camera.zoom = v;}}
+                          onlngchange={(v) => {view.camera.lng = v; if (["sync", "send-only"].includes(view.sync.lng.type)) camera.lng = v;}}
+                          onlatchange={(v) => {view.camera.lat = v; if (["sync", "send-only"].includes(view.sync.lat.type)) camera.lat = v;}}
+                          onbearingchange={(v) => {view.camera.bearing = v; if (["sync", "send-only"].includes(view.sync.bearing.type)) camera.bearing = v;}}
+                          onpitchchange={(v) => {view.camera.pitch = v; if (["sync", "send-only"].includes(view.sync.pitch.type)) camera.pitch = v;}}
+                          onrollchange={(v) => {view.camera.roll = v; if (["sync", "send-only"].includes(view.sync.roll.type)) camera.roll = v;}}
+                          onelevationchange={(v) => {view.camera.elevation = v; if (["sync", "send-only"].includes(view.sync.elevation.type)) camera.elevation = v;}}
                         />
                       {/if}
                       <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
