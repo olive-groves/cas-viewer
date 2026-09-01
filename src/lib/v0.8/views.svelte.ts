@@ -43,12 +43,12 @@ export type Preview = {
 export type ViewLayout = {
   preview: Preview,
   window: WindowState,
-  minimap: boolean,
+  minimap: MinimapState,
 }
 
 export class SingleView {
   name: string | undefined = $state(undefined);
-  type = "single";
+  readonly type = "single";
   layers: OrderedSvelteMap<OverrideMapLibreLayerKey, SyncedMapLibreLayerKey> = new OrderedSvelteMap({ reorderItemInPlace: true, keyGenerator: () => `override-maplibre-layer_${crypto.randomUUID()}` });
   surface: {
     overrideKey: OverrideMapLibreSurfaceKey | undefined;
@@ -68,12 +68,12 @@ export class SingleView {
       controls: true,
       clientArea: true,
     },
-    minimap: false,
+    minimap: "none",
   });
 }
 export class MultiView {
   name: string | undefined = $state(undefined);
-  type = "multi";
+  readonly type = "multi";
   mode: ViewMode = $state({
     type: "side-by-side",
   });
@@ -92,6 +92,6 @@ export class MultiView {
       controls: true,
       clientArea: true,
     },
-    minimap: false,
+    minimap: "none",
   });
 }

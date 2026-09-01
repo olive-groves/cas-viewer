@@ -11,7 +11,8 @@
   import DropZone from "$lib/v0.8/DropZone.svelte";
   import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
   import { SourceManager, type SourceKey } from '$lib/source-manager.svelte';
-  import { MapLibreSyncedLayer, type AnyLayerSpec, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
+  import { MapLibreSyncedLayer, type AnyLayerSpec, type OverrideMapLibreLayerKey, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
+  import { mergeDeep } from '$lib/utils';
   const sourceManager = getSourceManagerContext();
   const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
@@ -22,7 +23,7 @@
     mode = $bindable({type: "side-by-side"}),
     layout = $bindable(),
   }: {
-    views: any,  // FIXME: MultiView.views OrderedSvelteMap<ViewKey, SingleView | MultiView>
+    views: MultiView["views"],
     camera: any,
     mode: ViewMode,
     layout: ViewLayout,
@@ -276,7 +277,7 @@
             visibility: true,
           } :
           undefined
-        const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual MapLibreSyncedLayer.spec is.
+        const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual instantiated MapLibreSyncedLayer.spec is.
           source: mapLibreSourceKey,
           type: layerSpecType,
           layout: {visibility: "visible"},
@@ -295,6 +296,48 @@
   let allowMultiViewNesting = $derived(views.order.length > 1);
   let allowSubViewNesting = $derived(views.order.length > 1);
   let modeArrangement: "side-by-side" | "overlay" = $derived(mode.type === "side-by-side" ? "side-by-side" : "overlay")
+
+  function findMatchingLayer(views: MultiView["views"], ofSpec: {type: Array<"raster" | "hillshade" | "color-relief" | "background">}) {
+    // Find the first override layer of a set of views matching the provided spec
+    // This tunnels down and across an array of (nested) views
+    let syncedLayerKey: SyncedMapLibreLayerKey | undefined = undefined;
+    let overrideKey: OverrideMapLibreLayerKey | undefined = undefined;
+    for (const viewKey of views.order) {
+      const view = views.get(viewKey);
+      if (view?.type === "single") {
+        for (const oKey of view.layers.order) {
+          const slKey = view.layers.get(oKey);
+          if (slKey === undefined) continue;
+          const layer = syncedMapLibreLayers.get(slKey);
+          if (layer === undefined) continue;
+          const spec = mergeDeep(layer?.spec, layer?.overrides.get(oKey)?.spec ?? {});
+          // "visible" is default, so we can't trust === "visible"; check if not "none"
+          if (ofSpec.type.includes(spec?.type) && spec?.layout?.visibility !== "none" ) {
+            syncedLayerKey = slKey;
+            overrideKey = oKey;
+            break;
+          }
+        }
+      } else if (view?.type === "multi") {
+        const keys = findMatchingLayer(view.views, ofSpec);
+        syncedLayerKey = keys.syncedLayerKey;
+        overrideKey = keys.overrideKey;
+      }
+      if (syncedLayerKey && overrideKey) break;
+    }
+    return {syncedLayerKey, overrideKey}
+  }
+  let minimapView = new SingleView();
+  $effect(() => {
+    const keys = findMatchingLayer(views, {type: ["background", "raster", "hillshade", "color-relief"]});
+    if (keys.overrideKey && keys.syncedLayerKey) {
+      if (minimapView.layers.map.get(keys.overrideKey)) {
+        minimapView.layers.set(keys.overrideKey, keys.syncedLayerKey);
+      } else {
+        minimapView.layers.add(keys.syncedLayerKey, {key: keys.overrideKey});
+      }
+    };
+  });
 </script>
 
 <DropZone
@@ -374,7 +417,8 @@
           bind:clientHeight={lens.boundingClientRect.height}
         >
           {#each visibleViewsOrder as viewKey, i (viewKey)}
-            {@const view = views.map.get(viewKey)}
+            <!-- FIXME: Guard on view type? #if? -->
+            {@const view = views.map.get(viewKey) as SingleView | MultiView}
             <div
               class=view
               style:clip-path={
@@ -423,7 +467,7 @@
                     {...view}
                     bind:camera
                     bind:mode={view.mode}
-                    layout={{preview: view.layout.preview, window: {...view.layout.window, ...((!layout.window.frame) && {titlebar: false, frame: false})}}}
+                    layout={{preview: view.layout.preview, minimap: view.layout.minimap, window: {...view.layout.window, ...((!layout.window.frame) && {titlebar: false, frame: false})}}}
                   />
                 {:else}
                   <!-- Outer: Dump existing view into multiview, add new view as sibling in that multiview -->
@@ -515,22 +559,48 @@
         </div>
       {/each}
     </div>
-    {#if layout.minimap}
-      <div class=minimap>
+    {#if layout.minimap !== "none"}
+      <div class="minimap-control stack">
+        {#if layout.minimap === "visible"}
+          <div class=minimap-container>
+            <SingleViewer
+              {...minimapView}
+              camera={{zoom: -1.5}}
+            />
+          </div>
+        {/if}
+        <button onclick={() => layout.minimap = layout.minimap === "visible" ? "hidden" : "visible"}>
+          <span>
+            Minimap
+          </span>
+        </button>
       </div>
     {/if}
   </div>
 </DropZone>
 
 <style>
-  .minimap {
+  .minimap-control {
     z-index: 1;
     justify-self: start;
     align-self: end;
-    width: 200px;
-    height: 200px;
-    border: 1px solid white;
     pointer-events: none;
+    min-width: 0;
+    min-height: 0;
+    .minimap-container {
+      display: grid;
+      grid-template-rows: minmax(0, 192px);
+      grid-template-columns: minmax(0, 192px);
+      border: 1px solid white;
+    }
+    button {
+      z-index: 1;
+      pointer-events: auto;
+      border-radius: var(--gap);
+      padding: calc(var(--gap) / 2);
+      justify-self: start;
+      align-self: end;
+    }
   }
   .add {
     gap: 1em;

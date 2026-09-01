@@ -34,8 +34,13 @@
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "red"}}});
   view.layers.add(syncedLayerKey, {key: overrideKey});
   multiView.views.add(view);
+
   view = new SingleView();
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
+  view.layers.add(syncedLayerKey, {key: overrideKey});
+  multiView.views.add(view);
+  view = new SingleView();
+  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
   view.layers.add(syncedLayerKey, {key: overrideKey});
   multiView.views.add(view);
 
@@ -44,33 +49,33 @@
   // We only turn the minimap for the root multiView on, because otherwise we'd get
   // multiple minimaps across the views which would overlap and be squeezed within their
   // windows, rather than be an interface element above all the views regardless of orientation
-  multiView.layout.minimap = true;
+  multiView.layout.minimap = "visible";
 
-  let A = new MultiView();
-  // A.mode.type = "lens";
-  A.name = "Multi-View A"
-  view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  A.views.add(view);
-  view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "yellow"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  A.views.add(view);
-  multiView.views.add(A)
+  // let A = new MultiView();
+  // // A.mode.type = "lens";
+  // A.name = "Multi-View A"
+  // view = new SingleView();
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // A.views.add(view);
+  // view = new SingleView();
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "yellow"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // A.views.add(view);
+  // multiView.views.add(A)
 
-  let B = new MultiView();
-  B.mode.type = "lens";
-  B.name = "Multi-View B"
-  view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "cyan"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  B.views.add(view);
-  view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "magenta"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  B.views.add(view);
-  A.views.add(B)
+  // let B = new MultiView();
+  // B.mode.type = "lens";
+  // B.name = "Multi-View B"
+  // view = new SingleView();
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "cyan"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // B.views.add(view);
+  // view = new SingleView();
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "magenta"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // B.views.add(view);
+  // A.views.add(B)
 
 </script>
 
