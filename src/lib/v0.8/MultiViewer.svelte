@@ -598,7 +598,7 @@
 <style>
   .minimap-control {
     z-index: 1;
-    justify-self: start;
+    justify-self: end;
     align-self: end;
     pointer-events: none;
     min-width: 0;
@@ -614,7 +614,7 @@
       pointer-events: auto;
       border-radius: var(--gap);
       padding: calc(var(--gap) / 2);
-      justify-self: start;
+      justify-self: end;
       align-self: end;
     }
   }
