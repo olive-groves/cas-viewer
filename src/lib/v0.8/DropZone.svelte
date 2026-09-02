@@ -118,7 +118,7 @@
         margin: var(--margin-top-bottom) var(--margin-left-right);
       }
       &.preferOuter > .inner {
-        --_dragging-margin: var(--dragging-margin, calc(3 * var(--sc-2-5-5)));
+        --_dragging-margin: var(--dragging-margin, calc(5 * var(--sc-2-5-5)));
         --margin-left-right: max(calc(50cqw - var(--_dragging-margin)), calc(0.5 * 50cqw));
         --margin-top-bottom: max(calc(50cqh - var(--_dragging-margin)), calc(0.5 * 50cqh));
         margin: var(--margin-top-bottom) var(--margin-left-right);
