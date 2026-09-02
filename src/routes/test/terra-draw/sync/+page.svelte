@@ -212,7 +212,6 @@ One global toolbar shared between both maps:
         }}
         onchange={(ids: FeatureId[], type: string, context?) => {
           console.log("onchange", ids, type, context);
-          const featureA = drawA?.getSnapshotFeature(ids[0]);
         }}
         onhistory={({cause, stack, undoSize, redoSize}) => {
           console.log("onhistory", cause, stack, undoSize, redoSize);
@@ -270,8 +269,11 @@ One global toolbar shared between both maps:
       <button
         onclick={() => {
           if (!selected) return;
-          draw?.removeFeatures([selected]);
-          draw?.deselectFeature(selected);
+          const _selected = selected;
+          drawA?.removeFeatures([_selected]);
+          drawB?.removeFeatures([_selected]);
+          drawA?.deselectFeature(_selected);
+          drawB?.deselectFeature(_selected);
         }}>Remove</button
       >
     {/if}
