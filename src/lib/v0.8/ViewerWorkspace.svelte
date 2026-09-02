@@ -5,6 +5,7 @@
   import { getSourceManagerContext } from "$lib/shared-context.svelte";
   import MultiViewer from "./MultiViewer.svelte";
   import type { MultiView } from "./views.svelte";
+  import ToolButton from "./ToolButton.svelte";
 
   let {
     multiView,
@@ -53,11 +54,15 @@
         </div>
       {/each}
     </div>
-    <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:margin-inline-start=auto>
-      <label style:display=flex style:gap=2px class=unselectable style:align-items=center>
-        <input type=checkbox checked={multiView.layout.window.frame} onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
-        Windowed
-      </label>
+    <div style:display=flex style:margin-inline-start=auto>
+      <ToolButton
+        toggle
+        --font-size=1.5rem
+        symbol=select_window
+        symbolOff=select_window_off
+        toggled={multiView.layout.window.frame}
+        ontoggle={(toggled) => {multiView.layout.window.frame = toggled; multiView.layout.window.titlebar = toggled;}}
+        />
     </div>
   </div>
   <MultiViewer
