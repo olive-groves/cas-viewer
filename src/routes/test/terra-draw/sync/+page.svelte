@@ -2,85 +2,22 @@
   import 'svelte-maplibre-gl/vite';
   // Adapted from https://svelte-maplibre-gl.mierune.dev/examples/terradraw
   import { MapLibre, BackgroundLayer } from 'svelte-maplibre-gl';
-  import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
-  import type { TerraDraw as Draw } from 'terra-draw';
-  import type { Point, Polygon, LineString, Position } from "geojson";
+  import { TerraDraw as TerraDrawSvelte } from '@svelte-maplibre-gl/terradraw';
   import {
+    TerraDraw,
     TerraDrawSelectMode,
     TerraDrawPolygonMode,
     TerraDrawPointMode,
+    type TerraDrawEventListeners,
   } from 'terra-draw';
+  import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
+  import { Map as MapLibreMap } from 'maplibre-gl';
   import { roundGeometryCoordinates } from '$lib/v0.8/maplibre-gl-terradraw/lib/helpers/roundFeatureCoordinates';
+  import { isGeometryOutOfBounds, terraDrawMaxBounds, wrapGeometryCoordinatesToBounds } from '$lib/v0.8/geojson-utils';
+  import { onMount } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
 
   type FeatureId = string | number;
-  type Feature = Point | Polygon | LineString;
-  const bounds = {
-    min: {
-      lng: -180,
-      lat: -85.049,
-      // lat: -85.051129,  // TODO: Report bug that can be dragged below this lat?
-    },
-    max: {
-      lng: 180,
-      lat: 85.051129,
-    }
-  };
-  function isFeatureOutOfBounds(feature: Feature): boolean {
-    let coordinates: Position[];
-    if (feature.type === "Point") {
-      coordinates = [feature.coordinates];
-    } else if (feature.type === "Polygon") {
-      coordinates = feature.coordinates[0];
-    } else if (feature.type === "LineString") {
-      coordinates = feature.coordinates;
-    } else {
-      throw new Error(`Feature type "${feature?.['type']}" not supported.`)
-    }
-    for (const coordinate of coordinates) {
-      if (isPositionOutOfBounds(coordinate)) {
-        return true
-      }
-    }
-    return false
-
-    function isPositionOutOfBounds(position: Position): boolean {
-      const lng = position[0];
-      const lat = position[1];
-      return (
-        lng <= bounds.min.lng
-        || lng > bounds.max.lng
-        || lat < bounds.min.lat
-        || lat > bounds.max.lat
-      );
-    }
-  }
-  function wrapFeatureCoordinatesToBounds(feature: Feature): Position | Position[] | Position[][] {
-    let coordinates: Position[];
-    if (feature.type === "Point") {
-      coordinates = [feature.coordinates];
-    } else if (feature.type === "Polygon") {
-      coordinates = feature.coordinates[0];
-    } else if (feature.type === "LineString") {
-      coordinates = feature.coordinates;
-    } else {
-      throw new Error(`Feature type "${feature?.['type']}" not supported.`)
-    }
-    coordinates.forEach((coordinate, i) => {
-      coordinates[i][0] = wrap(coordinate[0], bounds.min.lng, bounds.max.lng);
-      coordinates[i][1] = Math.max(bounds.min.lat, Math.min(coordinate[1], bounds.max.lat));
-    });
-    if (feature.type === "Point") {
-      return coordinates[0];
-    } else if (feature.type === "Polygon") {
-      return [coordinates];
-    }
-    return coordinates;
-    function wrap(n: number, min: number, max: number): number {
-      const d = max - min;
-      const w = ((n - min) % d + d) % d + min;
-      return (w === min) ? max : w;
-    }
-  }
 
   // Shared state, options
   const defaultSelectFlags = {
@@ -98,66 +35,210 @@
     polygon: defaultSelectFlags,
   }
 
-  let mode = $state('point');
-  let selected: string | number | null = $state(null);
+  class SyncedTerraDraw {
+    mode = $state('point');
+    modes: (TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode)[];
+    selected: string | number | null = $state(null);
 
-  // Individual state
-  let drawA: Draw | undefined = $state.raw();
-  let drawB: Draw | undefined = $state.raw();
-  const modesA = [
-    new TerraDrawSelectMode({
-      flags: selectFlags,
-    }),
-    new TerraDrawPointMode({
-      validation: (feature, { updateType }) => {
-        if (updateType === "finish" || updateType === "commit" || updateType === "provisional") {
-          if (isFeatureOutOfBounds(feature.geometry)) {
-            return { valid: false };
-          }
+    // For retaining a DOM element
+    // TODO: Make private?
+    readonly id: string = "terra-draw-synced-parent-map";
+    map: MapLibreMap | undefined = $state.raw();
+    draw: TerraDraw | undefined = $state.raw();
+
+    instances = new SvelteMap<string, TerraDrawInstance>();
+
+    constructor() {
+      $effect(() => {
+        this.draw?.setMode(syncedTerraDraw.mode);
+      });
+      this.modes = SyncedTerraDraw.modesFactory();
+    }
+
+    static outOfBoundsValidator = (feature, { updateType }) => {
+      if (updateType === "finish" || updateType === "commit" || updateType === "provisional") {
+        if (isGeometryOutOfBounds(feature.geometry, terraDrawMaxBounds)) {
+          return { valid: false };
         }
-        return { valid: true }
       }
-    }),
-    new TerraDrawPolygonMode({
-      validation: (feature, { updateType }) => {
-        if (updateType === "finish" || updateType === "commit" || updateType === "provisional") {
-          if (isFeatureOutOfBounds(feature.geometry)) {
-            return { valid: false };
-          }
+      return { valid: true }
+    }
+
+    static modesFactory() {
+      return [
+        new TerraDrawSelectMode({
+          flags: selectFlags,
+        }),
+        new TerraDrawPointMode({
+          validation: this.outOfBoundsValidator,
+        }),
+        new TerraDrawPolygonMode({
+          validation: this.outOfBoundsValidator,
+        }),
+      ];
+    }
+
+    addInstance(givenId?: string): TerraDrawInstance {
+      const id = givenId ?? crypto.randomUUID();
+      let instance = new TerraDrawInstance(id);
+      this.instances.set(id, instance);
+      instance.onselect = (featureId) => this.propagateonselect([featureId], instance.id);
+      instance.ondeselect = (featureId) => this.propagateondeselect([featureId], instance.id);
+      instance.onfinish = (featureId, context) => this.propagateonfinish([featureId, context], instance.id);
+      instance.onchange = (ids: FeatureId[], type: string, context?) => {console.log("onchange", ids, type, context)}
+      // Set timeout, await, or some other trigger for setting snapshot?
+      const snapshot = this.draw?.getSnapshot();
+      if (snapshot) {
+        // Await on draw instanced?
+        setTimeout(() => {
+          instance.draw?.addFeatures(snapshot);
+        }, 500)
+      }
+      return instance
+    }
+
+    propagateonselect = (args: Parameters<TerraDrawEventListeners["select"]>, instanceId: string) => {
+      console.log("onselect", ...args);
+      this.onselect(...args);
+      // this.instances.forEach((instance, id) => {})
+    }
+    propagateondeselect = (args: Parameters<TerraDrawEventListeners["deselect"]>, instanceId: string) => {
+      console.log("ondeselect", ...args);
+      this.ondeselect(...args);
+      // Bug: Press Escape when dragging a selected feature; onfinish returns undefined id; catch on deselect
+      const instance = this.instances.get(instanceId);
+      const featureId = args[0];
+      let feature = instance?.draw?.getSnapshotFeature(featureId);
+      if (feature) {
+        this.draw?.updateFeatureGeometry(featureId, feature.geometry);
+        this.instances.forEach((_instance, _id) => {
+          if (_id === instanceId)
+            return;
+          _instance.draw?.updateFeatureGeometry(featureId, feature.geometry);
+        })
+      }
+    }
+    propagateonfinish = (args: Parameters<TerraDrawEventListeners["finish"]>, instanceId: string) => {
+      console.log("onfinish", ...args);
+      this.onfinish(...args);
+      const instance = this.instances.get(instanceId);
+      const featureId = args[0];
+      const context = args[1];
+      if (!instance || typeof featureId === "undefined")
+        return;
+      if (context?.action === "draw") {
+        const feature = instance.draw?.getSnapshotFeature(featureId);
+        if (feature) {
+          this.draw?.addFeatures([feature]);
+          this.instances.forEach((_instance, _id) => {
+            if (_id === instanceId)
+              return;
+            _instance.draw?.addFeatures([feature]);
+          })
         }
-        return { valid: true }
+      // } else if (context && ["dragCoordinate", "dragFeature", "dragCoordinateResize",].includes(context?.action)) {
+      } else {
+        const feature = instance.draw?.getSnapshotFeature(featureId);
+        if (feature) {
+          feature.geometry.coordinates = wrapGeometryCoordinatesToBounds(feature.geometry, terraDrawMaxBounds);
+          feature.geometry = roundGeometryCoordinates(feature.geometry);
+          instance.draw?.updateFeatureGeometry(featureId, feature.geometry);  // Ensure drawn is wrapped
+          this.draw?.updateFeatureGeometry(featureId, feature.geometry);  // Then propogate
+          this.instances.forEach((_instance, _id) => {
+            if (_id === instanceId)
+              return;
+            _instance.draw?.updateFeatureGeometry(featureId, feature.geometry);
+          })
+        }
       }
-    }),
-  ];
-  const modesB = [
-    new TerraDrawSelectMode({
-      flags: selectFlags,
-    }),
-    new TerraDrawPointMode(),
-    new TerraDrawPolygonMode(),
-  ];
+    }
+
+    onselect: TerraDrawEventListeners["select"] = (id: FeatureId) => {
+      this.selected = id;
+    };
+    ondeselect: TerraDrawEventListeners["deselect"] = (id: FeatureId) => {
+      this.selected = null;
+    };
+    onfinish: TerraDrawEventListeners["finish"] = () => {};
+    // onchange: TerraDrawEventListeners["change"] = () => {};
+    // onhistory: TerraDrawEventListeners["history"] = () => {};
+
+  }
+
+  let syncedTerraDraw = new SyncedTerraDraw();
+
+  onMount(() => {
+    if (document.getElementById(syncedTerraDraw.id) === null) {
+      const container = document.createElement("div");
+      container.id = syncedTerraDraw.id;
+      document.body.appendChild(container);
+      syncedTerraDraw.map = new MapLibreMap({
+        container: container,
+      });
+      syncedTerraDraw.draw = new TerraDraw({
+        adapter: new TerraDrawMapLibreGLAdapter({map: syncedTerraDraw.map}),
+        modes: syncedTerraDraw.modes,
+      });
+      syncedTerraDraw.draw.start();
+    }
+  })
+
+  class TerraDrawInstance {
+    id: string;
+    draw: TerraDraw | undefined = $state.raw();
+    modes: (TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode)[];
+    private snapshot: ReturnType<TerraDraw["getSnapshot"]> = [];
+    private _visible: boolean = $state(true);
+    readonly visible = $derived(this._visible);
+
+    constructor(id: string) {
+      this.id = id;
+      this.modes = SyncedTerraDraw.modesFactory();
+    }
+
+    onselect: TerraDrawEventListeners["select"] = () => {};
+    ondeselect: TerraDrawEventListeners["deselect"] = () => {};
+    onfinish: TerraDrawEventListeners["finish"] = () => {};
+    onchange: TerraDrawEventListeners["change"] = () => {};
+    onhistory: TerraDrawEventListeners["history"] = () => {};
+
+    hide() {
+      if (!this.draw) {
+        this._visible = false;
+        return;
+      }
+      this.snapshot = this.draw.getSnapshot() ?? [];
+      this.draw.stop();
+      this._visible = false;
+    }
+
+    show() {
+      if (!this.draw) {
+        this._visible = true;
+        return;
+      }
+      this.draw.start();
+      this.draw.addFeatures(this.snapshot);
+      this._visible = true;
+    }
+  }
 
   // Proof
-  const modeNames = modesA.map((mode) => mode.mode);
+  const modeNames = syncedTerraDraw.modes.map((mode) => mode.mode);
   let zoom = $state(0)
-  let center = $state()
-  let pitch = $state()
-  let bearing = $state()
-  let roll = $state()
+  let center = $state([0, 0])
+  let pitch = $state(0)
+  let bearing = $state(0)
+  let roll = $state(0)
+
+  syncedTerraDraw.addInstance("0");
 
 </script>
 
-<!-- Minimum example of two maps A and B whose TerraDraws are synchronized:
-- Draw on A, add to B
-- Delete on A, delete on B
-- Move on A, move on B
-
-One global toolbar shared between both maps:
-- Point mode is Point mode on A and B
--->
-
 <div class=stack style="height: 100%; width: 100%;">
   <div style="display: flex; height: 100%; width: 100%;">
+    <!-- WARNING: DO NOT USE entries(); CLEARS TERRADRAW LAYERS {#each syncedTerraDraw.instances.entries() as instance (instance.id)} -->
+    {#each syncedTerraDraw.instances.values() as instance (instance.id)}
     <MapLibre
       inlineStyle="height: 100%; width: 100%;"
       renderWorldCopies={false}
@@ -171,112 +252,62 @@ One global toolbar shared between both maps:
     >
       <BackgroundLayer
         layout={{visibility: "visible"}}
-        paint={{"background-color": "blue"}}
+        paint={{"background-color": `rgb(${(Math.random()*255).toFixed(0)}, ${(Math.random()*255).toFixed(0)}, ${(Math.random()*255).toFixed(0)})`}}
       />
-      <TerraDraw
-        mode={mode}
-        modes={modesA}
-        bind:draw={drawA}
-        onselect={(id: FeatureId) => {
-          console.log("onselect", id);
-          selected = id;
-        }}
-        ondeselect={(id: FeatureId) => {
-          console.log("ondeselect", id);
-          // TODO: Report
-          // Bug: Press Escape when dragging a selected feature; onfinish returns undefined id; position A not progogated to B
-          let featureA = drawA?.getSnapshotFeature(id);
-          if (featureA) {
-            drawB?.updateFeatureGeometry(id, featureA.geometry);  // Then propogate
-          }
-          selected = null;
-        }}
-        onfinish={(id: FeatureId, context?) => {
-          console.log("onfinish", id, context);
-          if (typeof id === "undefined") return;
-          if (context?.action === "draw") {
-            const featureA = drawA?.getSnapshotFeature(id);
-            if (featureA) {
-              drawB?.addFeatures([featureA]);
-            }
-          // } else if (context && ["dragCoordinate", "dragFeature", "dragCoordinateResize",].includes(context?.action)) {
-          } else {
-            let featureA = drawA?.getSnapshotFeature(id);
-            if (featureA) {
-              featureA.geometry.coordinates = wrapFeatureCoordinatesToBounds(featureA.geometry);
-              featureA.geometry = roundGeometryCoordinates(featureA.geometry);
-              drawA?.updateFeatureGeometry(id, featureA.geometry);  // Ensure drawn is wrapped
-              drawB?.updateFeatureGeometry(id, featureA.geometry);  // Then propogate
-            }
-          }
-        }}
-        onchange={(ids: FeatureId[], type: string, context?) => {
-          console.log("onchange", ids, type, context);
-        }}
-        onhistory={({cause, stack, undoSize, redoSize}) => {
-          console.log("onhistory", cause, stack, undoSize, redoSize);
-        }}
-      />
+      {#if instance.visible}
+        <TerraDrawSvelte
+          // FIXME: hide/show throws error with already registered
+          mode={syncedTerraDraw.mode}
+          modes={instance.modes}
+          bind:draw={instance.draw}
+          onselect={instance.onselect}
+          ondeselect={instance.ondeselect}
+          onfinish={instance.onfinish}
+        />
+      {/if}
     </MapLibre>
-
-    <MapLibre
-      inlineStyle="height: 100%; width: 100%;"
-      renderWorldCopies={false}
-      attributionControl={false}
-      transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
-      bind:zoom
-      bind:center
-      bind:pitch
-      bind:bearing
-      bind:roll
-    >
-      <BackgroundLayer
-        layout={{visibility: "visible"}}
-        paint={{"background-color": "gray"}}
-      />
-      <TerraDraw
-        mode={mode}
-        modes={modesB}
-        bind:draw={drawB}
-        // onselect={(id: FeatureId) => {
-        //   selected = id;
-        // }}
-        // ondeselect={(id: FeatureId) => {
-        //   selected = null;
-        // }}
-        // onfinish={(id: FeatureId, context?) => {
-        //   const feature = drawB?.getSnapshotFeature(id);
-        //   drawA?.addFeatures([feature])
-        // }}
-        // onchange={(ids: FeatureId[], type: string, context?) => {
-        //   console.log(ids, type, context);
-        // }}
-        // onhistory={({cause, stack, undoSize, redoSize}) => {
-        //   console.log(cause, stack, undoSize, redoSize);
-        // }}
-      />
-    </MapLibre>
+    {/each}
   </div>
 
   <div class=controls style:align-self=start>
+    <button
+      onclick={() => {
+        syncedTerraDraw.addInstance();
+      }}>+ Viewer
+    </button>
+    <button
+      onclick={() => {
+        const instance = syncedTerraDraw.instances.get("0");
+        if (instance?.visible) {
+          instance.hide();
+        } else {
+          instance?.show();
+        }
+      }}>{syncedTerraDraw.instances.get("0")?.visible ? "Hide" : "Show"}
+    </button>
+    <button
+      onclick={() => {
+        console.log(syncedTerraDraw.instances.get("0")?.draw);
+      }}>log draw 0
+    </button>
     {#each modeNames as modeName (modeName)}
       <label class=unselectable>
-        <input type="radio" bind:group={mode} value={modeName}/>
+        <input type="radio" bind:group={syncedTerraDraw.mode} value={modeName}/>
         {modeName}
       </label>
     {/each}
-    {#if selected}
+    <!-- {#if syncedTerraDraw.selected}
       <button
         onclick={() => {
-          if (!selected) return;
-          const _selected = selected;
+          if (!syncedTerraDraw.selected) return;
+          const _selected = syncedTerraDraw.selected;
           drawA?.removeFeatures([_selected]);
           drawB?.removeFeatures([_selected]);
           drawA?.deselectFeature(_selected);
           drawB?.deselectFeature(_selected);
         }}>Remove</button
       >
-    {/if}
+    {/if} -->
   </div>
 </div>
 

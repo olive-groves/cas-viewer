@@ -1,5 +1,5 @@
-// From https://github.com/watergis/maplibre-gl-terradraw/blob/main/src/lib/helpers/roundFeatureCoordinates.ts
-// Modifications by Lars Maxfield
+// roundFeatureCoordinates adapted from https://github.com/watergis/maplibre-gl-terradraw/blob/main/src/lib/helpers/roundFeatureCoordinates.ts
+// TODO: Proper citation
 
 import type { GeoJSONStoreFeatures } from 'terra-draw';
 import type { Point, LineString, MultiPoint, Polygon, MultiLineString, MultiPolygon, Position } from 'geojson';
