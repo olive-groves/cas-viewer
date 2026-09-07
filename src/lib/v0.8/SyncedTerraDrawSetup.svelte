@@ -27,10 +27,10 @@
       const container = document.createElement("div");
       container.id = id;
       document.body.appendChild(container);
-      map = new MapLibreMap({  // bind:map={syncedDraw.map}
+      map = new MapLibreMap({
         container: container,
       });
-      draw = new TerraDraw({  // bind:draw={syncedDraw.draw}
+      draw = new TerraDraw({
         adapter: new TerraDrawMapLibreGLAdapter({map}),
         modes: modes,
       });
