@@ -19,7 +19,7 @@ type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | Te
 type ModeFactory = () => Mode[];
 
 export class SyncedTerraDraw {
-  mode = $state('point');
+  mode = $state("point");
   modeFactory: ModeFactory;
   selected: string | number | null = $state(null);
 
@@ -65,11 +65,16 @@ export class SyncedTerraDraw {
     // FIXME: Set timeout, await, or some other trigger for setting snapshot?
     // 'ready' doesn't fire on first component instantiation; only after explicit stop-start (hide-show)
     // instance.onreadyListeners.push(() => instance.draw?.addFeatures(this.draw?.getSnapshot() ?? []));
-    setTimeout(() => {
-      if (this.draw === undefined)
-        console.warn("No synced TerraDraw parent from which to get a snapshot. Perhaps you forgot to instantiate the parent draw and map with <SyncedTerraDrawComponent>?")
+    // setTimeout(() => {
+    //   if (this.draw === undefined)
+    //     console.warn("No synced TerraDraw parent from which to get a snapshot. Perhaps you forgot to instantiate the parent draw and map with <SyncedTerraDrawComponent>?");
+    //   instance.addFeatures(this.draw?.getSnapshot() ?? []);
+    // }, 200)
+    if (this.draw === undefined) {
+      console.warn("No synced TerraDraw parent from which to get a snapshot. Perhaps you forgot to instantiate the parent draw and map with <SyncedTerraDrawComponent>?")
+    } else {
       instance.addFeatures(this.draw?.getSnapshot() ?? []);
-    }, 200)
+    };
     this.instances.set(id, instance);
     return instance
   }
@@ -158,10 +163,14 @@ export class TerraDrawInstance {
   onselectListeners: TerraDrawEventListeners["select"][] = [];
   ondeselectListeners: TerraDrawEventListeners["deselect"][] = [];
   onhistoryListeners: TerraDrawEventListeners["history"][] = [];
+  onstartListeners: ((draw: TerraDraw) => void)[] = [];
+  onbeforestopListeners: ((draw: TerraDraw) => void)[] = [];
 
   constructor(id: string, modeFactory: ModeFactory) {
     this.id = id;
     this.modeFactory = modeFactory;
+    this.onstartListeners.push((draw) => draw.addFeatures(this.snapshot))
+    this.onbeforestopListeners.push((draw) => this.snapshot = draw.getSnapshot() ?? [])
   }
 
   readonly onready: TerraDrawEventListeners["ready"] = (...args) => this.onreadyListeners.forEach((listener) => listener(...args));
@@ -170,8 +179,10 @@ export class TerraDrawInstance {
   readonly onselect: TerraDrawEventListeners["select"] = (...args) => this.onselectListeners.forEach((listener) => listener(...args));
   readonly ondeselect: TerraDrawEventListeners["deselect"] = (...args) => this.ondeselectListeners.forEach((listener) => listener(...args));
   readonly onhistory: TerraDrawEventListeners["history"] = (...args) => this.onhistoryListeners.forEach((listener) => listener(...args));
+  readonly onstart: (draw: TerraDraw) => void = (...args) => this.onstartListeners.forEach((listener) => listener(...args));
+  readonly onbeforestop: (draw: TerraDraw) => void = (...args) => this.onbeforestopListeners.forEach((listener) => listener(...args));
 
-  addFeatures(...args: Parameters<TerraDraw["addFeatures"]>): ReturnType<TerraDraw["addFeatures"]> | "not-validated" {
+  addFeatures = (...args: Parameters<TerraDraw["addFeatures"]>): ReturnType<TerraDraw["addFeatures"]> | "not-validated" => {
     if (this.draw?.enabled) {
       return this.draw.addFeatures(...args);
     } else {

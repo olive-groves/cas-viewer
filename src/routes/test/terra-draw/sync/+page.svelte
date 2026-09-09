@@ -94,8 +94,6 @@
         {...instance}
         bind:draw={instance.draw}
         modes={instance.modeFactory()}
-        onstart={(draw) => draw.addFeatures(instance.snapshot)}
-        onbeforestop={(draw) => {instance.snapshot = draw.getSnapshot() ?? [];}}
       />
     </MapLibre>
     {/if}

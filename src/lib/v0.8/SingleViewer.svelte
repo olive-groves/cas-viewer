@@ -4,6 +4,7 @@
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView, CameraState } from './views.svelte';
   import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
+  import TerraDrawDeluxe from './TerraDrawDeluxe.svelte';
 
   // import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import {
@@ -341,20 +342,23 @@
     {/if}
 
     {#if draw?.instanceKey}
-      {@const instance = syncedTerraDraw.instances.get(draw.instanceKey)}
+      {@const instance = syncedTerraDraw.instances.get(draw?.instanceKey)}
       {#if instance}
         <BackgroundLayer
           id={SLOT_PREFIX + "td"}
           layout={{visibility: "none"}}
         />
-        <TerraDraw
+        <TerraDrawDeluxe
+          mode={syncedTerraDraw.mode}
+          {instance}
+        />
+        <!-- FIXME: Rescind Deluxe if nesting issue solved in MultiViewer? -->
+        <!-- <TerraDraw
           mode={syncedTerraDraw.mode}
           {...instance}
           bind:draw={instance.draw}
           modes={instance.modeFactory()}
-          onstart={(draw) => draw.addFeatures(instance.snapshot)}
-          onbeforestop={(draw) => {instance.snapshot = draw.getSnapshot() ?? [];}}
-        />
+        /> -->
       {/if}
     {/if}
   </MapLibre>

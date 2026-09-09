@@ -142,6 +142,7 @@
 
   function handleDropSuperOuter(e: DragEvent) {
     async function handleFiles(files: FileList) {
+      // FIXME: Fails with TerraDraw
       const existingNestedMultiView = new MultiView();
       const existingViewKeys = views.order;
       existingViewKeys.forEach((existingViewKey) => {
@@ -196,7 +197,13 @@
   function handleDropSubOuter(e: DragEvent, vK: ViewKey) {
     async function handleFiles(files: FileList, vK: ViewKey) {
       const nestedMultiView = new MultiView();
-      nestedMultiView.views.add(views.get(vK));
+      const original = views.get(vK);
+      // FIXME: Dedicated "copy" function for SingleView? If we duplicate a view, we need to instantiate a totally new draw key.
+      // const copy = new SingleView();
+      // copy.draw.instanceKey = syncedTerraDraw.addInstance().id;
+      // syncedTerraDraw.instances.get(copy.draw.instanceKey).snapshot = syncedTerraDraw.instances.get(original.draw.instanceKey)?.draw?.getSnapshot();
+      syncedTerraDraw.instances.get(original.draw.instanceKey).snapshot = syncedTerraDraw.instances.get(original.draw.instanceKey)?.draw?.getSnapshot();
+      nestedMultiView.views.add(original);
       [...files].forEach(async (file) => {
         const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
         const layers = await deriveSyncedLayersFromMapLibreSource(sourceKey);
