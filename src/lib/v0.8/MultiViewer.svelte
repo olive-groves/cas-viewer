@@ -151,7 +151,7 @@
       // FIXME: error here when this is called with views containing a multiview of view(s)
       // Might also do something we how we are copying, nesting, clearing etc.
       views.clear();
-      views.add(existingNestedMultiView);
+      views.add(existingNestedMultiView);  // FIXME: Troubleshoot from here onwards
       const newNestedMultiView = new MultiView();
       [...files].forEach(async (file) => {
         const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
