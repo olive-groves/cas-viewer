@@ -49,7 +49,7 @@
     }
   }
   let syncedTerraDraw = new SyncedTerraDraw(modeFactory);
-  const modeNames = syncedTerraDraw.modes.map((mode) => mode.mode);
+  const modeNames = syncedTerraDraw.modeFactory().map((mode) => mode.mode);
   let zoom = $state(0)
   let center = $state([0, 0])
   let pitch = $state(0)
@@ -58,19 +58,22 @@
 
   syncedTerraDraw.addInstance("0");
 
+  let render = $state(true);
+
 </script>
 
 <SyncedTerraDrawSetup
   id={syncedTerraDraw.id}
   bind:map={syncedTerraDraw.map}
   bind:draw={syncedTerraDraw.draw}
-  modes={syncedTerraDraw.modes}
+  modeFactory={syncedTerraDraw.modeFactory}
 />
 
 <div class=stack style="height: 100%; width: 100%;">
   <div style="display: flex; height: 100%; width: 100%;">
     <!-- WARNING: DO NOT USE entries(); CLEARS TERRADRAW LAYERS {#each syncedTerraDraw.instances.entries() as instance (instance.id)} -->
     {#each syncedTerraDraw.instances.values() as instance (instance.id)}
+    {#if render}
     <MapLibre
       inlineStyle="height: 100%; width: 100%;"
       renderWorldCopies={false}
@@ -86,18 +89,16 @@
         layout={{visibility: "visible"}}
         paint={{"background-color": `rgb(${(Math.random()*255).toFixed(0)}, ${(Math.random()*255).toFixed(0)}, ${(Math.random()*255).toFixed(0)})`}}
       />
-      <!-- FIXME: show, hide, show throws error with already registered -->
       <TerraDrawSvelte
         mode={syncedTerraDraw.mode}
-        modes={instance.modes}
+        {...instance}
         bind:draw={instance.draw}
-        onready={(instance.onready)}
-        onfinish={instance.onfinish}
-        onselect={instance.onselect}
-        ondeselect={instance.ondeselect}
-        onchange={instance.onchange}
+        modes={instance.modeFactory()}
+        onstart={(draw) => draw.addFeatures(instance.snapshot)}
+        onbeforestop={(draw) => {instance.snapshot = draw.getSnapshot() ?? [];}}
       />
     </MapLibre>
+    {/if}
     {/each}
   </div>
 
@@ -107,7 +108,7 @@
         syncedTerraDraw.addInstance();
       }}>+ Viewer
     </button>
-    <button
+    <!-- <button
       onclick={() => {
         const instance = syncedTerraDraw.instances.get("0");
         if (instance?.visible) {
@@ -116,6 +117,9 @@
           instance?.show();
         }
       }}>{syncedTerraDraw.instances.get("0")?.visible ? "Hide" : "Show"}
+    </button> -->
+    <button
+      onclick={() => {render = !render}}>{render ? "Unrender" : "Render"}
     </button>
     <button
       onclick={() => {

@@ -20,8 +20,7 @@ type ModeFactory = () => Mode[];
 
 export class SyncedTerraDraw {
   mode = $state('point');
-  modes: Mode[];
-  private modeFactory: ModeFactory;
+  modeFactory: ModeFactory;
   selected: string | number | null = $state(null);
 
   onreadyListeners: TerraDrawEventListeners["ready"][] = [];
@@ -44,7 +43,6 @@ export class SyncedTerraDraw {
       this.draw?.setMode(this.mode);
     });
     this.modeFactory = modeFactory;
-    this.modes = modeFactory();
   }
 
   static outOfBoundsValidator = (feature, { updateType }) => {
@@ -58,7 +56,7 @@ export class SyncedTerraDraw {
 
   addInstance(customId?: string): TerraDrawInstance {
     const id = customId ?? crypto.randomUUID();
-    let instance = new TerraDrawInstance(id, this.modeFactory());
+    let instance = new TerraDrawInstance(id, this.modeFactory);
     instance.onreadyListeners.push((...args) => this.synconready(instance.id, args));
     instance.onselectListeners.push((...args) => this.synconselect(instance.id, args));
     instance.ondeselectListeners.push((...args) => this.syncondeselect(instance.id, args));
@@ -149,7 +147,7 @@ export class SyncedTerraDraw {
 export class TerraDrawInstance {
   id: string;
   draw: TerraDraw | undefined = $state.raw();
-  modes: Mode[];
+  modeFactory: ModeFactory;
   private snapshot: ReturnType<TerraDraw["getSnapshot"]> = [];
   private _visible: boolean = $state(true);
   readonly visible = $derived(this._visible);
@@ -161,9 +159,9 @@ export class TerraDrawInstance {
   ondeselectListeners: TerraDrawEventListeners["deselect"][] = [];
   onhistoryListeners: TerraDrawEventListeners["history"][] = [];
 
-  constructor(id: string, modes: Mode[]) {
+  constructor(id: string, modeFactory: ModeFactory) {
     this.id = id;
-    this.modes = modes;
+    this.modeFactory = modeFactory;
   }
 
   readonly onready: TerraDrawEventListeners["ready"] = (...args) => this.onreadyListeners.forEach((listener) => listener(...args));
@@ -172,26 +170,6 @@ export class TerraDrawInstance {
   readonly onselect: TerraDrawEventListeners["select"] = (...args) => this.onselectListeners.forEach((listener) => listener(...args));
   readonly ondeselect: TerraDrawEventListeners["deselect"] = (...args) => this.ondeselectListeners.forEach((listener) => listener(...args));
   readonly onhistory: TerraDrawEventListeners["history"] = (...args) => this.onhistoryListeners.forEach((listener) => listener(...args));
-
-  hide() {
-    if (!this.draw) {
-      this._visible = false;
-      return;
-    }
-    this.snapshot = this.draw.getSnapshot() ?? [];
-    this.draw.stop();
-    this._visible = false;
-  }
-
-  show() {
-    if (!this.draw) {
-      this._visible = true;
-      return;
-    }
-    this.draw.start();
-    this.draw.addFeatures(this.snapshot);
-    this._visible = true;
-  }
 
   addFeatures(...args: Parameters<TerraDraw["addFeatures"]>): ReturnType<TerraDraw["addFeatures"]> | "not-validated" {
     if (this.draw?.enabled) {

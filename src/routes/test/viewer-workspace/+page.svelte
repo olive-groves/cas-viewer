@@ -2,8 +2,19 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Orchestration of sources, synced layers, and multi-view...
   // Viewer Manager?
-  import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
-  import { setSourceManagerContext, setSyncedMapLibreLayersContext, setSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  import {
+    sourceManager,
+    syncedMapLibreLayers,
+    multiView,
+    syncedMapLibreSurfaces,
+    syncedTerraDraw,
+  } from "$lib/shared.svelte";
+  import {
+    setSourceManagerContext,
+    setSyncedMapLibreLayersContext,
+    setSyncedMapLibreSurfacesContext,
+    setSyncedTerraDrawContext,
+  } from "$lib/shared-context.svelte";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
@@ -14,12 +25,14 @@
   setSourceManagerContext(sourceManager);
   setSyncedMapLibreLayersContext(syncedMapLibreLayers);
   setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
+  setSyncedTerraDrawContext(syncedTerraDraw);
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
   import { MultiView, SingleView } from "$lib/v0.8/views.svelte";
   import ViewerWorkspace from "$lib/v0.8/ViewerWorkspace.svelte";
   import { MapLibreSyncedLayer, type AnyLayerSpec, type SyncedMapLibreLayerKey } from "$lib/synced-layer.svelte";
+  import SyncedTerraDrawSetup from "$lib/v0.8/SyncedTerraDrawSetup.svelte";
 
   const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
     type: "background",
@@ -33,15 +46,13 @@
   view = new SingleView();
   overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "red"}}});
   view.layers.add(syncedLayerKey, {key: overrideKey});
+  view.draw.instanceKey = syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
   view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  multiView.views.add(view);
-  view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  view.draw.instanceKey = syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
   // Minimap uses a requested layer or the first raster layer from the list of views
@@ -78,6 +89,13 @@
   // A.views.add(B)
 
 </script>
+
+<SyncedTerraDrawSetup
+  id={syncedTerraDraw.id}
+  bind:map={syncedTerraDraw.map}
+  bind:draw={syncedTerraDraw.draw}
+  modeFactory={syncedTerraDraw.modeFactory}
+/>
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>
   <ViewerWorkspace

@@ -3,17 +3,25 @@
   import * as maplibregl from 'maplibre-gl';
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView, CameraState } from './views.svelte';
+  import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
 
   // import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
-  import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  import {
+    getSourceManagerContext,
+    getSyncedMapLibreLayersContext,
+    getSyncedMapLibreSurfacesContext,
+    getSyncedTerraDrawContext,
+  } from "$lib/shared-context.svelte";
   const sourceManager = getSourceManagerContext();
   const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
+  const syncedTerraDraw = getSyncedTerraDrawContext();
 
   import { mergeDeep } from '$lib/utils';
   let {
     layers,
     surface,
+    draw,
     zoom = $bindable(),
     lng = $bindable(0),
     lat = $bindable(0),
@@ -31,6 +39,7 @@
   }: {
     layers: SingleView["layers"];
     surface?: SingleView["surface"];
+    draw?: SingleView["draw"];
     zoom?: SingleView["camera"]["zoom"];
     lng?: SingleView["camera"]["lng"];
     lat?: SingleView["camera"]["lat"];
@@ -91,6 +100,27 @@
       orderedLayerOverrides = [];
     }
     const currentOrder = target.getLayersOrder();
+
+    // TerraDraw
+    // Set last (top) override slot before the TerraDraw slot, because TerraDraw should
+    // be kept on top
+    const id = `${SLOT_PREFIX}${orderedLayerOverrides.at(-1)}`;
+    const beforeId = `${SLOT_PREFIX}td`;
+    if (currentOrder.includes(id) && currentOrder.includes(beforeId)) {
+      target.moveLayer(id, beforeId)
+    }
+    const _terraDrawLayerIds = [  // This order, regardless of mode order
+      'td-polygon',
+      'td-polygon-outline',
+      'td-linestring',
+      'td-point',
+      'td-point-marker',
+    ]
+    _terraDrawLayerIds.forEach((id) => {
+      if (currentOrder.includes(id) && currentOrder.includes(beforeId)) {
+        target.moveLayer(id, beforeId)
+      }
+    })
 
     // Layer slots
     // Set slot beforeId backwards, starting from second to last, because we "stack under"
@@ -168,7 +198,6 @@
   })
 
   const center = $derived({lng, lat});
-
 </script>
 
 <div class=map-container>
@@ -311,6 +340,23 @@
       {/await}
     {/if}
 
+    {#if draw?.instanceKey}
+      {@const instance = syncedTerraDraw.instances.get(draw.instanceKey)}
+      {#if instance}
+        <BackgroundLayer
+          id={SLOT_PREFIX + "td"}
+          layout={{visibility: "none"}}
+        />
+        <TerraDraw
+          mode={syncedTerraDraw.mode}
+          {...instance}
+          bind:draw={instance.draw}
+          modes={instance.modeFactory()}
+          onstart={(draw) => draw.addFeatures(instance.snapshot)}
+          onbeforestop={(draw) => {instance.snapshot = draw.getSnapshot() ?? [];}}
+        />
+      {/if}
+    {/if}
   </MapLibre>
 </div>
 

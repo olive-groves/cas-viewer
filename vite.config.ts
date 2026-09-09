@@ -6,6 +6,10 @@ export default defineConfig({
 
   optimizeDeps: {
     // MapLibre v6 worker bundling can fail during dependency pre-bundling.
-    exclude: ['maplibre-gl']
+    exclude: [
+      'maplibre-gl',
+      'svelte-maplibre-gl',
+      '@svelte-maplibre-gl/terradraw',
+    ]
   },
 });

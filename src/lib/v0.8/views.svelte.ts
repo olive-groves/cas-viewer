@@ -83,6 +83,10 @@ export class SingleView {
     overrideKey: OverrideMapLibreSurfaceKey | undefined;
     syncedSurfaceKey: SyncedMapLibreSurfaceKey | undefined;
   } = $state({ overrideKey: undefined, syncedSurfaceKey: undefined });
+  draw: {
+    instanceKey: string | undefined;
+    syncedDrawKey: string | undefined;
+  } = $state({ instanceKey: undefined, syncedDrawKey: undefined });
   layout: ViewLayout = $state({
     preview: {
       nest: 0,

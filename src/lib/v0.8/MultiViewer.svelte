@@ -9,13 +9,19 @@
   import { SingleView, MultiView } from './views.svelte';
 	import type { Attachment } from 'svelte/attachments';
   import DropZone from "$lib/v0.8/DropZone.svelte";
-  import { getSourceManagerContext, getSyncedMapLibreLayersContext, getSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  import {
+    getSourceManagerContext,
+    getSyncedMapLibreLayersContext,
+    getSyncedMapLibreSurfacesContext,
+    getSyncedTerraDrawContext,
+  } from "$lib/shared-context.svelte";
   import { SourceManager, type SourceKey } from '$lib/source-manager.svelte';
   import { MapLibreSyncedLayer, type AnyLayerSpec, type OverrideMapLibreLayerKey, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
   import { mergeDeep } from '$lib/utils';
   const sourceManager = getSourceManagerContext();
   const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
+  const syncedTerraDraw = getSyncedTerraDrawContext();
 
   let {
     views,
@@ -153,6 +159,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
+          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
           newNestedMultiView.views.add(view);
         })
       })
@@ -174,6 +181,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
+          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
           views.add(view);
         })
       })
@@ -196,6 +204,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
+          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
           nestedMultiView.views.add(view);
         })
       })
@@ -503,14 +512,15 @@
                     }}
                   >
                     <div class={["sub-view-container", {"add-drag-border": view.layout.preview.addChild > 0, add: view.layout.preview.addSibling > 0}]}>
-                      {#if view.layers.order.length < 1}
+                      <!-- {#if view.layers.order.length < 1}
                         <div class=views-notice>
                           No layers in this view.
                         </div>
-                      {:else}
+                      {:else} -->
                         <SingleViewer
                           {...view}
                           layers={view.layers}
+                          draw={view.draw}
                           zoom={["sync", "receive-only"].includes(view.sync.zoom.type) ? camera.zoom : view.camera.zoom}
                           lng={["sync", "receive-only"].includes(view.sync.lng.type) ? camera.lng : view.camera.lng}
                           lat={["sync", "receive-only"].includes(view.sync.lat.type) ? camera.lat : view.camera.lat}
@@ -526,7 +536,7 @@
                           onrollchange={(v) => {view.camera.roll = v; if (["sync", "send-only"].includes(view.sync.roll.type)) camera.roll = v;}}
                           onelevationchange={(v) => {view.camera.elevation = v; if (["sync", "send-only"].includes(view.sync.elevation.type)) camera.elevation = v;}}
                         />
-                      {/if}
+                      <!-- {/if} -->
                       <!-- WARNING: Hide, don't {if}, because elements removed from DOM cause issues with ondrag- handlers -->
                       {#each {length: view.layout.preview.addSibling}, i}
                         <div class=add-drag in:scale={{duration: 150, easing: cubicOut, delay: view.layout.preview.addSibling > 1 ? i*(75/(view.layout.preview.addSibling - 1)) : 0}}>
