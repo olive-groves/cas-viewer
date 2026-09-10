@@ -147,11 +147,15 @@
       const existingViewKeys = views.order;
       existingViewKeys.forEach((existingViewKey) => {
         existingNestedMultiView.views.add(views.map.get(existingViewKey), {key: existingViewKey});
+        // TODO: Tunnel down to all views... I wish we didn't need to do this.
+        try {
+          views.map.get(existingViewKey).draw.instanceKey = syncedTerraDraw.addInstance().id;
+        } catch {
+
+        }
       })
-      // FIXME: error here when this is called with views containing a multiview of view(s)
-      // Might also do something we how we are copying, nesting, clearing etc.
       views.clear();
-      views.add(existingNestedMultiView);  // FIXME: Troubleshoot from here onwards
+      views.add(existingNestedMultiView);
       const newNestedMultiView = new MultiView();
       [...files].forEach(async (file) => {
         const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
@@ -198,11 +202,8 @@
     async function handleFiles(files: FileList, vK: ViewKey) {
       const nestedMultiView = new MultiView();
       const original = views.get(vK);
-      // FIXME: Dedicated "copy" function for SingleView? If we duplicate a view, we need to instantiate a totally new draw key.
-      // const copy = new SingleView();
-      // copy.draw.instanceKey = syncedTerraDraw.addInstance().id;
-      // syncedTerraDraw.instances.get(copy.draw.instanceKey).snapshot = syncedTerraDraw.instances.get(original.draw.instanceKey)?.draw?.getSnapshot();
-      syncedTerraDraw.instances.get(original.draw.instanceKey).snapshot = syncedTerraDraw.instances.get(original.draw.instanceKey)?.draw?.getSnapshot();
+      // TODO: Tranferring instanceKeys...?
+      original.draw.instanceKey = syncedTerraDraw.addInstance().id;
       nestedMultiView.views.add(original);
       [...files].forEach(async (file) => {
         const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
@@ -434,7 +435,7 @@
         >
           {#each visibleViewsOrder as viewKey, i (viewKey)}
             <!-- FIXME: Guard on view type? #if? -->
-            {@const view = views.map.get(viewKey) as SingleView | MultiView}
+            {@const view = views?.map.get(viewKey) as SingleView | MultiView}
             <div
               class=view
               style:clip-path={
@@ -524,10 +525,11 @@
                           No layers in this view.
                         </div>
                       {:else} -->
+                        <!-- svelte-ignore ownership_invalid_mutation -->
                         <SingleViewer
                           {...view}
                           layers={view.layers}
-                          draw={view.draw}
+                          draw={view?.draw}
                           zoom={["sync", "receive-only"].includes(view.sync.zoom.type) ? camera.zoom : view.camera.zoom}
                           lng={["sync", "receive-only"].includes(view.sync.lng.type) ? camera.lng : view.camera.lng}
                           lat={["sync", "receive-only"].includes(view.sync.lat.type) ? camera.lat : view.camera.lat}

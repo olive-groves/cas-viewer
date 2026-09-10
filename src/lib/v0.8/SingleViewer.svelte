@@ -351,14 +351,8 @@
         <TerraDrawDeluxe
           mode={syncedTerraDraw.mode}
           {instance}
+          bind:this={instance.component}
         />
-        <!-- FIXME: Rescind Deluxe if nesting issue solved in MultiViewer? -->
-        <!-- <TerraDraw
-          mode={syncedTerraDraw.mode}
-          {...instance}
-          bind:draw={instance.draw}
-          modes={instance.modeFactory()}
-        /> -->
       {/if}
     {/if}
   </MapLibre>
