@@ -146,12 +146,19 @@
       const existingNestedMultiView = new MultiView();
       const existingViewKeys = views.order;
       existingViewKeys.forEach((existingViewKey) => {
-        existingNestedMultiView.views.add(views.map.get(existingViewKey), {key: existingViewKey});
-        // TODO: Tunnel down to all views... I wish we didn't need to do this.
-        try {
-          views.map.get(existingViewKey).draw.instanceKey = syncedTerraDraw.addInstance().id;
-        } catch {
-
+        const view = views.map.get(existingViewKey);
+        if (view) {
+          // FIXME: I recursively add draw instances to solve the issue with the view.draw.instanceKey not passing to the nested view.
+          // Maybe I'm missing something...?
+          recursiveAddDrawInstance(view);
+          existingNestedMultiView.views.add(view, {key: existingViewKey});
+        }
+        function recursiveAddDrawInstance(view: SingleView | MultiView) {
+          if (view.type === "single") {
+            view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+          } else {
+            view.views.map.forEach((v) => recursiveAddDrawInstance(v));
+          }
         }
       })
       views.clear();
@@ -164,7 +171,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
           newNestedMultiView.views.add(view);
         })
       })
@@ -186,7 +193,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
           views.add(view);
         })
       })
@@ -212,7 +219,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
           nestedMultiView.views.add(view);
         })
       })
@@ -529,7 +536,7 @@
                         <SingleViewer
                           {...view}
                           layers={view.layers}
-                          draw={view?.draw}
+                          drawKeys={view?.drawKeys}
                           zoom={["sync", "receive-only"].includes(view.sync.zoom.type) ? camera.zoom : view.camera.zoom}
                           lng={["sync", "receive-only"].includes(view.sync.lng.type) ? camera.lng : view.camera.lng}
                           lat={["sync", "receive-only"].includes(view.sync.lat.type) ? camera.lat : view.camera.lat}

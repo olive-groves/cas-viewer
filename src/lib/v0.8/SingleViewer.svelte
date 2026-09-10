@@ -21,7 +21,7 @@
   let {
     layers,
     surface,
-    draw,
+    drawKeys,
     zoom = $bindable(),
     lng = $bindable(0),
     lat = $bindable(0),
@@ -39,7 +39,7 @@
   }: {
     layers: SingleView["layers"];
     surface?: SingleView["surface"];
-    draw?: SingleView["draw"];
+    drawKeys?: SingleView["drawKeys"];
     zoom?: SingleView["camera"]["zoom"];
     lng?: SingleView["camera"]["lng"];
     lat?: SingleView["camera"]["lat"];
@@ -340,8 +340,8 @@
       {/await}
     {/if}
 
-    {#if draw?.instanceKey}
-      {@const instance = syncedTerraDraw.instances.get(draw?.instanceKey)}
+    {#if drawKeys?.instanceKey}
+      {@const instance = syncedTerraDraw.instances.get(drawKeys?.instanceKey)}
       {#if instance}
         <BackgroundLayer
           id={SLOT_PREFIX + "td"}

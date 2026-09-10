@@ -31,8 +31,10 @@
   // Proof
   import { MultiView, SingleView } from "$lib/v0.8/views.svelte";
   import ViewerWorkspace from "$lib/v0.8/ViewerWorkspace.svelte";
-  import { MapLibreSyncedLayer, type AnyLayerSpec, type SyncedMapLibreLayerKey } from "$lib/synced-layer.svelte";
+  import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
   import SyncedTerraDrawSetup from "$lib/v0.8/SyncedTerraDrawSetup.svelte";
+  import { type SourceKey, SourceManager } from "$lib/source-manager.svelte";
+  import { onMount } from "svelte";
 
   const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
     type: "background",
@@ -44,16 +46,16 @@
   let view;
   let overrideKey;
   view = new SingleView();
-  overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "red"}}});
-  view.layers.add(syncedLayerKey, {key: overrideKey});
-  view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "red"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
-  view = new SingleView();
-  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
-  // view.layers.add(syncedLayerKey, {key: overrideKey});
-  view.draw.instanceKey = syncedTerraDraw.addInstance().id;
-  multiView.views.add(view);
+  // view = new SingleView();
+  // // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
+  // // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+  // multiView.views.add(view);
 
   // Minimap uses a requested layer or the first raster layer from the list of views
   // It places the minimap at the bottom left of the multi-view window.
@@ -63,15 +65,16 @@
   multiView.layout.minimap = "visible";
 
   // let A = new MultiView();
-  // // A.mode.type = "lens";
   // A.name = "Multi-View A"
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "yellow"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
+  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // multiView.views.add(A)
 
@@ -87,6 +90,151 @@
   // view.layers.add(syncedLayerKey, {key: overrideKey});
   // B.views.add(view);
   // A.views.add(B)
+
+  const nViewers = multiView.views.order.length;
+
+  const localPmtilesUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
+  const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);
+  const initialUrls = [
+    localPmtilesUrl,
+    localPmtilesDemUrl,
+  ];
+
+  async function deriveSyncedLayerFromMapLibreSource(
+    mapLibreSourceKey: SourceKey,
+    nOverrides: number,
+  ) {
+    const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
+    if (mapLibreSource === undefined) return;
+    const sourceSpec = {
+      ...await mapLibreSource.source.spec,
+      ...mapLibreSource?.override
+    }
+
+    if (sourceSpec.type === "raster" || sourceSpec.type === "image") {  // If raster, add a raster layer to each group
+      const layerSpecType = "raster";
+      const initialPaintSpec = {
+        "raster-opacity": 0.8,
+      }
+      const layerSpec: AnyLayerSpec = {  // This isn't state(); the MapLibreSyncedLayer.spec is.
+        source: mapLibreSourceKey,
+        type: layerSpecType,
+        layout: {visibility: "visible"},
+        paint: initialPaintSpec,
+      }
+      const syncedLayer = new MapLibreSyncedLayer(layerSpec)
+      const overrideKeys = [...Array(nOverrides).keys()].map(() => syncedLayer.addOverride({spec: {}}))
+      const syncedLayerKey: SyncedMapLibreLayerKey = `synced-maplibre-layer_${crypto.randomUUID()}`;
+      syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+      // For each (single)view, add the synced layer with one of the overrides.
+      multiView.views.order.forEach((viewKey, viewIndex) => {
+        const view = multiView.views.map.get(viewKey);
+        if (view?.type === "single") {
+          (view as SingleView).layers.add(syncedLayerKey, {key: overrideKeys.at(viewIndex)})
+        }
+      })
+    } else if (sourceSpec.type === "raster-dem") {  // If raster-dem, add a hillshade AND color-relief layer to each group
+      const layerSpecTypes = ["color-relief", "hillshade"];
+      layerSpecTypes.forEach((layerSpecType) => {
+        const initialPaintSpec =
+          layerSpecType === "hillshade" ?
+          {
+            "hillshade-illumination-direction": 90,
+            "hillshade-exaggeration": 0.5,
+          } :
+          {
+            'color-relief-color': [
+              'interpolate',
+              ['linear'],
+              ['elevation'],
+              0, 'rgba(0, 0, 0, 0)',
+              1, 'rgba(4, 0, 108, 0.5)',
+              5000, 'rgba(215, 5, 13, 0.5)'
+            ]
+          }
+        const initialBackgroundSpec: Background | undefined =
+          layerSpecType === "hillshade" ?
+          {
+            color: "#7f7f7f",
+            opacity: 0.8,
+            visibility: true,
+          } :
+          undefined
+        const layerSpec: AnyLayerSpec = {  // This isn't state() and shouldn't be; the eventual MapLibreSyncedLayer.spec is.
+          source: mapLibreSourceKey,
+          type: layerSpecType,
+          layout: {visibility: "visible"},
+          paint: initialPaintSpec,
+        }
+
+        const syncedLayer = new MapLibreSyncedLayer(layerSpec, initialBackgroundSpec)
+        const overrideKeys = [...Array(nOverrides).keys()].map(() => syncedLayer.addOverride({spec: {}}))
+        const syncedLayerKey: SyncedMapLibreLayerKey = `synced-maplibre-layer_${crypto.randomUUID()}`;
+        syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
+        // For each (single)view, add the synced layer with one of the overrides.
+        multiView.views.order.forEach((viewKey, viewIndex) => {
+          const view = multiView.views.map.get(viewKey);
+          if (view?.type === "single") {
+            (view as SingleView).layers.add(syncedLayerKey, {key: overrideKeys.at(viewIndex)})
+          }
+        })
+      })
+    }
+  }
+
+  async function derivedSyncedSurfaceFromMapLibreSource(
+    mapLibreSourceKey: SourceKey,
+    nOverrides: number,
+  ) {
+    const mapLibreSource = sourceManager.mapLibreSources.get(mapLibreSourceKey);
+    if (mapLibreSource === undefined) {
+      return
+    }
+    const sourceSpec = {
+      ...await mapLibreSource.source.spec,
+      ...mapLibreSource?.override
+    }
+    if (sourceSpec.type !== "raster-dem") {
+      return
+    }
+    const surfaceSpec: SurfaceSpec = {
+      source: mapLibreSourceKey,
+      layout: {
+        enabled: true,
+        exaggeration: 10,
+      }
+    }
+    const syncedSurface = new MapLibreSyncedSurface(surfaceSpec)
+    const overrideKeys = [...Array(nOverrides).keys()].map(() => syncedSurface.addOverride({spec: {}}))
+    const syncedSurfaceKey: SyncedMapLibreSurfaceKey = `synced-maplibre-surface_${crypto.randomUUID()}`;
+    syncedMapLibreSurfaces.set(syncedSurfaceKey, syncedSurface);
+    // For each (single)view, set the synced surface with one of the overrides.
+    multiView.views.order.forEach((viewKey, viewIndex) => {
+      const view = multiView.views.map.get(viewKey);
+      if (view?.type === "single") {
+        (view as SingleView).surface.overrideKey = overrideKeys.at(viewIndex);
+        (view as SingleView).surface.syncedSurfaceKey = syncedSurfaceKey;
+      }
+    })
+  }
+
+  onMount(() => {
+
+    const initialSourceKeys = initialUrls.map((url) => sourceManager.add(SourceManager.urlToSource(url)));
+    // For each source, create a synced layer derived from its spec with as many
+    // overrides as nViewers, to simulate side by side with the same source
+    initialSourceKeys.forEach((sourceKey) => {
+      deriveSyncedLayerFromMapLibreSource(sourceKey, nViewers)
+    })
+
+    const sloppySurfaceSourceKeys = initialUrls.map((url) => sourceManager.add(SourceManager.urlToSource(url)));
+    // SLOPPY: For each source, (attempt to) create a synced surface dervied from its
+    // spec with as many overrides as nViewers.
+    sloppySurfaceSourceKeys.forEach((sourceKey) => {
+      derivedSyncedSurfaceFromMapLibreSource(sourceKey, nViewers)
+    })
+  })
+
 
 </script>
 
