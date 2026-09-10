@@ -3,8 +3,7 @@
   import * as maplibregl from 'maplibre-gl';
   import { BackgroundLayer, ColorReliefLayer, HillshadeLayer, ImageSource, MapLibre, RasterDEMTileSource, RasterLayer, RasterTileSource, Terrain } from 'svelte-maplibre-gl';
   import type { SingleView, CameraState } from './views.svelte';
-  import { TerraDraw } from '@svelte-maplibre-gl/terradraw';
-  import TerraDrawDeluxe from './TerraDrawDeluxe.svelte';
+  import { TerraDraw as TerraDrawSvelte } from '@svelte-maplibre-gl/terradraw';
 
   // import { sourceManager, syncedMapLibreLayers, syncedMapLibreSurfaces } from "$lib/shared.svelte";
   import {
@@ -348,10 +347,11 @@
           id={SLOT_PREFIX + "td"}
           layout={{visibility: "none"}}
         />
-        <TerraDrawDeluxe
+        <TerraDrawSvelte
           mode={syncedTerraDraw.mode}
-          {instance}
-          bind:this={instance.component}
+          {...instance}
+          bind:draw={instance.draw}
+          modes={instance.modeFactory()}
         />
       {/if}
     {/if}
