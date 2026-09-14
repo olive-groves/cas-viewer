@@ -7,6 +7,7 @@
     TerraDrawSelectMode,
     TerraDrawPolygonMode,
     TerraDrawPointMode,
+    TerraDrawMarkerMode,
     TerraDrawPolyLineMode,
   } from 'terra-draw';
   import { SyncedTerraDraw } from '$lib/v0.8/synced-terra-draw.svelte';
@@ -27,16 +28,106 @@
   };
   const selectFlags = {
     point: defaultSelectFlags,
+    marker: defaultSelectFlags,
     polygon: defaultSelectFlags,
     polyline: defaultSelectFlags,
   }
+  // const svg = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200v-400h80v264l464-464 56 56-464 464h264v80H200Z"/></svg>`;
+  const svg = `
+  <svg
+    width="200px" height="103px"
+    viewBox="0 0 200 103"
+    xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="xMaxYMax meet"
+  >
+    <defs>
+      <marker
+        id="marker-arrow"
+        viewBox="0 0 10 10"
+        refX="10"
+        refY="5"
+        markerWidth="4"
+        markerHeight="4"
+        orient="auto-start-reverse"
+        fill="white"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" />
+      </marker>
+
+      <filter filterUnits="userSpaceOnUse" id="filter-shadow" x="0" y="0" width="100%" height="100%">
+        <feDropShadow
+          dx="3"
+          dy="3"
+          stdDeviation="0"
+          flood-color="black"
+          flood-opacity="1"
+        />
+      </filter>
+
+      <mask id="mask-inner-outer">
+        <circle cx="100" cy="100" r="100" fill="white" />
+        <circle cx="100" cy="100" r="10" fill="black" />
+      </mask>
+
+    </defs>
+
+    <!-- A line with a marker -->
+    <g filter="url(#filter-shadow)">
+      <g mask="url(#mask-inner-outer)">
+        <rect
+          id="_square-spanner"
+          x="0"
+          y="0"
+          width="200"
+          height="200"
+          fill="transparent"
+        />
+        <line
+          x1="200"
+          y1="0"
+          x2="100"
+          y2="100"
+          stroke="white"
+          stroke-width="4"
+        />
+      </g>
+      <line
+        x1="200"
+        y1="0"
+        x2="100"
+        y2="100"
+        stroke-width="4"
+        stroke="transparent"
+        marker-end="url(#marker-arrow)"
+      />
+    </g>
+  </svg>
+  `;
+  const svgBlob = new Blob([svg], { type: "image/svg+xml" });
+  const svgBlogUrl = URL.createObjectURL(svgBlob);
+  const markerUrl = svgBlogUrl;
+  const markerWidth = svg.match(`(width.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);;
+  const markerHeight = svg.match(`(height.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
   const modeFactory = () => {
     {
       return [
         new TerraDrawSelectMode({
           flags: selectFlags,
+          styles: {
+            selectedMarkerUrl: markerUrl,
+            selectedMarkerWidth: markerWidth,
+            selectedMarkerHeight: markerHeight,
+          },
         }),
         new TerraDrawPointMode({
+          validation: SyncedTerraDraw.outOfBoundsValidator,
+        }),
+        new TerraDrawMarkerMode({
+          styles: {
+            markerUrl: markerUrl,
+            markerWidth: markerWidth,
+            markerHeight: markerHeight,
+          },
           validation: SyncedTerraDraw.outOfBoundsValidator,
         }),
         new TerraDrawPolygonMode({
