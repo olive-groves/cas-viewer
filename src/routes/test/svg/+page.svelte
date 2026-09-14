@@ -70,6 +70,7 @@
         stroke="transparent"
         marker-end="url(#marker-arrow)"
       />
+      <circle cx="100" cy="100" r="4" fill="white" stroke="black" />
     </g>
   </svg>
 
