@@ -9,17 +9,18 @@ import type {
   TerraDrawPolyLineMode,
   TerraDrawEventListeners,
   GeoJSONStoreFeatures,
+  TerraDrawMarkerMode,
 } from 'terra-draw';
 
 import { roundGeometryCoordinates } from '$lib/v0.8/maplibre-gl-terradraw/lib/helpers/roundFeatureCoordinates';
 import { isGeometryOutOfBounds, terraDrawMaxBounds, wrapGeometryCoordinatesToBounds } from '$lib/v0.8/geojson-utils';
 
-type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | TerraDrawPolyLineMode;
+type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | TerraDrawPolyLineMode | TerraDrawMarkerMode;
 
 type ModeFactory = () => Mode[];
 
 export class SyncedTerraDraw {
-  mode = $state("point");
+  mode: string = $state("");
   modeFactory: ModeFactory;
   selected: string | number | null = $state(null);
 
@@ -38,7 +39,8 @@ export class SyncedTerraDraw {
 
   instances = new SvelteMap<string, TerraDrawInstance>();
 
-  constructor(modeFactory: ModeFactory) {
+  constructor(modeFactory: ModeFactory, mode?: string) {
+    this.mode = mode ?? modeFactory().find((mode) => mode.type === "drawing")?.mode ?? ""
     $effect.root(() => {
       this.draw?.setMode(this.mode);
     });

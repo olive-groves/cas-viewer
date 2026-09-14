@@ -5,10 +5,11 @@
   import { TerraDraw as TerraDrawSvelte } from '@svelte-maplibre-gl/terradraw';
   import {
     TerraDrawSelectMode,
-    TerraDrawPolygonMode,
-    TerraDrawPointMode,
+    // TerraDrawPolygonMode,
+    // TerraDrawPointMode,
     TerraDrawMarkerMode,
     TerraDrawPolyLineMode,
+    ValidateNotSelfIntersecting,
   } from 'terra-draw';
   import { SyncedTerraDraw } from '$lib/v0.8/synced-terra-draw.svelte';
   import SyncedTerraDrawSetup from '$lib/v0.8/SyncedTerraDrawSetup.svelte';
@@ -27,11 +28,16 @@
     }
   };
   const selectFlags = {
-    point: defaultSelectFlags,
+    // point: defaultSelectFlags,
     marker: defaultSelectFlags,
-    polygon: defaultSelectFlags,
+    // polygon: defaultSelectFlags,
     polyline: defaultSelectFlags,
   }
+  const primary = "#fff";
+  const shadow = "#000";
+  const shadowOpacity = 0.6;
+  const secondary = "#000";
+  const fillOpacity = 0.3;
   // const svg = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200v-400h80v264l464-464 56 56-464 464h264v80H200Z"/></svg>`;
   const svg = `
   <svg
@@ -49,7 +55,7 @@
         markerWidth="4"
         markerHeight="4"
         orient="auto-start-reverse"
-        fill="white"
+        fill="${primary}"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" />
       </marker>
@@ -59,13 +65,13 @@
           dx="3"
           dy="3"
           stdDeviation="0"
-          flood-color="black"
-          flood-opacity="1"
+          flood-color="${shadow}"
+          flood-opacity="${shadowOpacity.toFixed(2)}"
         />
       </filter>
 
       <mask id="mask-inner-outer">
-        <circle cx="100" cy="100" r="100" fill="white" />
+        <circle cx="100" cy="100" r="100" fill="${primary}" />
         <circle cx="100" cy="100" r="10" fill="black" />
       </mask>
 
@@ -87,7 +93,7 @@
           y1="0"
           x2="100"
           y2="100"
-          stroke="white"
+          stroke="${primary}"
           stroke-width="4"
         />
       </g>
@@ -123,7 +129,7 @@
         markerWidth="4"
         markerHeight="4"
         orient="auto-start-reverse"
-        fill="white"
+        fill="${primary}"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" />
       </marker>
@@ -133,13 +139,13 @@
           dx="3"
           dy="3"
           stdDeviation="0"
-          flood-color="black"
-          flood-opacity="1"
+          flood-color="${shadow}"
+          flood-opacity="${shadowOpacity.toFixed(2)}"
         />
       </filter>
 
       <mask id="mask-inner-outer">
-        <circle cx="100" cy="100" r="100" fill="white" />
+        <circle cx="100" cy="100" r="100" fill="${primary}" />
         <circle cx="100" cy="100" r="10" fill="black" />
       </mask>
 
@@ -161,7 +167,7 @@
           y1="0"
           x2="100"
           y2="100"
-          stroke="white"
+          stroke="${primary}"
           stroke-width="4"
         />
       </g>
@@ -174,7 +180,7 @@
         stroke="transparent"
         marker-end="url(#marker-arrow)"
       />
-      <circle cx="100" cy="100" r="4" fill="white" stroke="black" />
+      <circle cx="100" cy="100" r="4" fill="${primary}" stroke="black" />
     </g>
   </svg>
   `;
@@ -184,6 +190,9 @@
 
   const markerWidth = svg.match(`(width.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);;
   const markerHeight = svg.match(`(height.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
+  const validator = (feature, { updateType }) => {
+    return { valid: SyncedTerraDraw.outOfBoundsValidator(feature, { updateType }).valid && ValidateNotSelfIntersecting(feature).valid };
+  }
   const modeFactory = () => {
     {
       return [
@@ -195,22 +204,50 @@
             selectedMarkerHeight: markerHeight,
           },
         }),
-        new TerraDrawPointMode({
-          validation: SyncedTerraDraw.outOfBoundsValidator,
-        }),
+        // new TerraDrawPointMode({
+        //   validation: SyncedTerraDraw.outOfBoundsValidator,
+        // }),
         new TerraDrawMarkerMode({
+          validation: SyncedTerraDraw.outOfBoundsValidator,
           styles: {
             markerUrl: markerUrl,
             markerWidth: markerWidth,
             markerHeight: markerHeight,
           },
-          validation: SyncedTerraDraw.outOfBoundsValidator,
         }),
-        new TerraDrawPolygonMode({
-          validation: SyncedTerraDraw.outOfBoundsValidator,
-        }),
+        // new TerraDrawPolygonMode({
+        //   validation: validator,
+        // }),
         new TerraDrawPolyLineMode({
-          validation: SyncedTerraDraw.outOfBoundsValidator,
+          validation: validator,
+          styles: {
+            lineStringColor: primary,
+            // lineStringOpacity: ,
+            // lineStringWidth: ,
+            polygonFillColor: primary,
+            polygonFillOpacity: fillOpacity,
+            polygonOutlineColor: primary,
+            // polygonOutlineOpacity: ,
+            // polygonOutlineWidth: ,
+            closingPointColor: primary,
+            // closingPointOpacity: ,
+            // closingPointWidth: ,
+            closingPointOutlineColor: secondary,
+            // closingPointOutlineOpacity: ,
+            // closingPointOutlineWidth: ,
+            snappingPointColor: primary,
+            // snappingPointOpacity: ,
+            // snappingPointWidth: ,
+            snappingPointOutlineColor: secondary,
+            // snappingPointOutlineOpacity: ,
+            // snappingPointOutlineWidth: ,
+            coordinatePointColor: primary,
+            // coordinatePointOpacity: ,
+            // coordinatePointWidth: ,
+            coordinatePointOutlineColor: secondary,
+            // coordinatePointOutlineOpacity: ,
+            // coordinatePointOutlineWidth: ,
+          }
         }),
       ];
     }
