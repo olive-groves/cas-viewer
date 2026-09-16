@@ -55,14 +55,13 @@
       {/each}
     </div>
     <div style:display=flex style:margin-inline-start=auto>
-      <ToolButton
-        toggle
-        --font-size=1.5rem
-        symbol=select_window
-        symbolOff=select_window_off
-        toggled={multiView.layout.window.frame}
-        ontoggle={(toggled) => {multiView.layout.window.frame = toggled; multiView.layout.window.titlebar = toggled;}}
-        />
+      <label style:display=flex style:gap=2px style:white-space=nowrap>
+        Show Windows
+        <input
+          type=checkbox
+          checked={multiView.layout.window.frame}
+          onchange={(e) => {multiView.layout.window.frame = e.target.checked; multiView.layout.window.titlebar = e.target.checked;}}>
+      </label>
     </div>
   </div>
   <MultiViewer
