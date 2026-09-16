@@ -1,5 +1,5 @@
 diff --git a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
-index 3ba2358..132dbef 100644
+index 3ba2358..53643af 100644
 --- a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
 +++ b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte
 @@ -26,7 +26,9 @@
@@ -17,18 +17,17 @@ index 3ba2358..132dbef 100644
  		onselect?: TerraDrawEventListeners['select'];
  		ondeselect?: TerraDrawEventListeners['deselect'];
  		onhistory?: TerraDrawEventListeners['history'];
-+    onstart?: () => void;
-+    onbeforestop?: () => void;
++		onstart?: (draw: Draw) => void;
++		onbeforestop?: (draw: Draw) => void;
  	} = $props();
  
  	let destroyed = false;
-@@ -72,7 +76,12 @@
+@@ -72,7 +76,11 @@
  		const instance = draw;
  		if (!instance) return;
  		instance.start();
 -		return () => instance.stop();
 +    onstart?.(instance);
-+    console.log("Lick em joe")
 +		return () => {
 +      onbeforestop?.(instance);
 +      instance.stop();
@@ -37,15 +36,15 @@ index 3ba2358..132dbef 100644
  	$effect(() => {
  		draw?.setMode(mode);
 diff --git a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
-index bfbe499..a5e3259 100644
+index bfbe499..af8d695 100644
 --- a/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
 +++ b/node_modules/@svelte-maplibre-gl/terradraw/dist/TerraDraw.svelte.d.ts
 @@ -16,6 +16,8 @@ type $$ComponentProps = {
      onselect?: TerraDrawEventListeners['select'];
      ondeselect?: TerraDrawEventListeners['deselect'];
      onhistory?: TerraDrawEventListeners['history'];
-+    onstart?: () => void;
-+    onbeforestop?: () => void;
++    onstart?: (draw: Draw) => void;
++    onbeforestop?: (draw: Draw) => void;
  };
  declare const TerraDraw: import("svelte").Component<$$ComponentProps, {}, "draw">;
  type TerraDraw = ReturnType<typeof TerraDraw>;
