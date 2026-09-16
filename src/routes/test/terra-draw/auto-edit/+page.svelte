@@ -45,17 +45,17 @@
     }),
   ];
   const modeNames = modes.map((mode) => mode.mode);
-  let mode = $state('linestring');  // Public prop
+  let userMode = $state('linestring');  // Public prop
   let selected: string | number | null = $state(null);
   // KEEP:
   // An error occurs if switching modes when a feature is selected during auto-edit.
   // For now the fix is to explicitly deselect the feature when we change modes.
   // svelte-ignore state_referenced_locally
-  let _mode = $state(mode);
+  let actualMode = $state(userMode);
   $effect(() => {
     const _selected = untrack(() => selected);
     if (_selected) draw?.deselectFeature(_selected);
-    _mode = mode;
+    actualMode = userMode;
   })
 
   let autoEdit: boolean = $state(true);
@@ -68,7 +68,7 @@
     inlineStyle="height: 100%; width: 100%; grid-area: 1 / 1 / -1 / -1;"
   >
     <SvelteTerraDraw
-      mode={_mode}
+      mode={actualMode}
       modes={[...modes, lastDrawSelectMode]}
       bind:draw
       onselect={(id: FeatureId) => {
@@ -88,7 +88,7 @@
           context?.action === 'draw' && autoEdit
         ) {
           _lastDrawId = id;
-          _lastDrawMode = mode;
+          _lastDrawMode = userMode;
           draw?.selectFeature(id, lastDrawSelectMode.mode);
         }
       }}
@@ -107,7 +107,7 @@
         }}
         >Undo</button>
       {#each modeNames as modeName (modeName)}
-        <label><input type="radio" bind:group={mode} value={modeName}/> {modeName}</label>
+        <label><input type="radio" bind:group={userMode} value={modeName}/> {modeName}</label>
       {/each}
     </div>
   </MapLibre>
