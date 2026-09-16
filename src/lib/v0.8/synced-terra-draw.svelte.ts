@@ -56,21 +56,10 @@ export class SyncedTerraDraw {
   readonly lastDrawSelectModeName: string = '_select-last-draw';
 
   constructor(modeFactory: ModeFactory, userMode?: string) {
-    // If userMode is set, set the actualMode
-    $effect(() => {
-      const _selected = untrack(() => this.selected);
-      if (_selected) {
-        this.draw?.deselectFeature(_selected);
-        this.instances.forEach((_instance, _instanceId) => {
-          _instance.deselectFeature(_selected);
-        })
-      }
-      this.actualMode = this.userMode;
-    });
     $effect.root(() => {
       this.draw?.setMode(this.actualMode);
     });
-    this.userMode = userMode ?? modeFactory().find((mode) => mode.type === "drawing")?.mode ?? ""
+    this.setUserMode(userMode ?? modeFactory().find((mode) => mode.type === "drawing")?.mode ?? "");
     this.modeFactory = modeFactory;
     this.modeNames = modeFactory().map((mode) => mode.mode);
 
@@ -88,6 +77,20 @@ export class SyncedTerraDraw {
       flags: selectFlags,
       styles: selectStyles,
     });
+  }
+
+  setUserMode(mode: Mode["mode"]): void {
+    // If userMode is set, set the actualMode
+    this.userMode = mode;
+    const selected = this.selected;
+    if (selected !== null) {
+      this.draw?.deselectFeature(selected);
+      this.instances.forEach((_instance, _instanceId) => {
+        _instance.deselectFeature(selected);
+      })
+    }
+    this.actualMode = this.userMode;
+    return
   }
 
   static outOfBoundsValidator: Validator = (feature, { updateType }) => {
@@ -142,6 +145,8 @@ export class SyncedTerraDraw {
   }
   syncondeselect = (instanceId: string, args: Parameters<TerraDrawEventListeners["deselect"]>) => {
     // console.log("syncondeselect", ...args);
+
+    // FIXME: Minimized viewers throw "Terra Draw is not enabled"
 
     this.selected = null;
     const featureId = args[0];

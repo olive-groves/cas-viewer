@@ -51,11 +51,11 @@
   view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
-  // view = new SingleView();
-  // // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
-  // // view.layers.add(syncedLayerKey, {key: overrideKey});
-  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
-  // multiView.views.add(view);
+  view = new SingleView();
+  // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
+  // view.layers.add(syncedLayerKey, {key: overrideKey});
+  view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+  multiView.views.add(view);
 
   // Minimap uses a requested layer or the first raster layer from the list of views
   // It places the minimap at the bottom left of the multi-view window.
@@ -69,12 +69,12 @@
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+  // view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "yellow"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  // view.draw.instanceKey = syncedTerraDraw.addInstance().id;
+  // view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // multiView.views.add(A)
 
@@ -243,6 +243,7 @@
   bind:map={syncedTerraDraw.map}
   bind:draw={syncedTerraDraw.draw}
   modeFactory={syncedTerraDraw.modeFactory}
+  lastDrawSelectModeFactory={syncedTerraDraw.lastDrawSelectModeFactory}
 />
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>

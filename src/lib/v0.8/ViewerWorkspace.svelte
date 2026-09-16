@@ -2,10 +2,9 @@
 <script lang="ts">
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
 
-  import { getSourceManagerContext } from "$lib/shared-context.svelte";
+  import { getSourceManagerContext, getSyncedTerraDrawContext } from "$lib/shared-context.svelte";
   import MultiViewer from "./MultiViewer.svelte";
   import type { MultiView } from "./views.svelte";
-  import ToolButton from "./ToolButton.svelte";
 
   let {
     multiView,
@@ -14,6 +13,7 @@
   } = $props();
 
   const sourceManager = getSourceManagerContext();
+  const syncedTerraDraw = getSyncedTerraDrawContext();
 
   let camera = $state({
     zoom: undefined,
@@ -34,6 +34,27 @@
 <!-- Container to hold taskbar, MultiViewer, status bar, etc. -->
 <div class=workspace>
   <div class="taskbar unselectable">
+    <div style:display=flex style:overflow-x=auto style:border="1px solid gray" style:align-items=center>
+      {#each syncedTerraDraw.modeNames as modeName (modeName)}
+        <div style:display=flex style:padding="0 4px" style:align-items=center>
+          <label class=oneline-input-label>
+            <input
+              type="radio"
+              name="drawMode"
+              group={syncedTerraDraw.userMode}
+              value={modeName}
+              onclick={() => syncedTerraDraw.setUserMode(modeName)}
+            />
+            <span style:text-transform=capitalize>
+              {modeName}
+            </span>
+          </label>
+        </div>
+      {/each}
+    </div>
+    <div style="margin-inline-start: var(--gap); margin-inline-end: var(--gap); align-self: center;">
+      ·
+    </div>
     <div>
       <select bind:value={multiView.mode.type}>
         {#each ["Side-by-Side", "Lens", "Blink", "Fade"] as modeType}
@@ -46,17 +67,17 @@
     <div style:display=flex style:overflow-x=auto>
       {#each multiView.views.order as viewKey, i (viewKey)}
         {@const view = multiView.views.map.get(viewKey)}
-        <div style:display=flex style:border="1px solid gray" style:padding="0 6px" style:align-items=center>
-          <label style:display=flex style:gap=2px style:white-space=nowrap>
+        <div style:display=flex style:border="1px solid gray" style:padding="0 4px" style:align-items=center>
+          <label class=oneline-input-label>
             {view.name || `View ${i + 1}`}
             <input type=checkbox checked={view.layout.window.state !== "minimized"} onchange={(e) => view.layout.window.state = e.target.checked ? "normal" : "minimized"}>
           </label>
         </div>
       {/each}
     </div>
-    <div style:display=flex style:margin-inline-start=auto>
-      <label style:display=flex style:gap=2px style:white-space=nowrap>
-        Show Windows
+    <div style:display=flex style:margin-inline-start=auto style:border="1px solid gray" style:padding="0 4px" style:align-items=center>
+      <label class=oneline-input-label>
+        Window Frames
         <input
           type=checkbox
           checked={multiView.layout.window.frame}
@@ -80,10 +101,15 @@
     background: black;
     .taskbar {
       display: flex;
-      gap: var(--gap);
+      gap: calc(var(--gap));
       flex: 0 0;
       background-color: color-mix(in srgb, Canvas, CanvasText 10%);
       align-items: flex-start;
     }
+  }
+  .oneline-input-label {
+    display: flex;
+    gap: 2px;
+    white-space: nowrap;
   }
 </style>

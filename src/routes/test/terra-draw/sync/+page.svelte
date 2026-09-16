@@ -251,7 +251,6 @@
     ];
   }
   let syncedTerraDraw = new SyncedTerraDraw(modeFactory);
-  const modeNames = syncedTerraDraw.modeFactory().map((mode) => mode.mode);
   let zoom = $state(0)
   let center = $state([0, 0])
   let pitch = $state(0)
@@ -312,9 +311,14 @@
     <button onclick={() => render = !render}>
       {render ? "Unrender" : "Render"}
     </button>
-    {#each modeNames as modeName (modeName)}
+    {#each syncedTerraDraw.modeNames as modeName (modeName)}
       <label class=unselectable>
-        <input type="radio" bind:group={syncedTerraDraw.userMode} value={modeName}/>
+        <input
+          type="radio"
+          group={syncedTerraDraw.userMode}
+          value={modeName}
+          onclick={() => syncedTerraDraw.setUserMode(modeName)}
+        />
         {modeName}
       </label>
     {/each}

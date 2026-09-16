@@ -3,12 +3,13 @@ import { SourceManager } from "./source-manager.svelte";
 import type { MapLibreSyncedLayer, AnyLayerSpec, SyncedMapLibreLayerKey, SyncedMapLibreSurfaceKey, MapLibreSyncedSurface } from "./synced-layer.svelte";
 import { MultiView } from "./v0.8/views.svelte";
 import {
+  TerraDrawRenderMode,
   TerraDrawSelectMode,
   TerraDrawPolyLineMode,
   TerraDrawMarkerMode,
   ValidateNotSelfIntersecting,
 } from "terra-draw";
-import { SyncedTerraDraw } from "./v0.8/synced-terra-draw.svelte";
+import { SyncedTerraDraw, type Validator } from "./v0.8/synced-terra-draw.svelte";
 
 // All the sources
 export const sourceManager = new SourceManager();
@@ -187,28 +188,32 @@ const selectedSvgBlob = new Blob([selectedSvg], { type: "image/svg+xml" });
 const selectedSvgBlobUrl = URL.createObjectURL(selectedSvgBlob);
 const selectedMarkerUrl = selectedSvgBlobUrl;
 
-const markerWidth = svg.match(`(width.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);;
+const markerWidth = svg.match(`(width.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
 const markerHeight = svg.match(`(height.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
-const validator = (feature, { updateType }) => {
+const validator: Validator = (feature, { updateType }) => {
   return { valid: SyncedTerraDraw.outOfBoundsValidator(feature, { updateType }).valid && ValidateNotSelfIntersecting(feature).valid };
 }
 const modeFactory = () => {
   {
     return [
+      new TerraDrawRenderMode({
+        modeName: "view-only",
+        styles: {},
+      }),
       new TerraDrawSelectMode({
         flags: selectFlags,
         styles: {
           selectedMarkerUrl: selectedMarkerUrl,
-          selectedMarkerWidth: markerWidth,
-          selectedMarkerHeight: markerHeight,
+          selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
+          selectedMarkerHeight: markerHeight ? parseInt(markerHeight) : undefined,
         },
       }),
       new TerraDrawMarkerMode({
         validation: SyncedTerraDraw.outOfBoundsValidator,
         styles: {
           markerUrl: markerUrl,
-          markerWidth: markerWidth,
-          markerHeight: markerHeight,
+          markerWidth: markerWidth ? parseInt(markerWidth) : undefined,
+          markerHeight: markerHeight ? parseInt(markerHeight) : undefined,
         },
       }),
       new TerraDrawPolyLineMode({
@@ -234,6 +239,7 @@ const modeFactory = () => {
           snappingPointOutlineColor: secondary,
           // snappingPointOutlineOpacity: ,
           // snappingPointOutlineWidth: ,
+          // @ts-ignore FIXME: Remove after bumping terra-draw
           coordinatePointColor: primary,
           // coordinatePointOpacity: ,
           // coordinatePointWidth: ,

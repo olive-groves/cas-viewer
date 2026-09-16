@@ -209,6 +209,7 @@
     renderWorldCopies={false}
     attributionControl={false}
     transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
+    bearingSnap={0}
     // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
     {zoom}
     {center}
@@ -348,10 +349,10 @@
           layout={{visibility: "none"}}
         />
         <TerraDrawSvelte
-          mode={syncedTerraDraw.mode}
+          mode={syncedTerraDraw.actualMode}
           {...instance}
           bind:draw={instance.draw}
-          modes={instance.modeFactory()}
+          modes={instance.modeFactory().concat(instance.lastDrawSelectModeFactory())}
         />
       {/if}
     {/if}
