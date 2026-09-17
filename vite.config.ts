@@ -10,6 +10,7 @@ export default defineConfig({
       'maplibre-gl',
       'svelte-maplibre-gl',
       '@svelte-maplibre-gl/terradraw',
+      'terra-draw-maplibre-gl-adapter',
     ]
   },
 });

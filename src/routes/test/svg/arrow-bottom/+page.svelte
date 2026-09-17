@@ -1,12 +1,8 @@
-<script lang="ts">
-  let selected = $state(true);
-</script>
-
 <div style:background-color=red>
 
   <svg
-    width="200" height="200"
-    viewBox="0 0 200 200"
+    width="200" height="103"
+    viewBox="0 0 200 103"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="xMaxYMax meet"
   >
@@ -26,9 +22,9 @@
 
       <filter filterUnits="userSpaceOnUse" id="filter-shadow" x="0" y="0" width="100%" height="100%">
         <feDropShadow
-          dx={`${selected ? 2 : 1}`}  // --stroke-width * sqrt(2)?
-          dy={`${selected ? 2 : 1}`}  // --stroke-width * sqrt(2)?
-          stdDeviation={`${selected ? 0 : 2}`}
+          dx="1"  // --stroke-width * sqrt(2)?
+          dy="1"  // --stroke-width * sqrt(2)?
+          stdDeviation="2"
           flood-color="black"
           flood-opacity="1"
         />
@@ -74,14 +70,9 @@
         stroke="transparent"
         marker-end="url(#marker-arrow)"
       />
+      <circle cx="100" cy="100" r="4" fill="white" stroke="black" />
     </g>
-    {#if selected}
-      <circle cx="100" cy="100" r="6" fill="white" stroke="black" stroke-width="2" />
-    {/if}
   </svg>
 
 </div>
-<label class=unselectable>
-  <input type=checkbox bind:checked={selected}>
-  selected
-</label>
+<p>Hello World</p>

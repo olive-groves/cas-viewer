@@ -36,14 +36,13 @@
   }
   const primary = "#fff";
   const shadow = "#000";
-  const shadowOpacity = 0.6;
   const secondary = "#000";
   const fillOpacity = 0.3;
   // const svg = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200v-400h80v264l464-464 56 56-464 464h264v80H200Z"/></svg>`;
   const svg = `
   <svg
-    width="200px" height="103px"
-    viewBox="0 0 200 103"
+    width="200px" height="200px"
+    viewBox="0 0 200 200"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="xMaxYMax meet"
   >
@@ -63,11 +62,11 @@
 
       <filter filterUnits="userSpaceOnUse" id="filter-shadow" x="0" y="0" width="100%" height="100%">
         <feDropShadow
-          dx="2"
-          dy="2"
-          stdDeviation="0"
+          dx="1"
+          dy="1"
+          stdDeviation="2"
           flood-color="${shadow}"
-          flood-opacity="${shadowOpacity.toFixed(2)}"
+          flood-opacity="1"
         />
       </filter>
 
@@ -116,8 +115,8 @@
 
   const selectedSvg = `
   <svg
-    width="200px" height="103px"
-    viewBox="0 0 200 103"
+    width="200px" height="200px"
+    viewBox="0 0 200 200"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="xMaxYMax meet"
   >
@@ -141,7 +140,7 @@
           dy="2"
           stdDeviation="0"
           flood-color="${shadow}"
-          flood-opacity="${shadowOpacity.toFixed(2)}"
+          flood-opacity="1"
         />
       </filter>
 
@@ -181,8 +180,8 @@
         stroke="transparent"
         marker-end="url(#marker-arrow)"
       />
-      <circle cx="100" cy="100" r="4" fill="${primary}" stroke="black" />
     </g>
+    <circle cx="100" cy="100" r="6" fill="${primary}" stroke="black" stroke-width="2" />
   </svg>
   `;
   const selectedSvgBlob = new Blob([selectedSvg], { type: "image/svg+xml" });
