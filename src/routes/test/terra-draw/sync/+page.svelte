@@ -205,6 +205,50 @@
           selectedMarkerUrl: selectedMarkerUrl,
           selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
           selectedMarkerHeight: markerHeight ? parseInt(markerHeight) : undefined,
+          selectedLineStringColor: primary,
+          selectedPolygonColor: primary,
+          selectedPolygonFillOpacity: fillOpacity,
+          selectedPolygonOutlineColor: primary,
+          selectionPointColor: primary,
+          selectionPointOutlineColor: secondary,
+          midPointColor: primary,
+          midPointOutlineColor: secondary,
+
+          // selectedPointColor
+          // selectedPointWidth
+          // selectedPointOpacity
+          // selectedPointOutlineColor
+          // selectedPointOutlineWidth
+          // selectedPointOutlineOpacity
+
+          // selectedMarkerUrl
+          // selectedMarkerHeight
+          // selectedMarkerWidth
+
+          // selectedLineStringColor
+          // selectedLineStringWidth
+          // selectedLineStringOpacity
+          // selectedLineStringDash
+
+          // selectedPolygonColor
+          // selectedPolygonFillOpacity
+          // selectedPolygonOutlineColor
+          // selectedPolygonOutlineOpacity
+          // selectedPolygonOutlineWidth
+
+          // selectionPointWidth
+          // selectionPointColor
+          // selectionPointOpacity
+          // selectionPointOutlineColor
+          // selectionPointOutlineWidth
+          // selectionPointOutlineOpacity
+
+          // midPointColor
+          // midPointOutlineColor
+          // midPointOpacity
+          // midPointWidth
+          // midPointOutlineWidth
+          // midPointOutlineOpacity
         },
       }),
       new TerraDrawMarkerMode({
@@ -274,8 +318,8 @@
 <div class=stack style="height: 100%; width: 100%;">
   <div style="display: flex; height: 100%; width: 100%;">
     <!-- WARNING: DO NOT USE entries(); CLEARS TERRADRAW LAYERS {#each syncedTerraDraw.instances.entries() as instance (instance.id)} -->
-    {#each syncedTerraDraw.instances.values() as instance (instance.id)}
-      {#if render}
+    {#each syncedTerraDraw.instances.values() as instance, i (instance.id)}
+      {#if render || i }
         <MapLibre
           inlineStyle="height: 100%; width: 100%;"
           renderWorldCopies={false}
@@ -314,8 +358,9 @@
       <label class=unselectable>
         <input
           type="radio"
-          group={syncedTerraDraw.userMode}
+          name="syncedTerraDraw.userMode"
           value={modeName}
+          checked={modeName === syncedTerraDraw.userMode}
           onclick={() => syncedTerraDraw.setUserMode(modeName)}
         />
         {modeName}

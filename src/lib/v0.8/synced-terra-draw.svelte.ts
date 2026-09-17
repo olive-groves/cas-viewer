@@ -12,10 +12,10 @@ import {
   type TerraDrawMarkerMode,
   type TerraDrawRenderMode,
 } from 'terra-draw';
+import type { Polygon } from 'geojson';
 
 import { roundGeometryCoordinates } from '$lib/v0.8/maplibre-gl-terradraw/lib/helpers/roundFeatureCoordinates';
 import { isGeometryOutOfBounds, terraDrawMaxBounds, wrapGeometryCoordinatesToBounds } from '$lib/v0.8/geojson-utils';
-import { untrack } from 'svelte';
 
 type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | TerraDrawPolyLineMode | TerraDrawMarkerMode | TerraDrawRenderMode;
 
@@ -169,7 +169,7 @@ export class SyncedTerraDraw {
 
     // This fixes a bug when pressing Escape (cancelling) when dragging a selected feature; onfinish returns undefined id; catch on deselect
     const instance = this.instances.get(instanceId);
-    let feature = instance?.draw?.getSnapshotFeature(featureId);
+    let feature = instance?.getSnapshotFeature(featureId);
     if (feature) {
       this.draw?.updateFeatureGeometry(featureId, feature.geometry);
       this.instances.forEach((_instance, _id) => {
@@ -202,6 +202,9 @@ export class SyncedTerraDraw {
       if (feature) {
         feature.geometry.coordinates = wrapGeometryCoordinatesToBounds(feature.geometry, terraDrawMaxBounds);
         feature.geometry = roundGeometryCoordinates(feature.geometry);
+        // Polyline in-edit linestrings have geometry.type === 'LineString', but have geometry coordinates of 'Polygon'
+        if (feature.geometry.type === "LineString" && Array.isArray(feature.geometry.coordinates.at(0)?.at(0)))
+          feature.geometry.coordinates = (feature.geometry as unknown as Polygon).coordinates[0];
         instance.updateFeatureGeometry(featureId, feature.geometry);  // Ensure drawn is wrapped
         this.draw?.updateFeatureGeometry(featureId, feature.geometry);  // Then propogate
         this.instances.forEach((_instance, _instanceId) => {
@@ -289,23 +292,29 @@ export class TerraDrawInstance {
   updateFeatureGeometry(...args: Parameters<TerraDraw["updateFeatureGeometry"]>): ReturnType<TerraDraw["updateFeatureGeometry"]> {
     if (this.draw?.enabled) {
       return this.draw.updateFeatureGeometry(...args);
-    } else {
-      const featureIndex = this.snapshot.findIndex((feature) => feature.id === args[0]);
-      if (featureIndex < 0)
-        return;
-      this.snapshot[featureIndex] = { ...this.snapshot.at(featureIndex) as GeoJSONStoreFeatures, geometry: args[1] }
-      return
     }
+
+    const featureIndex = this.snapshot.findIndex((feature) => feature.id === args[0]);
+    if (featureIndex < 0)
+      return
+
+    this.snapshot[featureIndex] = { ...this.snapshot.at(featureIndex) as GeoJSONStoreFeatures, geometry: args[1] }
+    return
   }
 
   getSnapshotFeature(...args: Parameters<TerraDraw["getSnapshotFeature"]>): ReturnType<TerraDraw["getSnapshotFeature"]> {
-    return this.draw?.getSnapshotFeature(...args);
+    if (this.draw?.enabled) {
+      return this.draw.getSnapshotFeature(...args);
+    }
+    return this.snapshot.find((feature) => feature.id === args[0]);
   }
 
   selectFeature(...args: Parameters<TerraDraw["selectFeature"]>): ReturnType<TerraDraw["selectFeature"]> {
     // Guard against recursive onselect events when already selected.
     if (this.selected !== args[0]) {
-      return this.draw?.selectFeature(...args);
+      if (this.draw?.enabled)
+        return this.draw.selectFeature(...args);
+      return
     }
     console.debug(`selectFeature skipped because feature ${args[0]} is already selected.`)
     return
@@ -314,8 +323,11 @@ export class TerraDrawInstance {
   deselectFeature(...args: Parameters<TerraDraw["deselectFeature"]>): ReturnType<TerraDraw["deselectFeature"]> {
     // Guard against recursive ondeselect events when already null.
     if (this.selected !== null) {
-      return this.draw?.deselectFeature(...args);
+      if (this.draw?.enabled)
+        return this.draw.deselectFeature(...args)
+      return
     }
+
     console.debug(`deselectFeature skipped because there is already nothing selected.`)
     return
   }

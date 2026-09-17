@@ -8,32 +8,44 @@ export const roundGeometryCoordinates = <G extends Point | LineString | MultiPoi
 	geometry: G,
 	decimalPlaces: number = 9
 ): G => {
-	function roundCoord(coord: Position) {
+  function roundCoord(coord: Position) {
 		return [Number(coord[0].toFixed(decimalPlaces)), Number(coord[1].toFixed(decimalPlaces))];
-	}
+  }
 
-  const type = geometry.type;
+  function nestedArrayDepth(array: any[], initialDepth = 0): number {
+    let currentDepth = initialDepth;
+    if (Array.isArray(array.at(0))) {
+      currentDepth += 1;
+      return nestedArrayDepth(array.at(0), currentDepth);
+    }
+    return currentDepth
+  }
+
   let coordinates = geometry.coordinates;
-  switch (type) {
-    case 'Point':
+  switch (nestedArrayDepth(coordinates)) {
+    // Apparent 'Point'
+    case 0:
       coordinates = roundCoord(coordinates as [number, number]);
       break;
-    case 'LineString':
-    case 'MultiPoint':
+    // Apparent 'LineString' or 'MultiPoint':
+    case 1:
       coordinates = (coordinates as Position[]).map(roundCoord);
       break;
-    case 'Polygon':
-    case 'MultiLineString':
+    // Apparent 'Polygon' or 'MultiLineString':
+    case 2:
       coordinates = (coordinates as Position[][]).map((ring: Position[]) => ring.map(roundCoord));
       break;
-    case 'MultiPolygon':
+    // Apparent 'MultiPolygon':
+    case 3:
       coordinates = (coordinates as unknown as Position[][][]).map((polygon: Position[][]) =>
         polygon.map((ring: Position[]) => ring.map(roundCoord))
       );
       break;
     default:
+      console.warn(`Unsupported geometry type ${geometry.type}.`)
       break;
   }
+
   return {
     ...geometry,
     coordinates,
