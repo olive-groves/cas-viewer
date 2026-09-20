@@ -40,9 +40,9 @@
           <label class=oneline-input-label>
             <input
               type="radio"
-              name="drawMode"
-              group={syncedTerraDraw.userMode}
+              name="syncedTerraDraw.userMode"
               value={modeName}
+              checked={modeName === syncedTerraDraw.userMode}
               onclick={() => syncedTerraDraw.setUserMode(modeName)}
             />
             <span style:text-transform=capitalize>

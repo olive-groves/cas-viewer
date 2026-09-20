@@ -2,15 +2,18 @@ import { SvelteMap } from 'svelte/reactivity';
 
 import type { MapLibreMap } from 'maplibre-gl';
 import {
-  type TerraDraw,
   TerraDrawSelectMode,
-  type TerraDrawPolygonMode,
-  type TerraDrawPointMode,
-  type TerraDrawPolyLineMode,
-  type TerraDrawEventListeners,
-  type GeoJSONStoreFeatures,
-  type TerraDrawMarkerMode,
-  type TerraDrawRenderMode,
+} from 'terra-draw';
+import type {
+  TerraDraw,
+  TerraDrawPolygonMode,
+  TerraDrawPointMode,
+  TerraDrawPolyLineMode,
+  TerraDrawEventListeners,
+  GeoJSONStoreFeatures,
+  GeoJSONStoreGeometries,
+  TerraDrawMarkerMode,
+  TerraDrawRenderMode,
 } from 'terra-draw';
 import type { Polygon } from 'geojson';
 
@@ -40,11 +43,13 @@ export class SyncedTerraDraw {
   ondeselectListeners: TerraDrawEventListeners["deselect"][] = [];
   onhistoryListeners: TerraDrawEventListeners["history"][] = [];
 
+  // TODO: retain snapshot, drop the DOM stuff
   // For retaining a DOM element
   // TODO: Make private?
   readonly id: string = "terra-draw-synced-parent-map";
   map: MapLibreMap | undefined = $state.raw();
   draw: TerraDraw | undefined = $state.raw();
+  snapshot: GeoJSONStoreFeatures<GeoJSONStoreGeometries>[] = $state([]);
 
   instances = new SvelteMap<string, TerraDrawInstance>();
 
