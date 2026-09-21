@@ -305,6 +305,46 @@
 
   let render = $state(true);
 
+  syncedTerraDraw.onSyncedAddFeaturesListeners.push((features) => {
+    console.warn("FIXME: If features were added from an existing JSON via .syncedAddFeatures(), this callback overwrites exiting custom properties, including created-by time.")
+    features.forEach((feature) => {
+      if (feature.id) {
+        const now = new Date();
+        syncedTerraDraw.updateFeatureProperties(feature.id, {
+          // consider "custom-" prefix?
+          created: now.toISOString(),
+          modified: now.toISOString(),
+          comment: null,
+          tags: [],
+          // callback which appends props to that object?
+          // baseline setter that fills:
+          // {
+          //  type: "annotation"
+          //  author: ""
+          //  created: datetime.now
+          //  lastedited: ^
+          //  title: ""
+          //  tags: [""]
+          //  description:
+          //  async for elevation? area? -> no, we await that separately in the UI
+          //  comments: [
+          //    {},
+          //    {},
+          //    {},
+          //  ]
+          // }
+        })
+      }
+    })
+  })
+
+  syncedTerraDraw.onSyncedUpdateFeatureGeometryListeners.push((id) => {
+    syncedTerraDraw.updateFeatureProperties(id, {
+      modified: new Date().toISOString(),
+    })
+  })
+
+
 </script>
 
 <SyncedTerraDrawSetup
@@ -347,7 +387,7 @@
     {/each}
   </div>
 
-  <div class="controls unselectable" style:align-self=start>
+  <div class="controls unselectable" style:align-self=end style:justify-self=start>
     <button onclick={() => syncedTerraDraw.addInstance()}>
       + Viewer
     </button>
@@ -370,6 +410,47 @@
       (Actual mode: {syncedTerraDraw.actualMode})
     </div>
   </div>
+
+  <div class="features unselectable" style:align-self=start style:justify-self=start>
+    <h2>Features</h2>
+    {#each syncedTerraDraw.snapshot as feature (feature.id)}
+    <div class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}>
+      <h3>id: {feature.id}</h3>
+        <details>
+          <summary>geometry</summary>
+          <ul>
+            {#each Object.entries(feature.geometry) as [key, value] (key) }
+            <li>
+              {key}: {value}
+            </li>
+            {/each}
+          </ul>
+        </details>
+        <details>
+          <summary>properties</summary>
+          <ul>
+            {#each Object.entries(feature.properties) as [key, value] (key) }
+              <li>
+                {key}: {value}
+              </li>
+            {/each}
+          </ul>
+        </details>
+          {#if feature.properties?.comment !== undefined}
+            <!-- Comment widget with edit, cancel, etc. -->
+            <label>
+              comment:
+              <textarea
+                placeholder="Start a conversation"
+                rows="1"
+                cols="25"
+                bind:value={feature.properties.comment}
+              ></textarea>
+            </label>
+          {/if}
+      </div>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -379,5 +460,18 @@
         position: absolute;
         z-index: 1;
         background-color: black;
+    }
+    .features {
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+      gap: 1em;
+      background-color: rgba(0, 0, 0, 25%);
+      .feature {
+        border: 1px solid transparent;
+        &.selected {
+          border: 1px solid white;
+        }
+      }
     }
 </style>

@@ -43,12 +43,19 @@ export class SyncedTerraDraw {
   ondeselectListeners: TerraDrawEventListeners["deselect"][] = [];
   onhistoryListeners: TerraDrawEventListeners["history"][] = [];
 
+  onSyncedAddFeaturesListeners: ((features: GeoJSONStoreFeatures[]) => void)[] = [];
+  onSyncedUpdateFeatureGeometryListeners: ((id: FeatureId, geometry: GeoJSONStoreGeometries) => void)[] = [];
+
   // FIXME: Determine whether to retain actual draw or create a mock (snapshot, etc.);
   // will affect and be affected by the undo/redo implementation
   // TODO: Investigate undo-redo: is it needed, what is needed (undo only drawing elements?)
   readonly id: string = "terra-draw-synced-parent-map";
   map: MapLibreMap | undefined = $state.raw();
   draw: TerraDraw | undefined = $state.raw();
+
+  // TODO: Determine whether keeping state on a potentially massive array is the move...
+  snapshot: GeoJSONStoreFeatures<GeoJSONStoreGeometries>[] = $state([]);
+  // add a setter for properties?
 
   instances = new SvelteMap<string, TerraDrawInstance>();
 
@@ -97,6 +104,48 @@ export class SyncedTerraDraw {
     return
   }
 
+  // Add features to the synced parent, snapshot state store, and propogate them to the
+  // instances besides the optional source instance.
+  syncedAddFeatures(sourceInstanceId?: string, ...args: Parameters<TerraDraw["addFeatures"]>): ReturnType<TerraDraw["addFeatures"]> {
+    this.instances.forEach((instance, instanceId) => {
+      if (instanceId === sourceInstanceId)
+        return;
+      instance.addFeatures(...args);
+    });
+    this.snapshot.push(...args[0]);
+    this.onSyncedAddFeatures(...args);
+    return this.draw?.addFeatures(...args) ?? [];
+  }
+
+  syncedUpdateFeatureGeometry(sourceInstanceId?: string, ...args: Parameters<TerraDraw["updateFeatureGeometry"]>): ReturnType<TerraDraw["updateFeatureGeometry"]> {
+    this.instances.forEach((instance, instanceId) => {
+      if (instanceId === sourceInstanceId)
+        return;
+      instance.updateFeatureGeometry(...args);
+    })
+    const feature = this.snapshot.find((feature) => feature.id === args[0]);
+    if (feature) {
+      feature.geometry = args[1];
+      this.onSyncedUpdateFeatureGeometry(...args);
+    }
+    return this.draw?.updateFeatureGeometry(...args);
+  }
+
+  // Only updates parent snapshot state; actual draws are kept only TerraDraw-relevant
+  // This abides by JSON: undefined values remove their keys!
+  updateFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
+    const feature = this.snapshot.find((f) => f.id === args[0]);
+    if (feature)
+      Object.entries(args[1]).map(([key, value]) => {
+        if (value === undefined) {
+          delete feature.properties[key];
+        } else {
+          feature.properties[key] = value;
+        }
+      });
+    return
+  }
+
   static outOfBoundsValidator: Validator = (feature, { updateType }) => {
     return { valid: !isGeometryOutOfBounds(feature.geometry, terraDrawMaxBounds) }
   }
@@ -120,6 +169,8 @@ export class SyncedTerraDraw {
     if (this.draw === undefined) {
       console.warn("No synced TerraDraw parent from which to get a snapshot. Perhaps you forgot to instantiate the parent draw and map with <SyncedTerraDrawComponent>?")
     } else {
+      // FIXME: We want don't want custom properties in our parent snapshot to leak into
+      // the instance snapshots. Do we filter out non-TerraDraw props?
       instance.addFeatures(this.draw?.getSnapshot().filter((f) => !f.properties.midPoint && !f.properties.selectionPoint) ?? []);
     };
     this.instances.set(id, instance);
@@ -149,8 +200,6 @@ export class SyncedTerraDraw {
   }
   syncondeselect = (instanceId: string, args: Parameters<TerraDrawEventListeners["deselect"]>) => {
     // console.log("syncondeselect", ...args);
-
-    // FIXME: Minimized viewers throw "Terra Draw is not enabled"
 
     this.selected = null;
     const featureId = args[0];
@@ -193,12 +242,7 @@ export class SyncedTerraDraw {
     if (context?.action === "draw") {
       const feature = instance.getSnapshotFeature(featureId);
       if (feature) {
-        this.draw?.addFeatures([feature]);
-        this.instances.forEach((_instance, _instanceId) => {
-          if (_instanceId === instanceId)
-            return;
-          _instance.addFeatures([feature]);
-        })
+        this.syncedAddFeatures(instanceId, [feature]);
       }
     // } else if (context && ["dragCoordinate", "dragFeature", "dragCoordinateResize",].includes(context?.action)) {
     } else {
@@ -210,12 +254,7 @@ export class SyncedTerraDraw {
         if (feature.geometry.type === "LineString" && Array.isArray(feature.geometry.coordinates.at(0)?.at(0)))
           feature.geometry.coordinates = (feature.geometry as unknown as Polygon).coordinates[0];
         instance.updateFeatureGeometry(featureId, feature.geometry);  // Ensure drawn is wrapped
-        this.draw?.updateFeatureGeometry(featureId, feature.geometry);  // Then propogate
-        this.instances.forEach((_instance, _instanceId) => {
-          if (_instanceId === instanceId)
-            return;
-          _instance.updateFeatureGeometry(featureId, feature.geometry);
-        })
+        this.syncedUpdateFeatureGeometry(instanceId, featureId, feature.geometry);
       }
     }
 
@@ -243,6 +282,9 @@ export class SyncedTerraDraw {
   readonly onselect: TerraDrawEventListeners["select"] = (...args) => this.onselectListeners.forEach((listener) => listener(...args));
   readonly ondeselect: TerraDrawEventListeners["deselect"] = (...args) => this.ondeselectListeners.forEach((listener) => listener(...args));
   readonly onhistory: TerraDrawEventListeners["history"] = (...args) => this.onhistoryListeners.forEach((listener) => listener(...args));
+
+  readonly onSyncedAddFeatures = (features: GeoJSONStoreFeatures[]) => this.onSyncedAddFeaturesListeners.forEach((listener) => listener(features));
+  readonly onSyncedUpdateFeatureGeometry = (id: FeatureId, geometry: GeoJSONStoreGeometries) => this.onSyncedUpdateFeatureGeometryListeners.forEach((listener) => listener(id, geometry));
 }
 
 export class TerraDrawInstance {
