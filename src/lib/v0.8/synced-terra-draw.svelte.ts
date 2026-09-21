@@ -43,13 +43,12 @@ export class SyncedTerraDraw {
   ondeselectListeners: TerraDrawEventListeners["deselect"][] = [];
   onhistoryListeners: TerraDrawEventListeners["history"][] = [];
 
-  // TODO: retain snapshot, drop the DOM stuff
-  // For retaining a DOM element
-  // TODO: Make private?
+  // FIXME: Determine whether to retain actual draw or create a mock (snapshot, etc.);
+  // will affect and be affected by the undo/redo implementation
+  // TODO: Investigate undo-redo: is it needed, what is needed (undo only drawing elements?)
   readonly id: string = "terra-draw-synced-parent-map";
   map: MapLibreMap | undefined = $state.raw();
   draw: TerraDraw | undefined = $state.raw();
-  snapshot: GeoJSONStoreFeatures<GeoJSONStoreGeometries>[] = $state([]);
 
   instances = new SvelteMap<string, TerraDrawInstance>();
 
