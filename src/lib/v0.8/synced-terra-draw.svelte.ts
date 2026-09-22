@@ -131,6 +131,28 @@ export class SyncedTerraDraw {
     return this.draw?.updateFeatureGeometry(...args);
   }
 
+  syncedRemoveFeatures(sourceInstanceId?: string, ...args: Parameters<TerraDraw["removeFeatures"]>): ReturnType<TerraDraw["removeFeatures"]> {
+    this.instances.forEach((instance, instanceId) => {
+      if (instanceId === sourceInstanceId)
+        return;
+      instance.removeFeatures(...args);
+    })
+
+    // Find the index of each feature
+    // Sort the indices in decreasing order
+    // Remove by splicing
+    const featureIndices: number[] = [];
+    args[0].forEach((featureId) => {
+      featureIndices.push(this.snapshot.findIndex((feature) => feature.id === featureId))
+    });
+    featureIndices.sort((a, b) => b - a).forEach((i) => this.snapshot.splice(i, 1));
+
+    // if (featureIndices.length)
+    // TODO: this.onSyncedDeleteFeatures(...args);
+
+    return this.draw?.removeFeatures(...args);
+  }
+
   // Only updates parent snapshot state; actual draws are kept only TerraDraw-relevant
   // This abides by JSON: undefined values remove their keys!
   updateFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
@@ -232,6 +254,7 @@ export class SyncedTerraDraw {
       })
     }
   }
+
   synconfinish = (instanceId: string, args: Parameters<TerraDrawEventListeners["finish"]>) => {
     // console.log("synconfinish", ...args);
     const instance = this.instances.get(instanceId);
@@ -272,8 +295,19 @@ export class SyncedTerraDraw {
       })
     }
   }
+
   synconchange = (instanceId: string, args: Parameters<TerraDrawEventListeners["change"]>) => {
     // console.log("synconchange", ...args);
+
+    const type = args[1];
+
+    // Prevent recursive delete events by not syncing if features were removed with API.
+    // TODO: That feels a bit sussy. We must ensure that instance.draw.removeFeatures()
+    // can't be directly called, otherwise this breaks.
+    const context = args[2];
+    if (type === "delete" && (context as {origin?: "api"})?.origin === "api")  {
+      this.syncedRemoveFeatures(instanceId, args[0]);
+    }
   }
 
   readonly onready: TerraDrawEventListeners["ready"] = (...args) => this.onreadyListeners.forEach((listener) => listener(...args));
@@ -345,6 +379,23 @@ export class TerraDrawInstance {
       return
 
     this.snapshot[featureIndex] = { ...this.snapshot.at(featureIndex) as GeoJSONStoreFeatures, geometry: args[1] }
+    return
+  }
+
+  removeFeatures(...args: Parameters<TerraDraw["removeFeatures"]>): ReturnType<TerraDraw["removeFeatures"]> {
+    if (this.draw?.enabled) {
+      return this.draw.removeFeatures(...args);
+    }
+
+    // Find the index of each feature
+    // Sort the indices in decreasing order
+    // Remove by splicing
+    const featureIndices: number[] = [];
+    args[0].forEach((featureId) => {
+      featureIndices.push(this.snapshot.findIndex((feature) => feature.id === featureId))
+    });
+    featureIndices.sort((a, b) => b - a).forEach((i) => this.snapshot.splice(i, 1));
+
     return
   }
 
