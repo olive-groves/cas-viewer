@@ -12,6 +12,7 @@
   } from 'terra-draw';
   import { SyncedTerraDraw, type Validator } from '$lib/v0.8/synced-terra-draw.svelte';
   import SyncedTerraDrawSetup from '$lib/v0.8/SyncedTerraDrawSetup.svelte';
+  import AutogrowTextArea from '$lib/v0.8/AutogrowTextArea.svelte';
 
   // Proof
 
@@ -303,6 +304,55 @@
 
   let render = $state(true);
 
+  syncedTerraDraw.onSyncedAddFeaturesListeners.push((features) => {
+    console.warn("FIXME: If features were added from an existing JSON via .syncedAddFeatures(), this callback overwrites exiting custom properties, including created-by time.")
+    features.forEach((feature) => {
+      if (feature.id) {
+        const now = new Date();
+        syncedTerraDraw.updateFeatureProperties(feature.id, {
+          // consider "custom-" prefix?
+          created: now.toISOString(),
+          modified: now.toISOString(),
+          comment: {
+            created: "",
+            modified: "",
+            text: "",
+            author: "",
+            replies: [
+              // {
+              //   created: "",
+              //   modified: "",
+              //   text: "",
+              //   author: "",
+              // }
+            ],
+          },
+          category: "",
+          tags: [],
+          references: [
+            // references with respect to... coordinate system? (image -> mercator unity)
+          ],
+          "coordinate-system": "EPSG:3857",
+
+          // callback which appends props to that object?
+          // baseline setter that fills:
+          // async for elevation? area? -> no, we await that separately in the UI
+        })
+      }
+    })
+  })
+
+  syncedTerraDraw.onSyncedUpdateFeatureGeometryListeners.push((id) => {
+    syncedTerraDraw.updateFeatureProperties(id, {
+      modified: new Date().toISOString(),
+    })
+  })
+
+  $effect(() => {
+    const element = document.getElementById(`feature-${syncedTerraDraw.selected}`);
+    element?.scrollIntoView({block: "center", behavior: "smooth"});
+  })
+
 </script>
 
 <SyncedTerraDrawSetup
@@ -313,8 +363,8 @@
   lastDrawSelectModeFactory={syncedTerraDraw.lastDrawSelectModeFactory}
 />
 
-<div class=stack style="height: 100%; width: 100%;">
-  <div style="display: flex; height: 100%; width: 100%;">
+<div class="container stack">
+  <div class="views">
     <!-- WARNING: DO NOT USE entries(); CLEARS TERRADRAW LAYERS {#each syncedTerraDraw.instances.entries() as instance (instance.id)} -->
     {#each syncedTerraDraw.instances.values() as instance, i (instance.id)}
       {#if render || i }
@@ -345,7 +395,7 @@
     {/each}
   </div>
 
-  <div class="controls unselectable" style:align-self=end style:justify-self=start>
+  <div class="controls unselectable">
     <button onclick={() => syncedTerraDraw.addInstance()}>
       + Viewer
     </button>
@@ -368,14 +418,115 @@
       (Actual mode: {syncedTerraDraw.actualMode})
     </div>
   </div>
+
+  <div class=sidebar>
+
+    <h2>Features</h2>
+
+    <div class="features unselectable">
+
+      {#each syncedTerraDraw.snapshot as feature (feature.id)}
+      <div id={`feature-${feature.id}`} class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}>
+        <h3>id: {feature.id}</h3>
+        <details>
+          <summary>geometry</summary>
+          <ul>
+            {#each Object.entries(feature.geometry) as [key, value] (key) }
+            <li>
+              {key}: {value}
+            </li>
+            {/each}
+          </ul>
+        </details>
+        <details>
+          <summary>properties</summary>
+          <ul>
+            {#each Object.entries(feature.properties) as [key, value] (key) }
+              <li>
+                {key}: {value}
+              </li>
+            {/each}
+          </ul>
+        </details>
+        <label>
+          <select bind:value={feature.properties.category}>
+            <option value="">Select a category</option>
+            {#each ["crack", "loss", "uncategorized",] as category}
+              <option value={category.toLowerCase()}>
+                {category}
+              </option>
+            {/each}
+          </select>
+        </label>
+        {#if feature.properties?.comment !== undefined}
+
+          <!-- Comment widget with edit, cancel, etc. instead of binding -->
+          <AutogrowTextArea
+            placeholder="Start a conversation"
+            bind:value={feature.properties.comment.text}
+          />
+
+          <!-- {#each feature.properties.comment.replies as }
+
+          {/each} -->
+
+        {/if}
+        </div>
+      {/each}
+
+    </div>
+  </div>
 </div>
 
 <style>
-  .controls {
+  .container {
+    flex: 1;
+    min-height: 0;
+
+    .views {
+      align-self: stretch;
+      justify-self: stretch;
+
       display: flex;
+    }
+  }
+  .controls {
+    align-self: end;
+    justify-self: start;
+    z-index: 1;
+
+    display: flex;
+
+    gap: 1em;
+    background-color: black;
+  }
+  .sidebar {
+    align-self: stretch;
+    justify-self: end;
+    z-index: 1;
+
+    max-width: 400px;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    background-color: rgba(0, 0, 0, 25%);
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+
       gap: 1em;
-      position: absolute;
-      z-index: 1;
-      background-color: black;
+      background-color: rgba(0, 0, 0, 25%);
+
+      .feature {
+        border: 1px solid transparent;
+        &.selected {
+          border: 1px solid white;
+        }
+      }
+    }
   }
 </style>

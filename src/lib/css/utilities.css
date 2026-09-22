@@ -12,3 +12,20 @@
     grid-area: stack;
   }
 }
+
+
+/* https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/ */
+.no-break-out,
+.no-break-out-hyphen {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  -ms-word-break: break-all;
+  word-break: break-word;  /* break-all is unstable in WebKit */
+}
+.no-break-out-hyphen {
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
