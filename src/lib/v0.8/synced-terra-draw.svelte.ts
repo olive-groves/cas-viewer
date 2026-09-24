@@ -136,7 +136,7 @@ export class SyncedTerraDraw {
       if (instanceId === sourceInstanceId)
         return;
       instance.removeFeatures(...args);
-    })
+    });
 
     // Find the index of each feature
     // Sort the indices in decreasing order
@@ -305,7 +305,7 @@ export class SyncedTerraDraw {
     // TODO: That feels a bit sussy. We must ensure that instance.draw.removeFeatures()
     // can't be directly called, otherwise this breaks.
     const context = args[2];
-    if (type === "delete" && (context as {origin?: "api"})?.origin === "api")  {
+    if (type === "delete" && (context as {origin?: "api"})?.origin !== "api")  {
       this.syncedRemoveFeatures(instanceId, args[0]);
     }
   }
