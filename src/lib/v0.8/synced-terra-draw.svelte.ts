@@ -305,8 +305,16 @@ export class SyncedTerraDraw {
     // TODO: That feels a bit sussy. We must ensure that instance.draw.removeFeatures()
     // can't be directly called, otherwise this breaks.
     const context = args[2];
-    if (type === "delete" && (context as {origin?: "api"})?.origin !== "api")  {
-      this.syncedRemoveFeatures(instanceId, args[0]);
+    if (type === "delete" && (context as { origin?: "api" })?.origin !== "api") {
+      // Midpoint and selection point removal also fires onchange-delete, so we
+      // only synchronously remove features, not midpoints nor selection points.
+      // Grab from synced snapshot because if it's not there, it's not anywhere.
+      const filteredFeatureIds = args[0].filter((id) => {
+        const feature = this.snapshot.find((f) => f.id === id);
+        return feature && !feature?.properties.midPoint && !feature?.properties.selectionPoint;
+      });
+
+      this.syncedRemoveFeatures(instanceId, filteredFeatureIds);
     }
   }
 
