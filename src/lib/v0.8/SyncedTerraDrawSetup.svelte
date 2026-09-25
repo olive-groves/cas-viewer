@@ -10,13 +10,11 @@
     map = $bindable(),
     draw = $bindable(),
     modeFactory,
-    lastDrawSelectModeFactory,
   }: {
     id: SyncedTerraDraw["id"];
     map: SyncedTerraDraw["map"];
     draw: SyncedTerraDraw["draw"];
     modeFactory: SyncedTerraDraw["modeFactory"];
-    lastDrawSelectModeFactory: SyncedTerraDraw["lastDrawSelectModeFactory"];
   } = $props();
   // Whenever we use the shared instance, we must declare at the root level a setup component:
   //   <SyncedTerraDrawSetup {...syncedTerraDraw} />
@@ -34,7 +32,7 @@
       });
       draw = new TerraDraw({
         adapter: new TerraDrawMapLibreGLAdapter({map}),
-        modes: modeFactory().concat([lastDrawSelectModeFactory()]),
+        modes: modeFactory(),
       });
       draw.start();
     }

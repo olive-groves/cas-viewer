@@ -23,18 +23,78 @@ import { isGeometryOutOfBounds, terraDrawMaxBounds, wrapGeometryCoordinatesToBou
 type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | TerraDrawPolyLineMode | TerraDrawMarkerMode | TerraDrawRenderMode;
 
 type ModeFactory = () => Mode[];
-type LastDrawSelectModeFactory = () => TerraDrawSelectMode;
 
 type FeatureId = string | number;
 
+
 export type Validator = (feature: GeoJSONStoreFeatures, { updateType }: { updateType: "finish" | "commit" | "provisional" }) => { valid: boolean }
 
+// One of the modes in the ModeFactory passed to SyncedTerraDraw must be named "edit".
+// That edit mode is used to generate the isolated-edit mode that this manager triggers
+// when drawing has finished.
+// We don't set the mode on SyncedTerraDraw, we set it via the manager. It tells us the
+// the user-facing mode while keeping the actual mode.
+export class SyncedTerraDrawModeManager {
+  syncedTerraDraw: SyncedTerraDraw;
+
+  private _userMode: string = $state("");
+  readonly userMode: string = $derived(this._userMode);
+
+  private _actualMode: string = $state("");
+  readonly actualMode: string = $derived(this._actualMode);
+
+  static ISOLATED_EDIT_MODE_NAME: string = "isolated-edit";
+  private isolatedEditOnFinish: boolean;
+  private lastDrawId: FeatureId | null = $state(null);
+  private lastDrawMode: string | null = $state(null);
+
+  constructor(syncedTerraDraw: SyncedTerraDraw, options = { userMode: undefined, isolatedEditOnFinish: true }) {
+    this.syncedTerraDraw = syncedTerraDraw;
+    this.isolatedEditOnFinish = options.isolatedEditOnFinish;
+
+    $effect.root(() => {
+      this.syncedTerraDraw.mode = this.actualMode;
+    });
+
+    // Auto-select listeners
+    this.syncedTerraDraw.onSyncedDeselectListeners.push((_, featureId) => {
+      if (featureId === this.lastDrawId && this.lastDrawMode) {
+        this.lastDrawId = null;
+        this._actualMode = this.lastDrawMode;
+      }
+    });
+    this.syncedTerraDraw.onSyncedFinishListeners.push((_, featureId, context) => {
+      if (context?.action === 'draw' && this.isolatedEditOnFinish) {
+        this.lastDrawId = featureId;
+        this.lastDrawMode = this.userMode;
+        const isolatedSelectMode = SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME;
+        this._actualMode = isolatedSelectMode;
+        this.syncedTerraDraw.syncedSelectFeature(undefined, featureId, isolatedSelectMode);
+      }
+    });
+
+    this.setUserMode(options.userMode ?? this.syncedTerraDraw.modeFactory().filter((mode) => mode.type === "select").find((mode) => mode.mode.includes("select"))?.mode ?? "");
+  }
+
+  setUserMode(mode: Mode["mode"]): void {
+    // If userMode is set, set the actualMode
+    this._userMode = mode;
+    const currentlySelected = this.syncedTerraDraw.selected;
+    if (currentlySelected !== null) {
+      this.syncedTerraDraw.syncedDeselectFeature(undefined, currentlySelected);
+    }
+    this._actualMode = this.userMode;
+    return
+  }
+}
+
 export class SyncedTerraDraw {
-  userMode: string = $state("");
-  actualMode: string = $state("");
+  mode: string = $state("");
   modeFactory: ModeFactory;
   readonly modeNames: Mode["mode"][];
+
   selected: string | number | null = $state(null);
+  editing: string | number | null = $state(null);
 
   onreadyListeners: TerraDrawEventListeners["ready"][] = [];
   onfinishListeners: TerraDrawEventListeners["finish"][] = [];
@@ -45,10 +105,12 @@ export class SyncedTerraDraw {
 
   onSyncedAddFeaturesListeners: ((features: GeoJSONStoreFeatures[]) => void)[] = [];
   onSyncedUpdateFeatureGeometryListeners: ((id: FeatureId, geometry: GeoJSONStoreGeometries) => void)[] = [];
+  onSyncedDeselectListeners: ((instanceId: string | undefined, id: FeatureId) => void)[] = [];
+  onSyncedFinishListeners: ((instanceId: string | undefined, id: FeatureId, context: Parameters<TerraDrawEventListeners["finish"]>[1]) => void)[] = [];
 
   // FIXME: Determine whether to retain actual draw or create a mock (snapshot, etc.);
   // will affect and be affected by the undo/redo implementation
-  // TODO: Investigate undo-redo: is it needed, what is needed (undo only drawing elements?)
+  // TODO: Undo-redo necessary for drawing, but maybe not generally?
   readonly id: string = "terra-draw-synced-parent-map";
   map: MapLibreMap | undefined = $state.raw();
   draw: TerraDraw | undefined = $state.raw();
@@ -59,48 +121,43 @@ export class SyncedTerraDraw {
 
   instances = new SvelteMap<string, TerraDrawInstance>();
 
-  // Automatically select on draw finish
-  private autoSelectOnFinish = true;
-  private lastDrawId: FeatureId | null = $state(null);
-  private lastDrawMode: string | null = $state(null);
-  readonly lastDrawSelectModeFactory: LastDrawSelectModeFactory;
-  readonly lastDrawSelectModeName: string = '_select-last-draw';
-
-  constructor(modeFactory: ModeFactory, userMode?: string) {
+  constructor(modeFactory: ModeFactory, mode?: string) {
     $effect.root(() => {
-      this.draw?.setMode(this.actualMode);
+      this.draw?.setMode(this.mode);
     });
-    this.setUserMode(userMode ?? modeFactory().find((mode) => mode.type === "drawing")?.mode ?? "");
+    if (mode)
+      this.mode = mode;
     this.modeFactory = modeFactory;
     this.modeNames = modeFactory().map((mode) => mode.mode);
-
-    // Auto-select
-    const selectMode = (modeFactory().find((mode) => mode.type === "select") as TerraDrawSelectMode);
-    // @ts-ignore
-    const selectFlags = selectMode?.flags ?? {};
-    const selectStyles = selectMode?.styles ?? {};
-    if (selectFlags === undefined) {
-      console.warn("Auto-select mode flags are set empty because no select flags could be parsed from modeFactory.")
-    }
-    this.lastDrawSelectModeFactory = () => new TerraDrawSelectMode({
-      modeName: this.lastDrawSelectModeName,
-      allowManualSelection: false,
-      flags: selectFlags,
-      styles: selectStyles,
-    });
   }
 
-  setUserMode(mode: Mode["mode"]): void {
-    // If userMode is set, set the actualMode
-    this.userMode = mode;
-    const selected = this.selected;
-    if (selected !== null) {
-      this.draw?.deselectFeature(selected);
-      this.instances.forEach((_instance, _instanceId) => {
-        _instance.deselectFeature(selected);
+  syncedSelectFeature(sourceInstanceId: string | undefined, featureId: FeatureId, selectMode?: string): ReturnType<TerraDraw["selectFeature"]> {
+    const _featureId = featureId ?? null;
+    if (this.selected === _featureId)
+      return;
+    this.selected = _featureId;
+    this.draw?.selectFeature(_featureId, selectMode);
+    // FIXME: Avoid race condition a better way? Or a don't-propagate-select mode?
+    this.instances.forEach((_instance, _instanceId) => {
+      setTimeout(() => {
+        if (_instanceId === sourceInstanceId)
+          return;
+        _instance.selectFeature(_featureId, selectMode);
       })
-    }
-    this.actualMode = this.userMode;
+    })
+  }
+
+  syncedDeselectFeature(sourceInstanceId: string | undefined, featureId: FeatureId): ReturnType<TerraDraw["deselectFeature"]> {
+    if (this.selected === null)
+      return;
+    this.selected = null;
+    this.draw?.deselectFeature(featureId);
+    this.instances.forEach((_instance, _instanceId) => {
+      if (_instanceId === sourceInstanceId)
+        return;
+      _instance.deselectFeature(featureId);
+    });
+    this.onSyncedDeselect(sourceInstanceId, featureId);
     return
   }
 
@@ -113,11 +170,13 @@ export class SyncedTerraDraw {
       instance.addFeatures(...args);
     });
     this.snapshot.push(...args[0]);
+    const validation = this.draw?.addFeatures(...args) ?? []
     this.onSyncedAddFeatures(...args);
-    return this.draw?.addFeatures(...args) ?? [];
+    return validation;
   }
 
   syncedUpdateFeatureGeometry(sourceInstanceId?: string, ...args: Parameters<TerraDraw["updateFeatureGeometry"]>): ReturnType<TerraDraw["updateFeatureGeometry"]> {
+    this.draw?.updateFeatureGeometry(...args);
     this.instances.forEach((instance, instanceId) => {
       if (instanceId === sourceInstanceId)
         return;
@@ -126,9 +185,9 @@ export class SyncedTerraDraw {
     const feature = this.snapshot.find((feature) => feature.id === args[0]);
     if (feature) {
       feature.geometry = args[1];
-      this.onSyncedUpdateFeatureGeometry(...args);
     }
-    return this.draw?.updateFeatureGeometry(...args);
+    this.onSyncedUpdateFeatureGeometry(...args);
+    return
   }
 
   syncedRemoveFeatures(sourceInstanceId?: string, ...args: Parameters<TerraDraw["removeFeatures"]>): ReturnType<TerraDraw["removeFeatures"]> {
@@ -174,7 +233,7 @@ export class SyncedTerraDraw {
 
   addInstance(customId?: string): TerraDrawInstance {
     const id = customId ?? crypto.randomUUID();
-    let instance = new TerraDrawInstance(id, this.modeFactory, this.lastDrawSelectModeFactory);
+    let instance = new TerraDrawInstance(id, this.modeFactory);
     instance.onreadyListeners.push((...args) => this.synconready(instance.id, args));
     instance.onselectListeners.push((...args) => this.synconselect(instance.id, args));
     instance.ondeselectListeners.push((...args) => this.syncondeselect(instance.id, args));
@@ -212,46 +271,23 @@ export class SyncedTerraDraw {
 
   synconselect = (instanceId: string, args: Parameters<TerraDrawEventListeners["select"]>) => {
     // console.log("synconselect", ...args);
-    this.selected = args[0] ?? null;
-    this.draw?.selectFeature(...args);
-    this.instances.forEach((_instance, _instanceId) => {
-      if (_instanceId === instanceId)
-        return;
-      _instance.selectFeature(...args);
-    })
+    const featureId = args[0];
+    if (this.selected !== featureId)
+      this.syncedSelectFeature(instanceId, featureId);
   }
   syncondeselect = (instanceId: string, args: Parameters<TerraDrawEventListeners["deselect"]>) => {
     // console.log("syncondeselect", ...args);
 
-    this.selected = null;
     const featureId = args[0];
 
     // Sync
-    if (featureId) {
-      this.draw?.deselectFeature(...args);
-      this.instances.forEach((_instance, _instanceId) => {
-        if (_instanceId === instanceId)
-          return;
-        _instance.deselectFeature(...args);
-      })
-    }
-
-    // Auto-edit
-    if (featureId === this.lastDrawId && this.lastDrawMode) {
-      this.lastDrawId = null;
-      this.actualMode = this.lastDrawMode;
-    }
+    this.syncedDeselectFeature(instanceId, featureId);
 
     // This fixes a bug when pressing Escape (cancelling) when dragging a selected feature; onfinish returns undefined id; catch on deselect
     const instance = this.instances.get(instanceId);
     let feature = instance?.getSnapshotFeature(featureId);
     if (feature) {
-      this.draw?.updateFeatureGeometry(featureId, feature.geometry);
-      this.instances.forEach((_instance, _id) => {
-        if (_id === instanceId)
-          return;
-        _instance.updateFeatureGeometry(featureId, feature.geometry);
-      })
+      this.syncedUpdateFeatureGeometry(instanceId, featureId, feature.geometry);
     }
   }
 
@@ -273,32 +309,21 @@ export class SyncedTerraDraw {
       if (feature) {
         feature.geometry.coordinates = wrapGeometryCoordinatesToBounds(feature.geometry, terraDrawMaxBounds);
         feature.geometry = roundGeometryCoordinates(feature.geometry);
-        // Polyline in-edit linestrings have geometry.type === 'LineString', but have geometry coordinates of 'Polygon'
+
+        // Fixes: Polyline in-edit linestrings have geometry.type === 'LineString', but
+        // have geometry coordinates of 'Polygon', so we adjust for that.
         if (feature.geometry.type === "LineString" && Array.isArray(feature.geometry.coordinates.at(0)?.at(0)))
           feature.geometry.coordinates = (feature.geometry as unknown as Polygon).coordinates[0];
+
         instance.updateFeatureGeometry(featureId, feature.geometry);  // Ensure drawn is wrapped
         this.syncedUpdateFeatureGeometry(instanceId, featureId, feature.geometry);
       }
     }
 
-    // Auto-select
-    if (context?.action === 'draw' && this.autoSelectOnFinish) {
-      this.lastDrawId = featureId;
-      this.lastDrawMode = this.userMode;
-      this.actualMode = this.lastDrawSelectModeName;
-      // FIXME: Avoid race condition a better way? Or a don't-propagate-select mode?
-      this.draw?.selectFeature(featureId, this.lastDrawSelectModeName);
-      setTimeout(() => {
-        this.instances.forEach((_instance) => {
-          _instance.selectFeature(featureId, this.lastDrawSelectModeName);
-        })
-      })
-    }
+    this.onSyncedFinish(instanceId, featureId, context);
   }
 
   synconchange = (instanceId: string, args: Parameters<TerraDrawEventListeners["change"]>) => {
-    // console.log("synconchange", ...args);
-
     const type = args[1];
 
     // Prevent recursive delete events by not syncing if features were removed with API.
@@ -327,13 +352,14 @@ export class SyncedTerraDraw {
 
   readonly onSyncedAddFeatures = (features: GeoJSONStoreFeatures[]) => this.onSyncedAddFeaturesListeners.forEach((listener) => listener(features));
   readonly onSyncedUpdateFeatureGeometry = (id: FeatureId, geometry: GeoJSONStoreGeometries) => this.onSyncedUpdateFeatureGeometryListeners.forEach((listener) => listener(id, geometry));
+  readonly onSyncedDeselect = (instanceId: string | undefined, id: FeatureId) => this.onSyncedDeselectListeners.forEach((listener) => listener(instanceId, id));
+  readonly onSyncedFinish = (instanceId: string | undefined, id: FeatureId, context: Parameters<TerraDrawEventListeners["finish"]>[1]) => this.onSyncedFinishListeners.forEach((listener) => listener(instanceId, id, context));
 }
 
 export class TerraDrawInstance {
   id: string;
   draw: TerraDraw | undefined = $state.raw();
   modeFactory: ModeFactory;
-  lastDrawSelectModeFactory: LastDrawSelectModeFactory;
   private snapshot: ReturnType<TerraDraw["getSnapshot"]> = [];
   private _visible: boolean = $state(true);
   readonly visible = $derived(this._visible);
@@ -348,10 +374,9 @@ export class TerraDrawInstance {
   onstartListeners: ((draw: TerraDraw) => void)[] = [];
   onbeforestopListeners: ((draw: TerraDraw) => void)[] = [];
 
-  constructor(id: string, modeFactory: ModeFactory, lastDrawSelectModeFactory: LastDrawSelectModeFactory,) {
+  constructor(id: string, modeFactory: ModeFactory) {
     this.id = id;
     this.modeFactory = modeFactory;
-    this.lastDrawSelectModeFactory = lastDrawSelectModeFactory;
     this.onstartListeners.push((draw) => draw.addFeatures(this.snapshot));
     this.onbeforestopListeners.push((draw) => this.snapshot = draw.getSnapshot() ?? []);
     this.onselectListeners.push((featureId) => this.selected = featureId);
