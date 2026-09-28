@@ -49,6 +49,8 @@
   const secondary = "#000";
   const fillOpacity = 0.2;
 
+  const strokeOpacity = 0.9;
+
   const VIEWBOXSIZE = 256;
   const ARROWX0 = 256;
   const ARROWY0 = 0;
@@ -65,7 +67,6 @@
   const lineWidth = 2;
   const selectedLineWidth = 4;
 
-  // const svg = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200v-400h80v264l464-464 56 56-464 464h264v80H200Z"/></svg>`;
   const svg = `
   <svg
     width="${viewBoxWidthPx}px" height="${viewBoxHeightPx}px"
@@ -83,6 +84,7 @@
         markerHeight="4"
         orient="auto-start-reverse"
         fill="${primary}"
+        fill-opacity="${strokeOpacity}"
       >
         <path d="M 0 0 L 12 6 L 0 12 z" />
       </marker>
@@ -93,7 +95,7 @@
           dy="${1 * pixelsPerViewBoxPixel}"
           stdDeviation="2"
           flood-color="${shadow}"
-          flood-opacity="1"
+          flood-opacity="${strokeOpacity}"
         />
       </filter>
 
@@ -122,6 +124,7 @@
           y2="${VIEWBOXSIZE / 2}"
           stroke="${primary}"
           stroke-width="${strokeWidth * pixelsPerViewBoxPixel}"
+          stroke-opacity="${strokeOpacity}"
         />
       </g>
       <line
