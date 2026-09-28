@@ -239,9 +239,25 @@ export class SyncedTerraDraw {
     return this.draw?.removeFeatures(...args);
   }
 
-  // Only updates parent snapshot state; actual draws are kept only TerraDraw-relevant
-  // This abides by JSON: undefined values remove their keys!
-  updateFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
+  /**
+   * Doesn't update snapshot state; only updates draw instance properties.
+   * Use this only if you need a specific TerraDraw behavior, like conditional styling.
+   */
+  syncedUpdateFeatureProperties(sourceInstanceId?: string, ...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
+    this.instances.forEach((instance, instanceId) => {
+      if (instanceId === sourceInstanceId)
+        return;
+      instance.updateFeatureProperties(...args);
+    });
+    return
+  }
+
+  /**
+   * Only updates parent snapshot state; draw instances are kept TerraDraw-relevant.
+   * Use `syncedUpdatedFeatureProperties` for draw instances.
+   * This abides by JSON: undefined values remove their keys!
+   */
+  updateSnapshotFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
     const feature = this.snapshot.find((f) => f.id === args[0]);
     if (feature)
       Object.entries(args[1]).map(([key, value]) => {
@@ -439,6 +455,25 @@ export class TerraDrawInstance {
       return
 
     this.snapshot[featureIndex] = { ...this.snapshot.at(featureIndex) as GeoJSONStoreFeatures, geometry: args[1] }
+    return
+  }
+
+  updateFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
+    if (this.draw?.enabled) {
+      return this.draw.updateFeatureProperties(...args);
+    }
+
+    const featureIndex = this.snapshot.findIndex((feature) => feature.id === args[0]);
+    if (featureIndex < 0)
+      return
+
+    Object.entries(args[1]).map(([key, value]) => {
+      if (value === undefined) {
+        delete this.snapshot[featureIndex].properties[key];
+      } else {
+        this.snapshot[featureIndex].properties[key] = value;
+      }
+    });
     return
   }
 

@@ -403,7 +403,7 @@
       new TerraDrawMarkerMode({
         validation: SyncedTerraDraw.outOfBoundsValidator,
         styles: {
-          markerUrl: markerUrl,
+          markerUrl: ({properties}) => properties?._currentlyHovering ? selectedMarkerUrl : markerUrl,
           markerWidth: markerWidth ? parseInt(markerWidth) : undefined,
           markerHeight: markerHeight ? parseInt(markerHeight) : undefined,
         },
@@ -413,12 +413,12 @@
         styles: {
           lineStringColor: primary,
           lineStringOpacity: 1 * 0.8,
-          lineStringWidth: lineWidth,
+          lineStringWidth: ({properties}) => properties?._currentlyHovering ? selectedLineWidth : lineWidth,
           polygonFillColor: primary,
-          polygonFillOpacity: fillOpacity / 2,
+          polygonFillOpacity: ({properties}) => properties?._currentlyHovering ? fillOpacity : (fillOpacity / 2),
           polygonOutlineColor: primary,
           // polygonOutlineOpacity: ,
-          polygonOutlineWidth: lineWidth,
+          polygonOutlineWidth: ({properties}) => properties?._currentlyHovering ? selectedLineWidth : lineWidth,
           closingPointColor: primary,
           // closingPointOpacity: ,
           closingPointWidth: selectedPointSize,
@@ -461,7 +461,7 @@
     features.forEach((feature) => {
       if (feature.id) {
         const now = new Date();
-        syncedTerraDraw.updateFeatureProperties(feature.id, {
+        syncedTerraDraw.updateSnapshotFeatureProperties(feature.id, {
           // reserved: TerraDraw
           // mode: string,
           // marker: bool,
@@ -507,7 +507,7 @@
   })
 
   syncedTerraDraw.onSyncedUpdateFeatureGeometryListeners.push((id) => {
-    syncedTerraDraw.updateFeatureProperties(id, {
+    syncedTerraDraw.updateSnapshotFeatureProperties(id, {
       modified: new Date().toISOString(),
     })
   })
@@ -593,7 +593,15 @@
     <div class="features unselectable">
 
       {#each syncedTerraDraw.snapshot as feature (feature.id)}
-        <div id={`feature-${feature.id}`} class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}>
+        <div
+          role="application"
+          id={`feature-${feature.id}`}
+          class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}
+          onpointerenter={() => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, feature.id, {_currentlyHovering: true})}
+          onpointerleave={() => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, feature.id, {_currentlyHovering: undefined})}
+          onclick={() => syncedTerraDraw.syncedSelectFeature(undefined, feature.id)}
+          ondblclick={() => console.warn("Implement fit-feature-on-map.")}
+        >
           <h3>id: {feature.id}</h3>
           <button onclick={() => modeManager.selectIsolatedEdit(feature.id)}>
             Edit Geometry
