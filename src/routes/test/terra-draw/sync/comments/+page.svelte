@@ -459,9 +459,21 @@
       if (feature.id) {
         const now = new Date();
         syncedTerraDraw.updateFeatureProperties(feature.id, {
+          // reserved: TerraDraw
+          // mode: string,
+          // marker: bool,
+
+          // file-esque info
           // consider "custom-" prefix?
           created: now.toISOString(),
           modified: now.toISOString(),
+          "created-by": "author0",
+          "modified-by": "author1",
+
+          // annotation text info
+          category: "",
+          tags: [],
+          title: "",
           comment: {
             created: "",
             modified: "",
@@ -473,11 +485,10 @@
               //   modified: "",
               //   text: "",
               //   author: "",
+              //   replies: [], // NESTED REPLIES NOT SUPPORTED
               // }
             ],
           },
-          category: "",
-          tags: [],
           references: [
             // references with respect to... coordinate system? (image -> mercator unity)
           ],
@@ -486,6 +497,7 @@
           // callback which appends props to that object?
           // baseline setter that fills:
           // async for elevation? area? -> no, we await that separately in the UI
+          // async for references? filters to unique (no duplicates)
         })
       }
     })
@@ -552,16 +564,18 @@
         {render ? "Unrender" : "Render"}
       </button>
       {#each syncedTerraDraw.modeNames as modeName (modeName)}
-        <label class=unselectable>
-          <input
-            type="radio"
-            name="syncedTerraDraw.userMode"
-            value={modeName}
-            checked={modeName === modeManager.userMode}
-            onclick={() => modeManager.setUserMode(modeName)}
-          />
-          {modeName}
-        </label>
+        {#if !modeName.includes("edit")}
+          <label class=unselectable>
+            <input
+              type="radio"
+              name="syncedTerraDraw.userMode"
+              value={modeName}
+              checked={modeName === modeManager.userMode}
+              onclick={() => modeManager.setUserMode(modeName)}
+            />
+            {modeName}
+          </label>
+        {/if}
       {/each}
       <div>
         (Actual mode: {modeManager.actualMode})
@@ -576,51 +590,54 @@
     <div class="features unselectable">
 
       {#each syncedTerraDraw.snapshot as feature (feature.id)}
-      <div id={`feature-${feature.id}`} class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}>
-        <h3>id: {feature.id}</h3>
-        <details>
-          <summary>geometry</summary>
-          <ul>
-            {#each Object.entries(feature.geometry) as [key, value] (key) }
-            <li>
-              {key}: {value}
-            </li>
-            {/each}
-          </ul>
-        </details>
-        <details>
-          <summary>properties</summary>
-          <ul>
-            {#each Object.entries(feature.properties) as [key, value] (key) }
+        <div id={`feature-${feature.id}`} class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}>
+          <h3>id: {feature.id}</h3>
+          <button onclick={() => modeManager.selectIsolatedEdit(feature.id)}>
+            Edit Geometry
+          </button>
+          <details>
+            <summary>geometry</summary>
+            <ul>
+              {#each Object.entries(feature.geometry) as [key, value] (key) }
               <li>
                 {key}: {value}
               </li>
-            {/each}
-          </ul>
-        </details>
-        <label>
-          <select bind:value={feature.properties.category}>
-            <option value="">Select a category</option>
-            {#each ["crack", "loss", "uncategorized",] as category}
-              <option value={category.toLowerCase()}>
-                {category}
-              </option>
-            {/each}
-          </select>
-        </label>
-        {#if feature.properties?.comment !== undefined}
+              {/each}
+            </ul>
+          </details>
+          <details>
+            <summary>properties</summary>
+            <ul>
+              {#each Object.entries(feature.properties) as [key, value] (key) }
+                <li>
+                  {key}: {value}
+                </li>
+              {/each}
+            </ul>
+          </details>
+          <label>
+            <select bind:value={feature.properties.category}>
+              <option value="">Select a category</option>
+              {#each ["crack", "loss", "uncategorized",] as category}
+                <option value={category.toLowerCase()}>
+                  {category}
+                </option>
+              {/each}
+            </select>
+          </label>
+          {#if feature.properties?.comment !== undefined}
 
-          <!-- Comment widget with edit, cancel, etc. instead of binding -->
-          <AutogrowTextArea
-            placeholder="Start a conversation"
-            bind:value={feature.properties.comment.text}
-          />
+            <!-- Comment widget with edit, cancel, etc. instead of binding -->
+            <AutogrowTextArea
+              placeholder="Start a conversation"
+              bind:value={feature.properties.comment.text}
+            />
 
-          <!-- {#each feature.properties.comment.replies as }
+            <!-- {#each feature.properties.comment.replies as }
 
-          {/each} -->
+            {/each} -->
 
-        {/if}
+          {/if}
         </div>
       {/each}
 

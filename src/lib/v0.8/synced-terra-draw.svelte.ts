@@ -45,8 +45,8 @@ export class SyncedTerraDrawModeManager {
 
   static ISOLATED_EDIT_MODE_NAME: string = "isolated-edit";
   private isolatedEditOnFinish: boolean;
-  private lastDrawId: FeatureId | null = $state(null);
-  private lastDrawMode: string | null = $state(null);
+  private isolatedEditId: FeatureId | null = $state(null);
+  private lastUserMode: string | null = $state(null);
 
   constructor(syncedTerraDraw: SyncedTerraDraw, options = { userMode: undefined, isolatedEditOnFinish: true }) {
     this.syncedTerraDraw = syncedTerraDraw;
@@ -58,22 +58,49 @@ export class SyncedTerraDrawModeManager {
 
     // Auto-select listeners
     this.syncedTerraDraw.onSyncedDeselectListeners.push((_, featureId) => {
-      if (featureId === this.lastDrawId && this.lastDrawMode) {
-        this.lastDrawId = null;
-        this._actualMode = this.lastDrawMode;
+      if (featureId === this.isolatedEditId) {
+        this.deselectIsolatedEdit();
       }
     });
     this.syncedTerraDraw.onSyncedFinishListeners.push((_, featureId, context) => {
       if (context?.action === 'draw' && this.isolatedEditOnFinish) {
-        this.lastDrawId = featureId;
-        this.lastDrawMode = this.userMode;
-        const isolatedSelectMode = SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME;
-        this._actualMode = isolatedSelectMode;
-        this.syncedTerraDraw.syncedSelectFeature(undefined, featureId, isolatedSelectMode);
+        this.selectIsolatedEdit(featureId);
       }
     });
 
     this.setUserMode(options.userMode ?? this.syncedTerraDraw.modeFactory().filter((mode) => mode.type === "select").find((mode) => mode.mode.includes("select"))?.mode ?? "");
+  }
+
+  // Select a feature with isolated edit mode, allowing edits only on that feature;
+  // if clicked away, exits isolated edit mode and returns to the previous mode.
+  // If null, deselects.
+  selectIsolatedEdit(featureId: FeatureId): void {
+    // If the feature being selected for isolated edit is already selected in a
+    // different mode, then when we deselect it first. Otherwise, by selecting it for
+    // isolated edit, it gets deselected from its original mode, and the ondeselect
+    // callback calls deselect here, blowing away our logic.
+    if (this.syncedTerraDraw.selected === featureId) {
+      this.syncedTerraDraw.syncedDeselectFeature(undefined, featureId);
+    }
+
+    this.isolatedEditId = featureId;
+    this.lastUserMode = this.userMode;
+    this._actualMode = SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME;
+    setTimeout(() => {
+      this.syncedTerraDraw.syncedSelectFeature(undefined, featureId, SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME);
+    });
+    return
+  }
+
+  deselectIsolatedEdit(): void {
+    if (this.isolatedEditId !== null) {
+      this.syncedTerraDraw.syncedDeselectFeature(undefined, this.isolatedEditId);
+      this.isolatedEditId = null;
+    };
+    if (this.lastUserMode !== null) {
+      this._actualMode = this.lastUserMode;
+    }
+    return
   }
 
   setUserMode(mode: Mode["mode"]): void {
@@ -133,7 +160,7 @@ export class SyncedTerraDraw {
 
   syncedSelectFeature(sourceInstanceId: string | undefined, featureId: FeatureId, selectMode?: string): ReturnType<TerraDraw["selectFeature"]> {
     const _featureId = featureId ?? null;
-    if (this.selected === _featureId)
+    if (this.selected === _featureId && this.mode === selectMode)
       return;
     this.selected = _featureId;
     this.draw?.selectFeature(_featureId, selectMode);
