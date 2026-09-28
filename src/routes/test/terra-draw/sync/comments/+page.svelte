@@ -49,7 +49,8 @@
   const secondary = "#000";
   const fillOpacity = 0.2;
 
-  const strokeOpacity = 0.9;
+  const strokeOpacity = 0.8;
+  const selectedStrokeOpacity = 1.0;
 
   const VIEWBOXSIZE = 256;
   const ARROWX0 = 256;
@@ -57,7 +58,7 @@
   const viewBoxWidthPx = 128;
   const viewBoxHeightPx = viewBoxWidthPx;
   const pixelsPerViewBoxPixel = VIEWBOXSIZE / viewBoxWidthPx;
-  const strokeWidth = 3;
+  const strokeWidth = 2;
   const selectedStrokeWidth = 3;
   const selectedOutlineWidth = 2;
 
@@ -66,6 +67,8 @@
   const midPointSize = 3;
   const lineWidth = 2;
   const selectedLineWidth = 4;
+  const markerArrowRelativeWidth = 5;
+  const selectedMarkerArrowRelativeWidth = 4;
 
   const svg = `
   <svg
@@ -80,8 +83,8 @@
         viewBox="0 0 12 12"
         refX="12"
         refY="6"
-        markerWidth="4"
-        markerHeight="4"
+        markerWidth="${markerArrowRelativeWidth}"
+        markerHeight="${markerArrowRelativeWidth}"
         orient="auto-start-reverse"
         fill="${primary}"
         fill-opacity="${strokeOpacity}"
@@ -123,8 +126,8 @@
           x2="${VIEWBOXSIZE / 2}"
           y2="${VIEWBOXSIZE / 2}"
           stroke="${primary}"
-          stroke-width="${strokeWidth * pixelsPerViewBoxPixel}"
           stroke-opacity="${strokeOpacity}"
+          stroke-width="${strokeWidth * pixelsPerViewBoxPixel}"
         />
       </g>
       <line
@@ -156,10 +159,11 @@
         viewBox="0 0 10 10"
         refX="10"
         refY="5"
-        markerWidth="4"
-        markerHeight="4"
+        markerWidth="${selectedMarkerArrowRelativeWidth}"
+        markerHeight="${selectedMarkerArrowRelativeWidth}"
         orient="auto-start-reverse"
         fill="${primary}"
+        fill-opacity="${selectedStrokeOpacity}"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" />
       </marker>
@@ -170,7 +174,7 @@
           dy="${selectedOutlineWidth * pixelsPerViewBoxPixel}"
           stdDeviation="0"
           flood-color="${shadow}"
-          flood-opacity="1"
+          flood-opacity="${selectedStrokeOpacity}"
         />
       </filter>
 
@@ -198,6 +202,7 @@
           x2="${VIEWBOXSIZE / 2}"
           y2="${VIEWBOXSIZE / 2}"
           stroke="${primary}"
+          stroke-opacity="${selectedStrokeOpacity}"
           stroke-width="${selectedStrokeWidth * pixelsPerViewBoxPixel}"
         />
       </g>
@@ -230,10 +235,11 @@
         viewBox="0 0 10 10"
         refX="10"
         refY="5"
-        markerWidth="4"
-        markerHeight="4"
+        markerWidth="${selectedMarkerArrowRelativeWidth}"
+        markerHeight="${selectedMarkerArrowRelativeWidth}"
         orient="auto-start-reverse"
         fill="${primary}"
+        fill-opacity="${selectedStrokeOpacity}"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" />
       </marker>
@@ -244,7 +250,7 @@
           dy="${selectedOutlineWidth * pixelsPerViewBoxPixel}"
           stdDeviation="0"
           flood-color="${shadow}"
-          flood-opacity="1"
+          flood-opacity="${selectedStrokeOpacity}"
         />
       </filter>
 
@@ -272,6 +278,7 @@
           x2="${VIEWBOXSIZE / 2}"
           y2="${VIEWBOXSIZE / 2}"
           stroke="${primary}"
+          stroke-opacity="${selectedStrokeOpacity}"
           stroke-width="${selectedStrokeWidth * pixelsPerViewBoxPixel}"
         />
       </g>
