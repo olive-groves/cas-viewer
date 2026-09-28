@@ -516,6 +516,13 @@
       <div>
         (Actual mode: {modeManager.actualMode})
       </div>
+      {#if syncedTerraDraw.selected}
+        <div>
+          <button onclick={() => syncedTerraDraw.selected !== null && modeManager.selectIsolatedEdit(syncedTerraDraw.selected)}>
+            Edit Selected
+          </button>
+        </div>
+      {/if}
     </div>
   </div>
 
