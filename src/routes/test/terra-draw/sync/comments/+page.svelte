@@ -12,6 +12,7 @@
   import { SyncedTerraDraw, SyncedTerraDrawModeManager, type Validator } from '$lib/v0.8/synced-terra-draw.svelte';
   import SyncedTerraDrawSetup from '$lib/v0.8/SyncedTerraDrawSetup.svelte';
   import AutogrowTextArea from '$lib/v0.8/AutogrowTextArea.svelte';
+  import FeatureList from '$lib/v0.8/FeatureList.svelte';
 
   // Proof
 
@@ -121,8 +122,8 @@
           fill="transparent"
         />
         <line
-          x1="${ARROWX0}"
-          y1="${ARROWY0}"
+          x1="${212}"
+          y1="${44}"
           x2="${VIEWBOXSIZE / 2}"
           y2="${VIEWBOXSIZE / 2}"
           stroke="${primary}"
@@ -591,75 +592,45 @@
         (Actual mode: {modeManager.actualMode})
       </div>
     </div>
+
+    {#if syncedTerraDraw.selected !== null && modeManager.actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME}
+      <div class="context">
+        <h3>Annotation Context</h3>
+      </div>
+    {/if}
   </div>
 
   <div class=sidebar>
 
-    <h2>Features</h2>
+    <details open>
+      <summary class="unselectable">Annotations</summary>
+      <FeatureList
+        features={syncedTerraDraw.snapshot}
+        selectedFeature={syncedTerraDraw.selected}
+        onFeatureHoverStart={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
+        onFeatureHoverEnd={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
+        onFeatureClick={(id) => syncedTerraDraw.syncedSelectFeature(undefined, id)}
+        onFeatureDoubleClick={() => console.warn("Implement fit-feature-on-map.")}
+        onFeatureEdit={(id) => modeManager.selectIsolatedEdit(id)}
+      />
+    </details>
 
-    <div class="features unselectable">
+    <label>
+      <select>
+        <option value="">Select a category</option>
+        {#each ["crack", "loss", "uncategorized",] as category}
+          <option value={category.toLowerCase()}>
+            {category}
+          </option>
+        {/each}
+      </select>
+    </label>
 
-      {#each syncedTerraDraw.snapshot as feature (feature.id)}
-        <div
-          role="application"
-          id={`feature-${feature.id}`}
-          class={["feature", {selected: syncedTerraDraw.selected === feature.id}]}
-          onpointerenter={() => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, feature.id, {_currentlyHovering: true})}
-          onpointerleave={() => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, feature.id, {_currentlyHovering: undefined})}
-          onclick={() => syncedTerraDraw.syncedSelectFeature(undefined, feature.id)}
-          ondblclick={() => console.warn("Implement fit-feature-on-map.")}
-        >
-          <h3>id: {feature.id}</h3>
-          <button onclick={() => modeManager.selectIsolatedEdit(feature.id)}>
-            Edit Geometry
-          </button>
-          <details>
-            <summary>geometry</summary>
-            <ul>
-              {#each Object.entries(feature.geometry) as [key, value] (key) }
-              <li>
-                {key}: {value}
-              </li>
-              {/each}
-            </ul>
-          </details>
-          <details>
-            <summary>properties</summary>
-            <ul>
-              {#each Object.entries(feature.properties) as [key, value] (key) }
-                <li>
-                  {key}: {value}
-                </li>
-              {/each}
-            </ul>
-          </details>
-          <label>
-            <select bind:value={feature.properties.category}>
-              <option value="">Select a category</option>
-              {#each ["crack", "loss", "uncategorized",] as category}
-                <option value={category.toLowerCase()}>
-                  {category}
-                </option>
-              {/each}
-            </select>
-          </label>
-          {#if feature.properties?.comment !== undefined}
+      <!-- Comment widget with edit, cancel, etc. instead of binding -->
+      <AutogrowTextArea
+        placeholder="Start a conversation"
+      />
 
-            <!-- Comment widget with edit, cancel, etc. instead of binding -->
-            <AutogrowTextArea
-              placeholder="Start a conversation"
-              bind:value={feature.properties.comment.text}
-            />
-
-            <!-- {#each feature.properties.comment.replies as }
-
-            {/each} -->
-
-          {/if}
-        </div>
-      {/each}
-
-    </div>
   </div>
 </div>
 
@@ -701,21 +672,11 @@
     min-height: 0;
 
     background-color: rgba(0, 0, 0, 25%);
+  }
 
-    .features {
-      display: flex;
-      flex-direction: column;
-      overflow: auto;
-
-      gap: 1em;
-      background-color: rgba(0, 0, 0, 25%);
-
-      .feature {
-        border: 1px solid transparent;
-        &.selected {
-          border: 1px solid white;
-        }
-      }
-    }
+  .context {
+    align-self: start;
+    justify-self: end;
+    z-index: 1;
   }
 </style>
