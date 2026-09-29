@@ -13,6 +13,7 @@
   import SyncedTerraDrawSetup from '$lib/v0.8/SyncedTerraDrawSetup.svelte';
   import AutogrowTextArea from '$lib/v0.8/AutogrowTextArea.svelte';
   import FeatureList from '$lib/v0.8/FeatureList.svelte';
+  import FeatureInspectorEditor from '$lib/v0.8/FeatureInspectorEditor.svelte';
 
   // Proof
 
@@ -593,9 +594,17 @@
       </div>
     </div>
 
-    {#if syncedTerraDraw.selected !== null && modeManager.actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME}
+    {#if syncedTerraDraw.selected !== null}
+      {@const feature = syncedTerraDraw.snapshot.find((f) => f.id === syncedTerraDraw.selected)}
       <div class="context">
-        <h3>Annotation Context</h3>
+        <FeatureInspectorEditor
+          mode={modeManager.actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME ? "editing" : "selected"}
+          properties={syncedTerraDraw.snapshot.find((f) => f.id === syncedTerraDraw.selected).properties}
+          geometry={feature?.geometry}
+          onEditClick={() => syncedTerraDraw.selected !== null && modeManager.selectIsolatedEdit(syncedTerraDraw.selected)}
+          onDoneClick={() => modeManager.deselectIsolatedEdit("select", true)}
+          onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
+        />
       </div>
     {/if}
   </div>
@@ -614,22 +623,6 @@
         onFeatureEdit={(id) => modeManager.selectIsolatedEdit(id)}
       />
     </details>
-
-    <label>
-      <select>
-        <option value="">Select a category</option>
-        {#each ["crack", "loss", "uncategorized",] as category}
-          <option value={category.toLowerCase()}>
-            {category}
-          </option>
-        {/each}
-      </select>
-    </label>
-
-      <!-- Comment widget with edit, cancel, etc. instead of binding -->
-      <AutogrowTextArea
-        placeholder="Start a conversation"
-      />
 
   </div>
 </div>
@@ -678,5 +671,6 @@
     align-self: start;
     justify-self: end;
     z-index: 1;
+    margin: var(--gap);
   }
 </style>

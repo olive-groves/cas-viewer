@@ -92,14 +92,19 @@ export class SyncedTerraDrawModeManager {
     return
   }
 
-  deselectIsolatedEdit(): void {
-    if (this.isolatedEditId !== null) {
-      this.syncedTerraDraw.syncedDeselectFeature(undefined, this.isolatedEditId);
+  deselectIsolatedEdit(userMode?: Mode["mode"], keepSelected: boolean = false): void {
+    const id = this.isolatedEditId;
+    if (id !== null) {
+      this.syncedTerraDraw.syncedDeselectFeature(undefined, id);
       this.isolatedEditId = null;
     };
-    if (this.lastUserMode !== null) {
+    if (userMode) {
+      this.setUserMode(userMode);
+    } else if (this.lastUserMode !== null) {
       this._actualMode = this.lastUserMode;
     }
+    if (keepSelected && (id !== null))
+      this.syncedTerraDraw.syncedSelectFeature(undefined, id);
     return
   }
 

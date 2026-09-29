@@ -44,22 +44,15 @@
       onclick={() => onFeatureClick?.(featureId)}
       ondblclick={() => onFeatureDoubleClick?.(featureId)}
     >
-      <div class="category">
-        {feature.properties.category}
+      <div class="title">
+        {feature.properties.title || `Untitled ${feature.geometry.type ?? ""}`}
       </div>
-      <label>
-        <select bind:value={feature.properties.category}>
-          <option value="">Select a category</option>
-          {#each ["crack", "loss", "uncategorized",] as category}
-            <option value={category.toLowerCase()}>
-              {category}
-            </option>
-          {/each}
-        </select>
-      </label>
+      <div class="category">
+        {feature.properties.category || "Uncategorized"}
+      </div>
       <div class="tags">
         {#each feature.properties?.tags as tag (tag)}
-          {tag}
+        {tag}
         {/each}
       </div>
       <div class="edit" style:margin-inline-start=auto>
