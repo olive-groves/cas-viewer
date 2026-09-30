@@ -44,16 +44,20 @@
       onclick={() => onFeatureClick?.(featureId)}
       ondblclick={() => onFeatureDoubleClick?.(featureId)}
     >
-      <div class="title">
-        {feature.properties.title || `Untitled ${feature.geometry.type ?? ""}`}
-      </div>
       <div class="category">
-        {feature.properties.category || "Uncategorized"}
+        <span class={{unfilled: !feature.properties.category}}>
+          {feature.properties.category || "uncategorized"}
+        </span>
       </div>
       <div class="tags">
         {#each feature.properties?.tags as tag (tag)}
-        {tag}
+          {tag}
         {/each}
+      </div>
+      <div class="title">
+        <span class={{unfilled: !feature.properties.title}}>
+          {feature.properties.title || `Untitled ${feature.geometry.type ?? ""}`}
+        </span>
       </div>
       <div class="edit" style:margin-inline-start=auto>
         <button onclick={() => onFeatureEdit?.(featureId)}>
@@ -71,8 +75,7 @@
     flex-direction: column;
     overflow: auto;
 
-    gap: 0.5em;
-    background-color: rgba(0, 0, 0, 25%);
+    background-color: color-mix(in srgb, Canvas, transparent 5%);
 
     .feature {
       display: flex;
@@ -86,5 +89,11 @@
         border: 1px solid white;
       }
     }
+  }
+  .category::first-letter {
+    text-transform: capitalize;
+  }
+  .unfilled {
+    color: color-mix(in srgb, CanvasText, Canvas 50%);
   }
 </style>
