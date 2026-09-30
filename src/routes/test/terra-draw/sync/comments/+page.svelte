@@ -483,7 +483,7 @@
 
           // annotation text info
           category: "",
-          tags: ["tag1", "tag2"],
+          tags: [],
           title: "",
           comment: {
             created: "",

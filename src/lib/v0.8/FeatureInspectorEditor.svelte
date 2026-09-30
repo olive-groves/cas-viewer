@@ -5,6 +5,7 @@
   } from 'terra-draw';
   import AutogrowTextArea from './AutogrowTextArea.svelte';
   import ClickToRevealButton from './ClickToRevealButton.svelte';
+  import { SvelteMap } from 'svelte/reactivity';
 
   // Process/technique terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300229438
   // Condition/effect terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300209168
@@ -49,6 +50,78 @@
       },
     },
   }
+  const tag_map = new SvelteMap([
+    [
+      "priority",
+      {
+        "description": "Requires immediate attention.",
+      },
+    ],
+    [
+      "follow-up",
+      {
+        "description": "Inspect on later date.",
+      },
+    ],
+    [
+      "unresolved",
+      {
+        "description": "Not yet addressed.",
+      },
+    ],
+    [
+      "resolved",
+      {
+        "description": "Addressed.",
+      },
+    ],
+    [
+      "verified",
+      {
+        "description": "Verified by visual inspection, microscope, or other method.",
+      },
+    ],
+  ])
+
+  const tag_ch = new SvelteMap([
+    [
+      "priority",
+      {
+        "chroma": undefined,
+        "hue": 37,
+      }
+    ],
+    [
+      "follow-up",
+      {
+        "chroma": undefined,
+        "hue": 200,
+      }
+    ],
+    [
+      "unresolved",
+      {
+        "chroma": undefined,
+        "hue": 100,
+      }
+      ,
+    ],
+    [
+      "resolved",
+      {
+        "chroma": undefined,
+        "hue": 144,
+      }
+      ,
+    ],
+    [
+      "verified",
+      {
+        "chroma": undefined,
+        "hue": 254,
+      }
+    ],
+  ])
 
   let {
     mode = "selected",
@@ -71,7 +144,7 @@
   } = $props();
 </script>
 
-<div class="panel">
+<div class={["panel", mode]}>
 
   {#if mode === "selected"}
 
@@ -92,13 +165,15 @@
     </div>
     <div class="content">
       <div class="tags">
-        {#each properties?.tags as tag (tag)}
-          <div>
-            {tag}
+        {#each properties?.tags as tag}
+          <div class="tag" style:--chroma={tag_ch.get(tag)?.chroma} style:--hue={tag_ch.get(tag)?.hue}>
+            <div>
+              {tag}
+            </div>
           </div>
         {:else}
           <div class="unfilled">
-            No tags
+            Untagged
           </div>
         {/each}
       </div>
@@ -128,6 +203,7 @@
 
     <div class="titlebar">
       <label>
+        <div class="unselectable">Category</div>
         <select bind:value={properties.category}>
           <option value="">Select a category</option>
           {#each Object.values(processes_and_techniques_as_effect) as supervalue (supervalue)}
@@ -158,6 +234,47 @@
       </div>
     </div>
     <div class="content">
+      <div class="tag-field">
+        <div class="field-heading unselectable">
+          Tags
+        </div>
+        <div class="tags">
+          {#each properties?.tags as tag, i}
+            <div class="tag" style:--chroma={tag_ch.get(tag)?.chroma} style:--hue={tag_ch.get(tag)?.hue}>
+              <div>
+                {tag}
+              </div>
+              <button onclick={() => properties?.tags.splice(i, 1)}>
+                ×
+              </button>
+            </div>
+          {/each}
+          <ClickToRevealButton>
+            {#snippet button(reveal)}
+              <button onclick={() => reveal()}>
+                + Tag
+              </button>
+            {/snippet}
+
+            <select onchange={(e) => {
+              const value = e.target?.value;
+              if (value === undefined || value === "")
+                return;
+              if (properties?.tags?.includes(value))
+                return;
+              properties?.tags?.push(e.target.value);
+              e.target.value = "";
+            }}
+            >
+              <option value="">Select a tag</option>
+              {#each [...tag_map.keys()].filter((t) => !properties?.tags.includes(t)) as tag}
+                <option value={tag}>{tag}</option>
+              {/each}
+            </select>
+
+          </ClickToRevealButton>
+        </div>
+      </div>
       <div class="title">
         <ClickToRevealButton initiallyRevealed={properties?.title}>
           {#snippet button(reveal)}
@@ -166,12 +283,15 @@
             </button>
           {/snippet}
 
-          <div class="heading unselectable">Title</div>
-          <input type="text"
-            placeholder={`Untitled ${geometry?.type}`}
-            bind:value={properties.title}
-            maxlength="30"
-          />
+          <label>
+            <div class="unselectable">Title</div>
+            <input type="text"
+              placeholder={`Untitled ${geometry?.type}`}
+              bind:value={properties.title}
+              maxlength="30"
+              onkeyup={(e) => e.key === "Enter" && document.activeElement?.blur()}
+            />
+          </label>
 
         </ClickToRevealButton>
       </div>
@@ -183,12 +303,14 @@
             </button>
           {/snippet}
 
-          <div class="heading unselectable">Comment</div>
-          <AutogrowTextArea
-            placeholder="Start a comment"
-            bind:value={properties.comment.text}
-            rows={2}
-          />
+          <label>
+            <div class="unselectable">Comment</div>
+            <AutogrowTextArea
+              placeholder="Start a comment"
+              bind:value={properties.comment.text}
+              rows={2}
+            />
+          </label>
 
         </ClickToRevealButton>
       </div>
@@ -208,9 +330,9 @@
     display: flex;
     flex-direction: column;
     gap: var(--gap);
-    background: color-mix(in srgb, Canvas, CanvasText 10%);
+    background: color-mix(in srgb, Canvas, CanvasText 8%);
     padding: var(--gap);
-    border: 1px solid color-mix(in srgb, CanvasText, Canvas 50%);
+    border: 1px solid color-mix(in srgb, CanvasText, Canvas 80%);
     border-radius: var(--gap);
 
     button {
@@ -245,7 +367,8 @@
         color: color-mix(in srgb, CanvasText, Canvas 25%);
       }
     }
-    .heading {
+    label > div,
+    .field-heading {
       font-size: small;
       font-weight: bolder;
       color: color-mix(in srgb, CanvasText, Canvas 25%);
@@ -254,12 +377,32 @@
       display: flex;
       flex-direction: column;
       gap: var(--gap);
-      .tags {
-        display: flex;
-        gap: calc(2 * var(--gap));
-        .tag {
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: calc(var(--gap));
+      .tag {
 
+        --color: oklch(from CanvasText var(--lightness, 0.7) var(--chroma, 0.2) var(--hue, h));
+        display: flex;
+        font-size: 0.9rem;
+        border: 1px solid var(--color);
+        border-radius: var(--gap);
+        color: color-mix(in oklch, var(--color), CanvasText 80%);
+        background: color-mix(in oklch, var(--color), Canvas 85%);
+        padding-inline: var(--gap);
+        button {
+          background: transparent;
+          padding: 0 var(--gap);
         }
+      }
+    }
+    &.editing {
+      border: 1px solid color-mix(in srgb, CanvasText, Canvas 0%);
+      .tag {
+        padding-inline: 0;
+        padding-inline-start: var(--gap);
       }
     }
   }
