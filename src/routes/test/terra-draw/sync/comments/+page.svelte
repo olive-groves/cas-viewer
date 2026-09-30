@@ -686,7 +686,7 @@
     z-index: 1;
     margin: var(--gap);
     width: 100%;
-    max-width: 300px;
+    max-width: 350px;
     overflow-y: auto;
   }
 </style>

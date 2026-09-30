@@ -142,6 +142,39 @@
     onDrawAnotherClick?: () => void;
     onEditingCloseClick?: () => void;
   } = $props();
+
+  function p(n: number): "s" | "" {
+    return n !== 1 ? "s" : "";
+  }
+
+  let friendlyLocalDateTime: string | undefined = $derived.by(() => {
+    const created = properties?.created;
+    if (typeof created !== "string")
+      return undefined;
+    const now = new Date();
+    const date = new Date(created);
+    let difference_ms = now.getTime() - date.getTime();
+    let n: number;
+    let f: string;
+    if (difference_ms < 3000) {
+      f = `A few seconds ago`
+    } else if (difference_ms < 60000) {  // < 60 sec
+      n = Math.round(difference_ms / 1000);
+      f = `${n} second${p(n)} ago`;
+    } else if (difference_ms < 3600000) {  // < 60 min
+      n = Math.round(difference_ms / 60000);
+      f = `${n} minute${p(n)} ago`;
+    } else if (difference_ms < 86400000) {  // < 24 hr
+      n = Math.round(difference_ms / 3600000);
+      f = `${n} hour${p(n)} ago`;
+    } else if (difference_ms < 604800000) {  // < 7 d
+      n = Math.round(difference_ms / 86400000);
+      f = `${n} day${p(n)} ago (${date.getDay()})`;
+    } else {
+      f = `${date.getDate()} ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()} (${date.getDay()}) at ${date.getHours()}:${date.getMinutes()}`
+    }
+    return f
+  })
 </script>
 
 <div class={["panel", mode]}>
@@ -177,32 +210,32 @@
           </div>
         {/each}
       </div>
-      <div class="title">
-        {#if properties?.title}
+      <div class="created">
+        <time datetime={properties?.created} title={properties?.created}>{friendlyLocalDateTime}</time>
+      </div>
+      {#if properties?.title}
+        <div class="title">
           <span class={{unfilled: !properties?.title}}>
             {properties?.title || `Untitled ${geometry?.type}`}
           </span>
-        {/if}
-      </div>
-      <div class="comment">
-        {#if properties?.comment?.text}
+        </div>
+      {/if}
+      {#if properties?.comment?.text}
+        <div class="comment">
           <p>{properties?.comment?.text}</p>
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
     <div class="actionbar">
       <button onclick={() => onEditClick?.()}>
         Edit
-      </button>
-      <button onclick={() => onDrawAnotherClick?.()}>
-        Draw Another {geometry?.type}
       </button>
     </div>
 
   {:else if mode === "editing"}
 
     <div class="titlebar">
-      <label>
+      <label class="category">
         <div class="unselectable">Category</div>
         <select bind:value={properties.category}>
           <option value="">Select a category</option>
@@ -319,6 +352,9 @@
       <button onclick={() => onDoneClick?.()}>
         Done
       </button>
+      <button onclick={() => onDrawAnotherClick?.()}>
+        Done & Draw Another {geometry?.type}
+      </button>
     </div>
 
   {/if}
@@ -339,11 +375,21 @@
       text-transform: capitalize;
       padding: 0 calc(2 * var(--gap));
     }
+    .category {
+      span,
+      select {
+        font-size: larger;
+      }
+    }
     .category::first-letter {
       text-transform: capitalize;
     }
     .unfilled {
-      color: color-mix(in srgb, CanvasText, Canvas 50%);
+      color: color-mix(in srgb, CanvasText, Canvas 30%);
+    }
+    time {
+      font-size: 0.9rem;
+      color: color-mix(in srgb, CanvasText, Canvas 40%);
     }
 
     .titlebar {
@@ -351,7 +397,7 @@
     }
     .actionbar {
       display: flex;
-      padding-top: var(--gap);
+      padding-top: calc(2 * var(--gap));
       gap: var(--gap);
     }
     .title {
@@ -364,13 +410,15 @@
     .comment {
       p {
         line-height: 0.85lh;
-        color: color-mix(in srgb, CanvasText, Canvas 25%);
+        color: color-mix(in srgb, CanvasText, Canvas 10%);
       }
+    }
+    .created {
+      color: color-mix(in srgb, CanvasText, Canvas 50%);
     }
     label > div,
     .field-heading {
       font-size: small;
-      font-weight: bolder;
       color: color-mix(in srgb, CanvasText, Canvas 25%);
     }
     .content {
