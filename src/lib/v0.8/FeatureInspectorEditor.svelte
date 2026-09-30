@@ -4,6 +4,7 @@
     GeoJSONStoreGeometries,
   } from 'terra-draw';
   import AutogrowTextArea from './AutogrowTextArea.svelte';
+  import ClickToRevealButton from './ClickToRevealButton.svelte';
 
   // Process/technique terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300229438
   // Condition/effect terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300209168
@@ -71,7 +72,9 @@
 </script>
 
 <div class="panel">
+
   {#if mode === "selected"}
+
     <div class="titlebar">
       <div class="category">
         <span class={{unfilled: !properties.category}}>
@@ -88,10 +91,28 @@
       </div>
     </div>
     <div class="content">
-      <div>
-        <span class={{unfilled: !properties?.title}}>
-          {properties?.title || `Untitled ${geometry?.type}`}
-        </span>
+      <div class="tags">
+        {#each properties?.tags as tag (tag)}
+          <div>
+            {tag}
+          </div>
+        {:else}
+          <div class="unfilled">
+            No tags
+          </div>
+        {/each}
+      </div>
+      <div class="title">
+        {#if properties?.title}
+          <span class={{unfilled: !properties?.title}}>
+            {properties?.title || `Untitled ${geometry?.type}`}
+          </span>
+        {/if}
+      </div>
+      <div class="comment">
+        {#if properties?.comment?.text}
+          <p>{properties?.comment?.text}</p>
+        {/if}
       </div>
     </div>
     <div class="actionbar">
@@ -102,7 +123,9 @@
         Draw Another {geometry?.type}
       </button>
     </div>
+
   {:else if mode === "editing"}
+
     <div class="titlebar">
       <label>
         <select bind:value={properties.category}>
@@ -136,16 +159,38 @@
     </div>
     <div class="content">
       <div class="title">
-        <input
-          type="checkbox"
-          checked={false}
-        />
-        <div class="title">
+        <ClickToRevealButton initiallyRevealed={properties?.title}>
+          {#snippet button(reveal)}
+            <button onclick={() => reveal()}>
+              + Title
+            </button>
+          {/snippet}
+
+          <div class="heading unselectable">Title</div>
           <input type="text"
             placeholder={`Untitled ${geometry?.type}`}
             bind:value={properties.title}
+            maxlength="30"
           />
-        </div>
+
+        </ClickToRevealButton>
+      </div>
+      <div class="comment">
+        <ClickToRevealButton initiallyRevealed={properties?.comment?.text}>
+          {#snippet button(reveal)}
+            <button onclick={() => reveal()}>
+              + Comment
+            </button>
+          {/snippet}
+
+          <div class="heading unselectable">Comment</div>
+          <AutogrowTextArea
+            placeholder="Start a comment"
+            bind:value={properties.comment.text}
+            rows={2}
+          />
+
+        </ClickToRevealButton>
       </div>
     </div>
     <div class="actionbar">
@@ -153,7 +198,9 @@
         Done
       </button>
     </div>
+
   {/if}
+
 </div>
 
 <style>
@@ -163,7 +210,6 @@
     gap: var(--gap);
     background: color-mix(in srgb, Canvas, CanvasText 10%);
     padding: var(--gap);
-    min-width: 300px;
     border: 1px solid color-mix(in srgb, CanvasText, Canvas 50%);
     border-radius: var(--gap);
 
@@ -186,8 +232,35 @@
       padding-top: var(--gap);
       gap: var(--gap);
     }
+    .title {
+      span,
+      input[type=text] {
+        font-size: larger;
+      }
+      padding-block-start: 0.5lh;
+    }
+    .comment {
+      p {
+        line-height: 0.85lh;
+        color: color-mix(in srgb, CanvasText, Canvas 25%);
+      }
+    }
+    .heading {
+      font-size: small;
+      font-weight: bolder;
+      color: color-mix(in srgb, CanvasText, Canvas 25%);
+    }
     .content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      .tags {
+        display: flex;
+        gap: calc(2 * var(--gap));
+        .tag {
 
+        }
+      }
     }
   }
 

@@ -11,7 +11,6 @@
   } from 'terra-draw';
   import { SyncedTerraDraw, SyncedTerraDrawModeManager, type Validator } from '$lib/v0.8/synced-terra-draw.svelte';
   import SyncedTerraDrawSetup from '$lib/v0.8/SyncedTerraDrawSetup.svelte';
-  import AutogrowTextArea from '$lib/v0.8/AutogrowTextArea.svelte';
   import FeatureList from '$lib/v0.8/FeatureList.svelte';
   import FeatureInspectorEditor from '$lib/v0.8/FeatureInspectorEditor.svelte';
 
@@ -484,20 +483,20 @@
 
           // annotation text info
           category: "",
-          tags: [],
+          tags: ["tag1", "tag2"],
           title: "",
           comment: {
             created: "",
             modified: "",
             text: "",
             author: "",
-            replies: [
+            comments: [
               // {
               //   created: "",
               //   modified: "",
               //   text: "",
               //   author: "",
-              //   replies: [], // NESTED REPLIES NOT SUPPORTED
+              //   comments: [], // NESTED REPLIES NOT SUPPORTED
               // }
             ],
           },
@@ -684,5 +683,8 @@
     justify-self: end;
     z-index: 1;
     margin: var(--gap);
+    width: 100%;
+    max-width: 300px;
+    overflow-y: auto;
   }
 </style>
