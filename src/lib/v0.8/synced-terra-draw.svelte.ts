@@ -138,7 +138,8 @@ export class SyncedTerraDraw {
   modeFactory: ModeFactory;
   readonly modeNames: Mode["mode"][];
 
-  selected: string | number | null = $state(null);
+  private _selected: FeatureId | null = $state(null);
+  readonly selected: FeatureId | null = $derived(this._selected);
   editing: string | number | null = $state(null);
 
   onreadyListeners: TerraDrawEventListeners["ready"][] = [];
@@ -180,7 +181,7 @@ export class SyncedTerraDraw {
     const _featureId = featureId ?? null;
     if (this.selected === _featureId && this.mode === selectMode)
       return;
-    this.selected = _featureId;
+    this._selected = _featureId;
     this.draw?.selectFeature(_featureId, selectMode);
     // FIXME: Avoid race condition a better way? Or a don't-propagate-select mode?
     this.instances.forEach((_instance, _instanceId) => {
@@ -192,17 +193,24 @@ export class SyncedTerraDraw {
     })
   }
 
-  syncedDeselectFeature(sourceInstanceId: string | undefined, featureId: FeatureId): ReturnType<TerraDraw["deselectFeature"]> {
-    if (this.selected === null)
+  syncedDeselectFeature(sourceInstanceId: string | undefined, featureId: FeatureId | null): ReturnType<TerraDraw["deselectFeature"]> {
+    if (this.selected === null) {
+      console.warn("Skipping synced deselect because nothing is currently selected.")
       return;
-    this.selected = null;
-    this.draw?.deselectFeature(featureId);
+    }
+    const toBeDeselected = featureId === null ? this.selected : featureId;
+    if (toBeDeselected !== this.selected) {
+      console.warn(`Skipping synced deselect because feature ${toBeDeselected} is not currently selected — ${this.selected === null ? "nothing is" : `feature ${this.selected} is`}. Pass 'null' to deselect the currently selected feature regardless.`);
+      return;
+    }
+    this._selected = null;
+    this.draw?.deselectFeature(toBeDeselected);
     this.instances.forEach((_instance, _instanceId) => {
       if (_instanceId === sourceInstanceId)
         return;
-      _instance.deselectFeature(featureId);
+      _instance.deselectFeature(toBeDeselected);
     });
-    this.onSyncedDeselect(sourceInstanceId, featureId);
+    this.onSyncedDeselect(sourceInstanceId, toBeDeselected);
     return
   }
 

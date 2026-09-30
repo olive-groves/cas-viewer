@@ -607,6 +607,8 @@
           geometry={feature?.geometry}
           onEditClick={() => syncedTerraDraw.selected !== null && modeManager.selectIsolatedEdit(syncedTerraDraw.selected)}
           onDoneClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
+          onSelectedCloseClick={() => syncedTerraDraw.syncedDeselectFeature(undefined, null)}
+          onEditingCloseClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
           onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
         />
       </div>
