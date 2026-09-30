@@ -84,6 +84,8 @@ export class SyncedTerraDrawModeManager {
   // if clicked away, exits isolated edit mode and returns to the previous mode.
   // If null, deselects.
   selectIsolatedEdit(featureId: FeatureId): void {
+    if (featureId === this.isolatedEditId && featureId === this.syncedTerraDraw.selected)
+      return;
     // If the feature being selected for isolated edit is already selected in a
     // different mode, then when we deselect it first. Otherwise, by selecting it for
     // isolated edit, it gets deselected from its original mode, and the ondeselect
@@ -282,6 +284,7 @@ export class SyncedTerraDraw {
    * Only updates parent snapshot state; draw instances are kept TerraDraw-relevant.
    * Use `syncedUpdatedFeatureProperties` for draw instances.
    * This abides by JSON: undefined values remove their keys!
+   * TODO: Add internal property setter to support modified date-time?
    */
   updateSnapshotFeatureProperties(...args: Parameters<TerraDraw["updateFeatureProperties"]>): ReturnType<TerraDraw["updateFeatureProperties"]> {
     const feature = this.snapshot.find((f) => f.id === args[0]);
