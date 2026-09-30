@@ -42,8 +42,8 @@
     "physicochemical processes": {
       "soap": "Saponification · A process involving hydrolysis of an organic compound especially by alkali with the formation of salts of the fatty acids together with glycerol resulting in soap or soapy deposits.",
     },
-    "Non-Getty AAT": {
-      "Non-Getty AAT": {
+    "Non-Getty Art & Architecture Thesaurus": {
+      "Non-Getty Art & Architecture Thesaurus": {
         "loss": "Missing original material due to damage, aging, or deterioration.",
       },
     },
@@ -89,7 +89,9 @@
     </div>
     <div class="content">
       <div>
-        {properties?.title || `Untitled ${geometry?.type}`}
+        <span class={{unfilled: !properties?.title}}>
+          {properties?.title || `Untitled ${geometry?.type}`}
+        </span>
       </div>
     </div>
     <div class="actionbar">
@@ -134,10 +136,16 @@
     </div>
     <div class="content">
       <div class="title">
-        <input type="text"
-          placeholder={`Untitled ${geometry?.type}`}
-          bind:value={properties.title}
+        <input
+          type="checkbox"
+          checked={false}
         />
+        <div class="title">
+          <input type="text"
+            placeholder={`Untitled ${geometry?.type}`}
+            bind:value={properties.title}
+          />
+        </div>
       </div>
     </div>
     <div class="actionbar">

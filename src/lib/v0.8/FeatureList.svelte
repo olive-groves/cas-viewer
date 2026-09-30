@@ -60,7 +60,7 @@
         </span>
       </div>
       <div class="edit" style:margin-inline-start=auto>
-        <button onclick={() => onFeatureEdit?.(featureId)}>
+        <button onclick={(e) => {onFeatureEdit?.(featureId); e.stopPropagation();} }>
           Edit
         </button>
       </div>

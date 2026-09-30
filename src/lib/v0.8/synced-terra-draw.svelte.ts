@@ -48,9 +48,15 @@ export class SyncedTerraDrawModeManager {
   private isolatedEditId: FeatureId | null = $state(null);
   private lastUserMode: string | null = $state(null);
 
-  constructor(syncedTerraDraw: SyncedTerraDraw, options = { userMode: undefined, isolatedEditOnFinish: true }) {
+  static LAST_MODE = Symbol("last");
+  modeOnDeselect: typeof SyncedTerraDrawModeManager.LAST_MODE | Mode["mode"] = SyncedTerraDrawModeManager.LAST_MODE;
+
+  constructor(
+    syncedTerraDraw: SyncedTerraDraw,
+    { initialUserMode = undefined, isolatedEditOnFinish = true, modeOnDeselect = undefined }: { initialUserMode?: Mode["mode"], isolatedEditOnFinish?: boolean, modeOnDeselect?: Mode["mode"]} = {}
+  ) {
     this.syncedTerraDraw = syncedTerraDraw;
-    this.isolatedEditOnFinish = options.isolatedEditOnFinish;
+    this.isolatedEditOnFinish = isolatedEditOnFinish;
 
     $effect.root(() => {
       this.syncedTerraDraw.mode = this.actualMode;
@@ -58,7 +64,7 @@ export class SyncedTerraDrawModeManager {
 
     // Auto-select listeners
     this.syncedTerraDraw.onSyncedDeselectListeners.push((_, featureId) => {
-      if (featureId === this.isolatedEditId) {
+      if (featureId === this.isolatedEditId && this._actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME) {
         this.deselectIsolatedEdit();
       }
     });
@@ -68,7 +74,10 @@ export class SyncedTerraDrawModeManager {
       }
     });
 
-    this.setUserMode(options.userMode ?? this.syncedTerraDraw.modeFactory().filter((mode) => mode.type === "select").find((mode) => mode.mode.includes("select"))?.mode ?? "");
+    this.setUserMode(initialUserMode ?? this.syncedTerraDraw.modeFactory().filter((mode) => mode.type === "select").find((mode) => mode.mode.includes("select"))?.mode ?? "");
+
+    if (modeOnDeselect)
+      this.modeOnDeselect = modeOnDeselect;
   }
 
   // Select a feature with isolated edit mode, allowing edits only on that feature;
@@ -98,10 +107,13 @@ export class SyncedTerraDrawModeManager {
       this.syncedTerraDraw.syncedDeselectFeature(undefined, id);
       this.isolatedEditId = null;
     };
-    if (userMode) {
-      this.setUserMode(userMode);
-    } else if (this.lastUserMode !== null) {
-      this._actualMode = this.lastUserMode;
+    const _mode = userMode ?? this.modeOnDeselect;
+    if (_mode === SyncedTerraDrawModeManager.LAST_MODE) {
+      if (this.lastUserMode !== null) {
+        this._actualMode = this.lastUserMode;
+      }
+    } else {
+      this.setUserMode(_mode.toString());
     }
     if (keepSelected && (id !== null))
       this.syncedTerraDraw.syncedSelectFeature(undefined, id);
@@ -111,11 +123,11 @@ export class SyncedTerraDrawModeManager {
   setUserMode(mode: Mode["mode"]): void {
     // If userMode is set, set the actualMode
     this._userMode = mode;
+    this._actualMode = mode;
     const currentlySelected = this.syncedTerraDraw.selected;
     if (currentlySelected !== null) {
       this.syncedTerraDraw.syncedDeselectFeature(undefined, currentlySelected);
     }
-    this._actualMode = this.userMode;
     return
   }
 }

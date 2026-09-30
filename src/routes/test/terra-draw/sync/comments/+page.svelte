@@ -452,7 +452,7 @@
     ];
   }
   let syncedTerraDraw = new SyncedTerraDraw(modeFactory);
-  let modeManager = new SyncedTerraDrawModeManager(syncedTerraDraw);
+  let modeManager = new SyncedTerraDrawModeManager(syncedTerraDraw, {modeOnDeselect: "select"});
 
   let zoom = $state(0)
   let center = $state([0, 0])
@@ -525,6 +525,11 @@
     const element = document.getElementById(`feature-${syncedTerraDraw.selected}`);
     element?.scrollIntoView({block: "center", behavior: "smooth"});
   })
+
+  let tags = $state([
+    "urgent",
+    "resolved",
+  ])
 
 </script>
 
@@ -602,7 +607,7 @@
           properties={syncedTerraDraw.snapshot.find((f) => f.id === syncedTerraDraw.selected).properties}
           geometry={feature?.geometry}
           onEditClick={() => syncedTerraDraw.selected !== null && modeManager.selectIsolatedEdit(syncedTerraDraw.selected)}
-          onDoneClick={() => modeManager.deselectIsolatedEdit("select", true)}
+          onDoneClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
           onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
         />
       </div>
@@ -618,7 +623,14 @@
         selectedFeature={syncedTerraDraw.selected}
         onFeatureHoverStart={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
         onFeatureHoverEnd={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
-        onFeatureClick={(id) => syncedTerraDraw.syncedSelectFeature(undefined, id)}
+        onFeatureClick={(id) => {
+          if (modeManager.actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME) {
+            modeManager.selectIsolatedEdit(id);
+          } else {
+            modeManager.setUserMode("select");
+            syncedTerraDraw.syncedSelectFeature(undefined, id);
+          }
+        }}
         onFeatureDoubleClick={() => console.warn("Implement fit-feature-on-map.")}
         onFeatureEdit={(id) => modeManager.selectIsolatedEdit(id)}
       />
