@@ -124,10 +124,11 @@ export class SyncedTerraDrawModeManager {
     // If userMode is set, set the actualMode
     this._userMode = mode;
     this._actualMode = mode;
-    const currentlySelected = this.syncedTerraDraw.selected;
-    if (currentlySelected !== null) {
-      this.syncedTerraDraw.syncedDeselectFeature(undefined, currentlySelected);
-    }
+    // TODO: Determine whether this was ultimately necessary to deselect selected.
+    // const currentlySelected = this.syncedTerraDraw.selected;
+    // if (currentlySelected !== null) {
+    //   this.syncedTerraDraw.syncedDeselectFeature(undefined, currentlySelected);
+    // }
     return
   }
 }
