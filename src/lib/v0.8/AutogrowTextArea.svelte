@@ -48,6 +48,8 @@
       border: 1px solid transparent;
       border-radius: calc(var(--gap) / 2);
       font: inherit;
+      /* Cursor is hidden behind thicker selected border, so we pad. */
+      padding: 1px;
     }
   }
 </style>
