@@ -478,8 +478,8 @@
           // consider "custom-" prefix?
           created: now.toISOString(),
           modified: now.toISOString(),
-          "created-by": "author0",
-          "modified-by": "author1",
+          "created-by": "Author W. Created",
+          "modified-by": "Author W. Modified",
 
           // annotation text info
           category: "",
@@ -498,6 +498,13 @@
               //   author: "",
               //   comments: [], // NESTED REPLIES NOT SUPPORTED
               // }
+              {
+                text: "Reply 1.",
+                created: now.toISOString(),
+              },
+              {
+                text: "Reply 2."
+              },
             ],
           },
           references: [

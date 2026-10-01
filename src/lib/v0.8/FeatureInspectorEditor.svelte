@@ -147,12 +147,11 @@
     return n !== 1 ? "s" : "";
   }
 
-  let friendlyLocalDateTime: string | undefined = $derived.by(() => {
-    const created = properties?.created;
-    if (typeof created !== "string")
+  function getFriendlyLocalDateTime(datetime: Date["toISOString"]): string | undefined {
+    if (typeof datetime !== "string")
       return undefined;
     const now = new Date();
-    const date = new Date(created);
+    const date = new Date(datetime);
     let difference_ms = now.getTime() - date.getTime();
     let n: number;
     let f: string;
@@ -174,7 +173,8 @@
       f = `${date.getDate()} ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()} (${date.getDay()}) at ${date.getHours()}:${date.getMinutes()}`
     }
     return f
-  })
+  }
+
 </script>
 
 <div class={["panel", mode]}>
@@ -210,8 +210,12 @@
           </div>
         {/each}
       </div>
-      <div class="created">
-        <time datetime={properties?.created} title={properties?.created}>{friendlyLocalDateTime}</time>
+
+      <div class="authorship">
+        <div class="author">
+          {properties?.["created-by"] ?? "Author unknown"}
+        </div>
+        <time datetime={properties?.created} title={properties?.created}>{getFriendlyLocalDateTime(properties?.created)}</time>
       </div>
       {#if properties?.title}
         <div class="title">
@@ -223,6 +227,23 @@
       {#if properties?.comment?.text}
         <div class="comment">
           <p>{properties?.comment?.text}</p>
+        </div>
+      {/if}
+      {#if properties?.comment?.comments}
+        <div class="replies">
+          {#each properties?.comment?.comments as reply, i (i)}
+            {#if reply?.text}
+              <div class="reply">
+                <div class="authorship">
+                  <div class="author">
+                    {reply?.["created-by"] ?? "Author unknown"}
+                  </div>
+                  <time datetime={reply?.created} title={reply?.created}>{getFriendlyLocalDateTime(reply?.created)}</time>
+                </div>
+                <p>{reply?.text}</p>
+              </div>
+            {/if}
+          {/each}
         </div>
       {/if}
     </div>
@@ -378,7 +399,7 @@
     .category {
       span,
       select {
-        font-size: larger;
+        font-size: 1.35rem;
       }
     }
     .category::first-letter {
@@ -387,8 +408,14 @@
     .unfilled {
       color: color-mix(in srgb, CanvasText, Canvas 30%);
     }
+    .authorship {
+      display: flex;
+      font-size: 0.85rem;
+      color: color-mix(in srgb, CanvasText, Canvas 40%);
+      gap: calc(2 * var(--gap));
+    }
     time {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: color-mix(in srgb, CanvasText, Canvas 40%);
     }
 
@@ -403,22 +430,31 @@
     .title {
       span,
       input[type=text] {
-        font-size: larger;
+        font-size: 1.2rem;
       }
       padding-block-start: 0.5lh;
     }
-    .comment {
+    .comment,
+    .reply {
       p {
         line-height: 0.85lh;
         color: color-mix(in srgb, CanvasText, Canvas 10%);
       }
     }
-    .created {
-      color: color-mix(in srgb, CanvasText, Canvas 50%);
+    .replies {
+      padding: calc(2 * var(--gap)) 0;
+      display: flex;
+      flex-direction: column;
+      gap: calc(3* var(--gap));
+      margin-inline-start: 1em;
+    }
+    .reply {
+      display: flex;
+      flex-direction: column;
     }
     label > div,
     .field-heading {
-      font-size: small;
+      font-size: 0.85rem;
       color: color-mix(in srgb, CanvasText, Canvas 25%);
     }
     .content {
@@ -434,7 +470,7 @@
 
         --color: oklch(from CanvasText var(--lightness, 0.7) var(--chroma, 0.2) var(--hue, h));
         display: flex;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         border: 1px solid var(--color);
         border-radius: var(--gap);
         color: color-mix(in oklch, var(--color), CanvasText 80%);
