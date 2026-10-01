@@ -213,7 +213,7 @@
 
       <div class="authorship">
         <div class="author">
-          {properties?.["created-by"] ?? "Author unknown"}
+          {properties?.["created-by"] ?? "Unknown author"}
         </div>
         <time datetime={properties?.created} title={properties?.created}>{getFriendlyLocalDateTime(properties?.created)}</time>
       </div>
@@ -236,7 +236,7 @@
               <div class="reply">
                 <div class="authorship">
                   <div class="author">
-                    {reply?.["created-by"] ?? "Author unknown"}
+                    {reply?.["created-by"] ?? "Unknown author"}
                   </div>
                   <time datetime={reply?.created} title={reply?.created}>{getFriendlyLocalDateTime(reply?.created)}</time>
                 </div>
@@ -440,6 +440,9 @@
         line-height: 0.85lh;
         color: color-mix(in srgb, CanvasText, Canvas 10%);
       }
+    }
+    .comment {
+      margin-block-start: calc(-1 * var(--gap));
     }
     .replies {
       padding: calc(2 * var(--gap)) 0;
