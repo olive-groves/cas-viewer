@@ -13,7 +13,7 @@
     getSourceManagerContext,
     getSyncedMapLibreLayersContext,
     getSyncedMapLibreSurfacesContext,
-    getSyncedTerraDrawContext,
+    getSyncedTerraDrawModeManagerContext,
   } from "$lib/shared-context.svelte";
   import { SourceManager, type SourceKey } from '$lib/source-manager.svelte';
   import { MapLibreSyncedLayer, type AnyLayerSpec, type OverrideMapLibreLayerKey, type SyncedMapLibreLayerKey } from '$lib/synced-layer.svelte';
@@ -21,7 +21,7 @@
   const sourceManager = getSourceManagerContext();
   const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
-  const syncedTerraDraw = getSyncedTerraDrawContext();
+  const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
 
   let {
     views,
@@ -155,7 +155,7 @@
         }
         function recursiveAddDrawInstance(view: SingleView | MultiView) {
           if (view.type === "single") {
-            view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+            view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
           } else {
             view.views.map.forEach((v) => recursiveAddDrawInstance(v));
           }
@@ -171,7 +171,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
           newNestedMultiView.views.add(view);
         })
       })
@@ -193,7 +193,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
           views.add(view);
         })
       })
@@ -210,7 +210,7 @@
       const nestedMultiView = new MultiView();
       const original = views.get(vK);
       // TODO: Tranferring instanceKeys...?
-      original.draw.instanceKey = syncedTerraDraw.addInstance().id;
+      original.draw.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
       nestedMultiView.views.add(original);
       [...files].forEach(async (file) => {
         const sourceKey = sourceManager.add(SourceManager.fileToSource(file));
@@ -219,7 +219,7 @@
           syncedMapLibreLayers.set(syncedLayerKey, syncedLayer);  // TODO: Layers manager? .add() auto generates key
           const view = new SingleView();
           view.layers.add(syncedLayerKey, {key: overrideKey});
-          view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+          view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
           nestedMultiView.views.add(view);
         })
       })

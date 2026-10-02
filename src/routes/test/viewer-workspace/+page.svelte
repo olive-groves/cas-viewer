@@ -7,13 +7,13 @@
     syncedMapLibreLayers,
     multiView,
     syncedMapLibreSurfaces,
-    syncedTerraDraw,
+    syncedTerraDrawModeManager,
   } from "$lib/shared.svelte";
   import {
     setSourceManagerContext,
     setSyncedMapLibreLayersContext,
     setSyncedMapLibreSurfacesContext,
-    setSyncedTerraDrawContext,
+    setSyncedTerraDrawModeManagerContext,
   } from "$lib/shared-context.svelte";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
@@ -25,7 +25,7 @@
   setSourceManagerContext(sourceManager);
   setSyncedMapLibreLayersContext(syncedMapLibreLayers);
   setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
-  setSyncedTerraDrawContext(syncedTerraDraw);
+  setSyncedTerraDrawModeManagerContext(syncedTerraDrawModeManager);
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
@@ -48,13 +48,13 @@
   view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "red"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+  view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
   view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "blue"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+  view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
   multiView.views.add(view);
 
   // Minimap uses a requested layer or the first raster layer from the list of views
@@ -69,12 +69,12 @@
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "green"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  // view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+  // view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // view = new SingleView();
   // overrideKey = syncedLayer.addOverride({spec: {paint: {"background-color": "yellow"}}});
   // view.layers.add(syncedLayerKey, {key: overrideKey});
-  // view.drawKeys.instanceKey = syncedTerraDraw.addInstance().id;
+  // view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
   // A.views.add(view);
   // multiView.views.add(A)
 
@@ -239,11 +239,10 @@
 </script>
 
 <SyncedTerraDrawSetup
-  id={syncedTerraDraw.id}
-  bind:map={syncedTerraDraw.map}
-  bind:draw={syncedTerraDraw.draw}
-  modeFactory={syncedTerraDraw.modeFactory}
-  lastDrawSelectModeFactory={syncedTerraDraw.lastDrawSelectModeFactory}
+  id={syncedTerraDrawModeManager.syncedTerraDraw.id}
+  bind:map={syncedTerraDrawModeManager.syncedTerraDraw.map}
+  bind:draw={syncedTerraDrawModeManager.syncedTerraDraw.draw}
+  modeFactory={syncedTerraDrawModeManager.syncedTerraDraw.modeFactory}
 />
 
 <div style:display=flex style:height=100% style:width=100% style:overflow=hidden>

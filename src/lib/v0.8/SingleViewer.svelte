@@ -10,12 +10,12 @@
     getSourceManagerContext,
     getSyncedMapLibreLayersContext,
     getSyncedMapLibreSurfacesContext,
-    getSyncedTerraDrawContext,
+    getSyncedTerraDrawModeManagerContext,
   } from "$lib/shared-context.svelte";
   const sourceManager = getSourceManagerContext();
   const syncedMapLibreLayers = getSyncedMapLibreLayersContext();
   const syncedMapLibreSurfaces = getSyncedMapLibreSurfacesContext();
-  const syncedTerraDraw = getSyncedTerraDrawContext();
+  const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
 
   import { mergeDeep } from '$lib/utils';
   let {
@@ -342,17 +342,17 @@
     {/if}
 
     {#if drawKeys?.instanceKey}
-      {@const instance = syncedTerraDraw.instances.get(drawKeys?.instanceKey)}
+      {@const instance = syncedTerraDrawModeManager.syncedTerraDraw.instances.get(drawKeys?.instanceKey)}
       {#if instance}
         <BackgroundLayer
           id={SLOT_PREFIX + "td"}
           layout={{visibility: "none"}}
         />
         <TerraDrawSvelte
-          mode={syncedTerraDraw.actualMode}
+          mode={syncedTerraDrawModeManager.actualMode}
           {...instance}
           bind:draw={instance.draw}
-          modes={instance.modeFactory().concat(instance.lastDrawSelectModeFactory())}
+          modes={instance.modeFactory()}
         />
       {/if}
     {/if}

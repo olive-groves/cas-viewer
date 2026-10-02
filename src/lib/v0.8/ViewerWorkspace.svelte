@@ -2,7 +2,7 @@
 <script lang="ts">
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
 
-  import { getSourceManagerContext, getSyncedTerraDrawContext } from "$lib/shared-context.svelte";
+  import { getSourceManagerContext, getSyncedTerraDrawModeManagerContext } from "$lib/shared-context.svelte";
   import MultiViewer from "./MultiViewer.svelte";
   import type { MultiView } from "./views.svelte";
 
@@ -13,7 +13,7 @@
   } = $props();
 
   const sourceManager = getSourceManagerContext();
-  const syncedTerraDraw = getSyncedTerraDrawContext();
+  const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
 
   let camera = $state({
     zoom: undefined,
@@ -35,15 +35,15 @@
 <div class=workspace>
   <div class="taskbar unselectable">
     <div style:display=flex style:overflow-x=auto style:border="1px solid gray" style:align-items=center>
-      {#each syncedTerraDraw.modeNames as modeName (modeName)}
+      {#each syncedTerraDrawModeManager.syncedTerraDraw.modeNames as modeName (modeName)}
         <div style:display=flex style:padding="0 4px" style:align-items=center>
           <label class=oneline-input-label>
             <input
               type="radio"
-              name="syncedTerraDraw.userMode"
+              name="syncedTerraDrawModeManager.userMode"
               value={modeName}
-              checked={modeName === syncedTerraDraw.userMode}
-              onclick={() => syncedTerraDraw.setUserMode(modeName)}
+              checked={modeName === syncedTerraDrawModeManager.userMode}
+              onclick={() => syncedTerraDrawModeManager.setUserMode(modeName)}
             />
             <span style:text-transform=capitalize>
               {modeName}

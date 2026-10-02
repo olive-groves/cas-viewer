@@ -1,6 +1,7 @@
 import { LngLatBounds, type LngLatLike } from "maplibre-gl";
 import type { Geometry, Point, LineString, Polygon, Position } from 'geojson';
 
+export type FeatureId = string | number;
 
 export const terraDrawMaxBounds: LngLatBounds = new LngLatBounds([
   [-180, -85.049],
