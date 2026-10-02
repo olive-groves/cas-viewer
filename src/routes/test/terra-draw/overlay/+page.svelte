@@ -13,7 +13,7 @@
     TerraDrawModeUndoRedo,
     TerraDrawUndoRedoKeyboardShortcuts,
   } from 'terra-draw';
-    import { untrack } from 'svelte';
+  import { untrack } from 'svelte';
 
   // TODO: Make into enhanced, predefaulted terradraw Svelte component
   // Props:

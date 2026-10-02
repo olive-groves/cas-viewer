@@ -2,10 +2,22 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Orchestration of sources, synced layers, and multi-view...
   // Viewer Manager?
-  import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
-  import { setSourceManagerContext, setSyncedMapLibreLayersContext, setSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
   import { MapLibreSyncedLayer, MapLibreSyncedSurface, type AnyLayerSpec, type Background, type SurfaceSpec, type SyncedMapLibreLayerKey, type SyncedMapLibreSurfaceKey } from "$lib/synced-layer.svelte";
   import { PMTilesProtocol } from "@svelte-maplibre-gl/pmtiles";
+
+  import {
+    sourceManager,
+    syncedMapLibreLayers,
+    multiView,
+    syncedMapLibreSurfaces,
+    syncedTerraDrawModeManager,
+  } from "$lib/shared.svelte";
+  import {
+    setSourceManagerContext,
+    setSyncedMapLibreLayersContext,
+    setSyncedMapLibreSurfacesContext,
+    setSyncedTerraDrawModeManagerContext,
+  } from "$lib/shared-context.svelte";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
@@ -16,6 +28,7 @@
   setSourceManagerContext(sourceManager);
   setSyncedMapLibreLayersContext(syncedMapLibreLayers);
   setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
+  setSyncedTerraDrawModeManagerContext(syncedTerraDrawModeManager);
 
   const localPmtilesUrl = new URL('/local/bagunca-2025-10-21T1629/rgb.pmtiles', import.meta.url);
   const localPmtilesDemUrl = new URL('/local/bagunca-2025-10-21T1629/height.pmtiles', import.meta.url);

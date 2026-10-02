@@ -1,33 +1,20 @@
 import { SvelteMap } from 'svelte/reactivity';
 
 import type { MapLibreMap } from 'maplibre-gl';
-import {
-  TerraDrawSelectMode,
-} from 'terra-draw';
 import type {
   TerraDraw,
-  TerraDrawPolygonMode,
-  TerraDrawPointMode,
-  TerraDrawPolyLineMode,
   TerraDrawEventListeners,
   GeoJSONStoreFeatures,
   GeoJSONStoreGeometries,
-  TerraDrawMarkerMode,
-  TerraDrawRenderMode,
 } from 'terra-draw';
 import type { Polygon } from 'geojson';
 
 import { roundGeometryCoordinates } from '$lib/v0.8/maplibre-gl-terradraw/lib/helpers/roundFeatureCoordinates';
-import { isGeometryOutOfBounds, terraDrawMaxBounds, wrapGeometryCoordinatesToBounds } from '$lib/v0.8/geojson-utils';
+import { terraDrawMaxBounds, wrapGeometryCoordinatesToBounds } from '$lib/v0.8/geojson-utils';
+import type { FeatureId } from '$lib/v0.8/geojson-utils';
+import { ISOLATED_EDIT_MODE_NAME } from '$lib/v0.8/synced-terra-draw-mode-factory.svelte';
+import type { Mode, ModeFactory } from '$lib/v0.8/synced-terra-draw-mode-factory.svelte';
 
-type Mode = TerraDrawSelectMode | TerraDrawPointMode | TerraDrawPolygonMode | TerraDrawPolyLineMode | TerraDrawMarkerMode | TerraDrawRenderMode;
-
-type ModeFactory = () => Mode[];
-
-type FeatureId = string | number;
-
-
-export type Validator = (feature: GeoJSONStoreFeatures, { updateType }: { updateType: "finish" | "commit" | "provisional" }) => { valid: boolean }
 
 // One of the modes in the ModeFactory passed to SyncedTerraDraw must be named "edit".
 // That edit mode is used to generate the isolated-edit mode that this manager triggers
@@ -43,7 +30,6 @@ export class SyncedTerraDrawModeManager {
   private _actualMode: string = $state("");
   readonly actualMode: string = $derived(this._actualMode);
 
-  static ISOLATED_EDIT_MODE_NAME: string = "isolated-edit";
   private isolatedEditOnFinish: boolean;
   private isolatedEditId: FeatureId | null = $state(null);
   private lastUserMode: string | null = $state(null);
@@ -64,7 +50,7 @@ export class SyncedTerraDrawModeManager {
 
     // Auto-select listeners
     this.syncedTerraDraw.onSyncedDeselectListeners.push((_, featureId) => {
-      if (featureId === this.isolatedEditId && this._actualMode === SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME) {
+      if (featureId === this.isolatedEditId && this._actualMode === ISOLATED_EDIT_MODE_NAME) {
         this.deselectIsolatedEdit();
       }
     });
@@ -96,9 +82,9 @@ export class SyncedTerraDrawModeManager {
 
     this.isolatedEditId = featureId;
     this.lastUserMode = this.userMode;
-    this._actualMode = SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME;
+    this._actualMode = ISOLATED_EDIT_MODE_NAME;
     setTimeout(() => {
-      this.syncedTerraDraw.syncedSelectFeature(undefined, featureId, SyncedTerraDrawModeManager.ISOLATED_EDIT_MODE_NAME);
+      this.syncedTerraDraw.syncedSelectFeature(undefined, featureId, ISOLATED_EDIT_MODE_NAME);
     });
     return
   }
@@ -297,10 +283,6 @@ export class SyncedTerraDraw {
         }
       });
     return
-  }
-
-  static outOfBoundsValidator: Validator = (feature, { updateType }) => {
-    return { valid: !isGeometryOutOfBounds(feature.geometry, terraDrawMaxBounds) }
   }
 
   addInstance(customId?: string): TerraDrawInstance {
