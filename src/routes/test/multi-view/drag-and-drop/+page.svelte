@@ -2,8 +2,19 @@
   //////////////////////////////////////////////////////////////////////////////////////
   // Orchestration of sources, synced layers, and multi-view...
   // Viewer Manager?
-  import { sourceManager, syncedMapLibreLayers, multiView, syncedMapLibreSurfaces } from "$lib/shared.svelte";
-  import { setSourceManagerContext, setSyncedMapLibreLayersContext, setSyncedMapLibreSurfacesContext } from "$lib/shared-context.svelte";
+  import {
+    sourceManager,
+    syncedMapLibreLayers,
+    multiView,
+    syncedMapLibreSurfaces,
+    syncedTerraDrawModeManager,
+  } from "$lib/shared.svelte";
+  import {
+    setSourceManagerContext,
+    setSyncedMapLibreLayersContext,
+    setSyncedMapLibreSurfacesContext,
+    setSyncedTerraDrawModeManagerContext,
+  } from "$lib/shared-context.svelte";
 
   // FIXME: Clear for development purposes —————————————————————————————————————————————
   sourceManager.sources.forEach((_, key) => sourceManager.delete(key));
@@ -14,6 +25,7 @@
   setSourceManagerContext(sourceManager);
   setSyncedMapLibreLayersContext(syncedMapLibreLayers);
   setSyncedMapLibreSurfacesContext(syncedMapLibreSurfaces);
+  setSyncedTerraDrawModeManagerContext(syncedTerraDrawModeManager);
 
   //////////////////////////////////////////////////////////////////////////////////////
   // Proof
