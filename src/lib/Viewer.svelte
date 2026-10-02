@@ -15,7 +15,9 @@
     CustomControl,
   } from 'svelte-maplibre-gl';
   import { Underzoom } from 'maplibre-xy';
-  import maplibregl, { type CameraOptions } from 'maplibre-gl';
+  import 'svelte-maplibre-gl/vite';
+  import * as maplibregl from 'maplibre-gl';
+  import { type CameraOptions } from 'maplibre-gl';
 
   import { ViewerData } from './ViewerClasses.svelte';
   import DualRangeInput from './DualRangeInput.svelte';
@@ -24,7 +26,7 @@
   import Minimap from '$lib/mapboxgl-minimap.js';
   import ScaleBar from './ScaleBar.svelte';
   import Colorbar from './Colorbar.svelte';
-  
+
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1.0});
   // function identityTransformConstrain(lngLat, zoom) {
   //   return {center: lngLat, zoom: zoom ?? 0}
@@ -43,7 +45,7 @@
     //     `${color1Six.at(2)?.repeat(2)}` +
     //     `${color1Six.at(3)?.repeat(2)}`
     // }
-    
+
     // TODO: Alpha channel support (8-digit hex)
 
     // Convert the hex colors to RGB values
@@ -88,7 +90,7 @@
     const dateTime = metadata?.instrument?.dateTime ?? metadata.scanDateTime ?? 'Date-time undefined';
     return `${attribution}, ${license} · ${instrument} ${dateTime}`
   };
-  
+
   let {
     data,
     mapProps = $bindable({
@@ -278,7 +280,7 @@
       const angle = Math.atan2(-deltaX, deltaY);  // Considered in a clockwise angle coordinate system where 0 degrees is pointing upwards
       const angleDegrees = angle * (180.0 / Math.PI);
       controls.hillshade.angle = Math.floor((angleDegrees + 180) % 360);  // Shift angle into range [0, 360) to match the input range for hillshade direction
-  
+
       pointer.roundedPercentX = Math.abs(deltaX) >= Math.abs(deltaY) ? 100*Math.round(mouseX) : 100*mouseX;
       pointer.roundedPercentY = Math.abs(deltaY) >= Math.abs(deltaX) ? 100*Math.round(mouseY) : 100*mouseY;
     }
@@ -289,11 +291,11 @@
   let metersPerPixel = $derived(2**(maxZoom - mapProps.zoom) * metersPerMaxZoomPixel);
 
   const getHeaderMetadata = async () => {
-    const raster_header = await data?.raster.header 
-    const raster_metadata = await data?.raster.metadata 
-    const raster_dem_header = await data?.raster_dem.header 
-    const raster_dem_metadata = await data?.raster_dem.metadata 
-    const raster_overlay_header = await data?.raster_overlay.header 
+    const raster_header = await data?.raster.header
+    const raster_metadata = await data?.raster.metadata
+    const raster_dem_header = await data?.raster_dem.header
+    const raster_dem_metadata = await data?.raster_dem.metadata
+    const raster_overlay_header = await data?.raster_overlay.header
     const raster_overlay_metadata = await data?.raster_overlay.metadata
     colorRelief.setBreakpoints.max = raster_dem_metadata?.maximum ?? 1;
     controls.rgb.visibility = raster_header ? true : false;
@@ -730,7 +732,7 @@
               </label>
           </details>
         </div>
-        
+
         <div class="oneliner">
           <label class=checkbox><input
             type="checkbox"
@@ -852,7 +854,7 @@
   .controls {
     display: flex;
     flex-direction: column;
-    flex-wrap: nowrap;  
+    flex-wrap: nowrap;
     width: 400px;
   }
 

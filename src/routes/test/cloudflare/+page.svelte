@@ -1,4 +1,5 @@
 <script lang="ts">
+  import 'svelte-maplibre-gl/vite';
   import { MapLibre, RasterTileSource, RasterLayer, RasterDEMTileSource, Terrain, TerrainControl, HillshadeLayer, ColorReliefLayer } from 'svelte-maplibre-gl';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
   import { PMTiles } from 'pmtiles';
@@ -64,7 +65,7 @@
     aroundCenter={false}
   >
     <RasterDEMTileSource
-      id="terrain"    
+      id="terrain"
       url={`pmtiles://${urls[1]}`}
       encoding="custom"
       baseShift={0}

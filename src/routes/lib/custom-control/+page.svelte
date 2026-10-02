@@ -1,9 +1,9 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
 
-  import maplibregl from 'maplibre-gl';
+  import * as maplibregl from 'maplibre-gl';
   import type { FlyToOptions } from 'maplibre-gl';
-  
+
   import {
     MapLibre,
     RasterTileSource,
@@ -17,10 +17,10 @@
     AttributionControl,
     BackgroundLayer
   } from 'svelte-maplibre-gl';
-  
+
   import { PMTiles } from 'pmtiles';
   import { PMTilesProtocol } from '@svelte-maplibre-gl/pmtiles';
-  
+
   import { Underzoom } from 'maplibre-xy';
 
   import hillshadeIconEnabled from '$lib/hillshade-enabled.svg'
@@ -31,7 +31,7 @@
   import blenderIconDisabled from '$lib/blender-disabled.svg'
 
   import ScaleBar from '$lib/ScaleBar.svelte';
-  
+
   let map: maplibregl.Map | undefined = $state()
 
   let disclaimerVisible = $state(true)
@@ -51,7 +51,7 @@
       hillshadeVisible = true;
     }
   }
-  
+
   function toggleHillshade() {
     hillshadeVisible = !hillshadeVisible;
     if (hillshadeVisible && blenderVisible) blenderVisible = false;

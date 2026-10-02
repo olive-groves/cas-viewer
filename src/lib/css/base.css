@@ -1,0 +1,48 @@
+html, body {
+  background-color: color-mix(in srgb, Canvas, CanvasText 2.5%);
+  color: color-mix(in srgb, CanvasText, Canvas 15%);
+  color-scheme: dark;
+  height: 100dvh;
+  display: flex;
+  flex-flow: column;
+  margin: 0;
+  padding: 0;
+}
+
+
+h1 {
+  font-size: 4rem;
+  font-family: TexgyrepagellaItalic, build-fallback--TexgyrepagellaItalic;
+  font-weight: unset;
+  line-height: 0.9;
+}
+
+body {
+  font-family: SourceSans3-VariableFont_wght, build-fallback--SourceSans3-VariableFont_wght;
+  font-kerning: normal;
+}
+
+input[type=text].inline {
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button {
+  color: inherit;
+  background: color-mix(in srgb, Canvas, CanvasText 2.5%);
+  border: 1px solid transparent;
+  outline: 1px dotted transparent;
+  outline-offset: 1px;
+  &:hover, &:focus-visible {
+    color: color-mix(in srgb, CanvasText, Canvas 0%);
+    background: color-mix(in srgb, Canvas, CanvasText 10%);
+    border-color: color-mix(in srgb, CanvasText, Canvas 50%);
+    &:active {
+      border-color: currentColor;
+    }
+  }
+  &:focus-visible {
+    outline-color: currentColor;
+  }
+}
