@@ -8,7 +8,7 @@
     TerraDrawSelectMode,
     TerraDrawLineStringMode,
   } from 'terra-draw';
-    import { untrack } from 'svelte';
+  import { untrack } from 'svelte';
 
   let draw: TerraDraw | undefined = $state.raw();
 
