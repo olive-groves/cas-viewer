@@ -178,9 +178,22 @@
           onEditingCloseClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
           onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
           onDeleteClick={() => {
-            modeManager.deselectIsolatedEdit();
+            const dialog = document.getElementById("dialog-delete-selected");
+            dialog?.showModal();
           }}
         />
+        <dialog id="dialog-delete-selected">
+          <h2>Delete selected feature?</h2>
+          <p>Are you sure you want to delete the selected feature?</p>
+          <div class="actionbar">
+            <button commandfor="dialog-delete-selected" command="close">Cancel</button>
+            <button
+              onclick={() => {if (modeManager.syncedTerraDraw.selected) {const d = modeManager.syncedTerraDraw.selected; modeManager.deselectIsolatedEdit(); modeManager.syncedTerraDraw.syncedRemoveFeatures(undefined, [d]);}}}
+              commandfor="dialog-delete-selected" command="close">
+              Delete
+            </button>
+          </div>
+        </dialog>
       </div>
     {/if}
   </div>
@@ -258,5 +271,22 @@
     width: 100%;
     max-width: 350px;
     overflow-y: auto;
+  }
+
+  dialog {
+    border: 1px solid;
+    padding: calc(2* var(--gap));
+    &::backdrop{
+      background-color: color-mix(in srgb, Canvas, transparent 25%);
+    }
+    .actionbar {
+      padding-top: 1lh;
+      display: flex;
+      flex-direction: row-reverse;
+      gap: var(--gap);
+      button {
+        padding: 0 var(--gap);
+      }
+    }
   }
 </style>

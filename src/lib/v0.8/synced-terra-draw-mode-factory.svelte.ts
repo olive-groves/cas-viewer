@@ -27,6 +27,12 @@ const outOfBoundsValidator: Validator = (feature, { updateType }) => {
 }
 
 // Shared state, options
+const defaultKeyEvents = {
+  delete: null,
+  rotate: null,
+  scale: null,
+  deselect: "Escape",
+}
 const defaultSelectFlags = {
   feature: {
     draggable: false,
@@ -323,6 +329,7 @@ export const modeFactory: ModeFactory = () => {
     new TerraDrawSelectMode({
       modeName: "select",
       flags: selectFlags,
+      keyEvents: defaultKeyEvents,
       styles: {
         selectedMarkerUrl: selectedMarkerUrl,
         selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
@@ -399,6 +406,7 @@ export const modeFactory: ModeFactory = () => {
     // Isolated edit mode, identical to edit mode.
     new TerraDrawSelectMode({
       modeName: ISOLATED_EDIT_MODE_NAME,
+      keyEvents: defaultKeyEvents,
       allowManualSelection: false,
       flags: editFlags,
       styles: {

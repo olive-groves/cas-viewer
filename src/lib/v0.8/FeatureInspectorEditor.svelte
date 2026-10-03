@@ -7,6 +7,8 @@
   import ClickToRevealButton from './ClickToRevealButton.svelte';
   import { SvelteMap } from 'svelte/reactivity';
 
+  // TODO: Add tab capture; see Svelte tutorial example
+
   // Process/technique terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300229438
   // Condition/effect terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300209168
   const processes_and_techniques = {
@@ -372,13 +374,13 @@
       </div>
     </div>
     <div class="actionbar">
-      <button class=primary onclick={() => onDoneClick?.()}>
+      <button class="primary" onclick={() => onDoneClick?.()}>
         Done
       </button>
       <button onclick={() => onDrawAnotherClick?.()}>
         Done & Draw Another
       </button>
-      <button onclick={() => onDeleteClick?.()}>
+      <button class="severe" onclick={() => onDeleteClick?.()}>
         Delete
       </button>
     </div>
@@ -405,6 +407,15 @@
         background: CanvasText;
         &:hover {
           background: color-mix(in srgb, CanvasText, Canvas 10%);
+        }
+      }
+
+      &.severe {
+        color: CanvasText;
+        background-color: Canvas;
+        &:hover {
+          border-color: color-mix(in oklab, CanvasText, red 90%);
+          background: color-mix(in oklab, Canvas, red 25%);
         }
       }
     }
