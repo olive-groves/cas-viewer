@@ -207,13 +207,16 @@
         </label>
       </div>
       <div class="filter">
-        <label>
-          Filter:
-          <input type="text" bind:value={filterBy} placeholder="Text to filter" />
-        </label>
+        <form>
+          <label>
+            Filter:
+            <input name="filter" type="text" bind:value={filterBy} placeholder="Text to filter" />
+            <input style:display={!filterBy ? "none" : ""} type="reset" value="Clear"  />
+          </label>
+        </form>
       </div>
       <FeatureList
-        features={filterBy ? syncedTerraDraw.snapshot.filter((f) => (f.properties.title.includes(filterBy) || f.properties.comment.text.includes(filterBy) || f.properties.category.includes(filterBy))) : syncedTerraDraw.snapshot}
+        features={filterBy ? syncedTerraDraw.snapshot.filter((f) => (f.properties.category.includes(filterBy) || f.properties.tags.some((t) => t.includes(filterBy)) || f.properties.title.includes(filterBy) || f.properties.comment.text.includes(filterBy))) : syncedTerraDraw.snapshot}
         selectedFeature={syncedTerraDraw.selected}
         onFeatureHoverStart={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
         onFeatureHoverEnd={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
@@ -274,6 +277,7 @@
       border: 1px solid transparent;
       summary {
         font-size: 1.2rem;
+        font-weight: 500;
       }
       &:has(summary:hover) {
         border-color: color-mix(in srgb, CanvasText, Canvas 50%);
@@ -286,7 +290,7 @@
     }
   }
   .filter {
-    input:not(:placeholder-shown) {
+    input[type=text]:not(:placeholder-shown) {
       border-color: color-mix(in srgb, greenyellow, transparent 25%);
       outline-color: greenyellow
     }
