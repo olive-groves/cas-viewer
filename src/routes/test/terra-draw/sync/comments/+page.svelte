@@ -177,6 +177,9 @@
           onSelectedCloseClick={() => syncedTerraDraw.syncedDeselectFeature(undefined, null)}
           onEditingCloseClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
           onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
+          onDeleteClick={() => {
+            modeManager.deselectIsolatedEdit();
+          }}
         />
       </div>
     {/if}

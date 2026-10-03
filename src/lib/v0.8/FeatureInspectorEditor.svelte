@@ -131,6 +131,7 @@
     onSelectedCloseClick,
     onDoneClick,
     onDrawAnotherClick,
+    onDeleteClick,
     onEditingCloseClick,
   }: {
     mode: "selected" | "editing";
@@ -140,6 +141,7 @@
     onSelectedCloseClick?: () => void;
     onDoneClick?: () => void;
     onDrawAnotherClick?: () => void;
+    onDeleteClick?: () => void;
     onEditingCloseClick?: () => void;
   } = $props();
 
@@ -370,11 +372,14 @@
       </div>
     </div>
     <div class="actionbar">
-      <button onclick={() => onDoneClick?.()}>
+      <button class=primary onclick={() => onDoneClick?.()}>
         Done
       </button>
       <button onclick={() => onDrawAnotherClick?.()}>
-        Done & Draw Another {geometry?.type}
+        Done & Draw Another
+      </button>
+      <button onclick={() => onDeleteClick?.()}>
+        Delete
       </button>
     </div>
 
@@ -395,6 +400,13 @@
     button {
       text-transform: capitalize;
       padding: 0 calc(2 * var(--gap));
+      &.primary {
+        color: Canvas;
+        background: CanvasText;
+        &:hover {
+          background: color-mix(in srgb, CanvasText, Canvas 10%);
+        }
+      }
     }
     .category {
       span,
@@ -424,6 +436,7 @@
     }
     .actionbar {
       display: flex;
+      flex-wrap: wrap;
       padding-top: calc(2 * var(--gap));
       gap: var(--gap);
     }
