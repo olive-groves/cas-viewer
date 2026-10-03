@@ -14,20 +14,24 @@
     properties = $bindable(),
     geometry,
     onEditClick,
+    onZoomToFitClick,
     onSelectedCloseClick,
     onDoneClick,
     onDrawAnotherClick,
     onDeleteClick,
+    onCaptureView,
     onEditingCloseClick,
   }: {
     mode: "selected" | "editing";
     properties?: GeoJSONStoreFeatures<GeoJSONStoreGeometries>["properties"];
     geometry?: GeoJSONStoreFeatures<GeoJSONStoreGeometries>["geometry"];
     onEditClick?: () => void;
+    onZoomToFitClick?: () => void;
     onSelectedCloseClick?: () => void;
     onDoneClick?: () => void;
     onDrawAnotherClick?: () => void;
     onDeleteClick?: () => void;
+    onCaptureView?: () => void;
     onEditingCloseClick?: () => void;
   } = $props();
 
@@ -76,8 +80,8 @@
         </span>
       </div>
       <div style:margin-inline-start=auto>
-        <button>
-          Fit to view
+        <button onclick={() => onZoomToFitClick?.()}>
+          Zoom to fit
         </button>
         <button onclick={() => onSelectedCloseClick?.()}>
           ×
@@ -170,6 +174,9 @@
         </select>
       </label>
       <div style:margin-inline-start=auto>
+        <button onclick={() => onCaptureView?.()}>
+          Capture view
+        </button>
         <button onclick={() => onEditingCloseClick?.()}>
           ×
         </button>

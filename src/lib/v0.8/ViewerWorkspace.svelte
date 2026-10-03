@@ -56,6 +56,7 @@
               // }
             ],
           },
+          camera: $state.snapshot(camera),
           references: [
             // references with respect to... coordinate system? (image -> mercator unity)
           ],
@@ -92,16 +93,23 @@
   ])
   // ———————————————————————————————————————————————————————————————————————————————————
 
-  let camera = $state({
-    zoom: undefined,
-    center: undefined,
-  })
+  let camera = $state({})
 
   // A mode where I only see images. That's it.
   // A mode where I see images and most settings.
   // A mode where I see images as framed windows and all settings.
   let mode: "full" | "lite" | "presentation" = $state("full");
   let lights: "on" | "dim" | "out" = $state("on");
+
+  function setCamera(c) {
+    camera.zoom = c.zoom;
+    camera.lng = c.lng;
+    camera.lat = c.lat;
+    camera.bearing = c.bearing;
+    camera.pitch = c.pitch;
+    camera.roll = c.roll;
+    camera.elevation = c.elevation;
+  }
 
 </script>
 
@@ -166,11 +174,14 @@
     {#if syncedTerraDrawModeManager.syncedTerraDraw.selected !== null}
       {@const feature = syncedTerraDrawModeManager.syncedTerraDraw.snapshot.find((f) => f.id === syncedTerraDrawModeManager.syncedTerraDraw.selected)}
       <div class="context">
+      <!-- FIXME: Feature inspector should emit ID -->
         <FeatureInspectorEditor
           mode={syncedTerraDrawModeManager.actualMode === ISOLATED_EDIT_MODE_NAME ? "editing" : "selected"}
-          properties={syncedTerraDrawModeManager.syncedTerraDraw.snapshot.find((f) => f.id === syncedTerraDrawModeManager.syncedTerraDraw.selected).properties}
+          properties={feature?.properties}
           geometry={feature?.geometry}
           onEditClick={() => syncedTerraDrawModeManager.syncedTerraDraw.selected !== null && syncedTerraDrawModeManager.selectIsolatedEdit(syncedTerraDrawModeManager.syncedTerraDraw.selected)}
+          onZoomToFitClick={() => setCamera(feature?.properties?.camera)}
+          onCaptureView={() => feature.properties.camera = $state.snapshot(camera)}
           onDoneClick={() => syncedTerraDrawModeManager.deselectIsolatedEdit(undefined, true)}
           onSelectedCloseClick={() => syncedTerraDrawModeManager.syncedTerraDraw.syncedDeselectFeature(undefined, null)}
           onEditingCloseClick={() => syncedTerraDrawModeManager.deselectIsolatedEdit(undefined, true)}
@@ -228,7 +239,7 @@
             syncedTerraDrawModeManager.syncedTerraDraw.syncedSelectFeature(undefined, id);
           }
         }}
-        onFeatureDoubleClick={() => console.warn("Implement fit-feature-on-map.")}
+        onFeatureDoubleClick={(id) => setCamera(syncedTerraDrawModeManager.syncedTerraDraw.snapshot.find((f) => f.id === id) ?.properties?.camera)}
         onFeatureEdit={(id) => syncedTerraDrawModeManager.selectIsolatedEdit(id)}
       />
     </details>
