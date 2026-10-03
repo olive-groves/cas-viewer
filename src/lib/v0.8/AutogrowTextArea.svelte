@@ -50,6 +50,9 @@
       font: inherit;
       /* Cursor is hidden behind thicker selected border, so we pad. */
       padding: 1px;
+      &:focus {
+        outline-color: color-mix(in srgb, currentColor, transparent 20%);
+      }
     }
   }
 </style>
