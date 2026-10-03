@@ -207,44 +207,46 @@
     {/if}
   </div>
 
-  <div class="sidebar" style:display={!sidebarExpanded ? "none" : ""}>
+  {#if sidebarExpanded}
+    <div class="sidebar">
 
-    <details open>
-      <summary class="unselectable">Annotations</summary>
-      <div>
-        <label>
-          Author name:
-          <input type="text" bind:value={authorName} placeholder="Enter your author name" />
-        </label>
-      </div>
-      <div class="filter">
-        <form>
+      <details open>
+        <summary class="unselectable">Annotations</summary>
+        <div>
           <label>
-            Filter:
-            <input name="filter" type="text" bind:value={filterBy} placeholder="Text to filter" />
-            <input style:display={!filterBy ? "none" : ""} type="reset" value="Clear"  />
+            Author name:
+            <input type="text" bind:value={authorName} placeholder="Enter your author name" />
           </label>
-        </form>
-      </div>
-      <FeatureList
-        features={filterBy ? syncedTerraDrawModeManager.syncedTerraDraw.snapshot.filter((f) => (f.properties.category.includes(filterBy) || f.properties.tags.some((t) => t.includes(filterBy)) || f.properties.title.includes(filterBy) || f.properties.comment.text.includes(filterBy))) : syncedTerraDrawModeManager.syncedTerraDraw.snapshot}
-        selectedFeature={syncedTerraDrawModeManager.syncedTerraDraw.selected}
-        onFeatureHoverStart={(id) => syncedTerraDrawModeManager.syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
-        onFeatureHoverEnd={(id) => syncedTerraDrawModeManager.syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
-        onFeatureClick={(id) => {
-          if (syncedTerraDrawModeManager.actualMode === ISOLATED_EDIT_MODE_NAME) {
-            syncedTerraDrawModeManager.selectIsolatedEdit(id);
-          } else {
-            syncedTerraDrawModeManager.setUserMode("select");
-            syncedTerraDrawModeManager.syncedTerraDraw.syncedSelectFeature(undefined, id);
-          }
-        }}
-        onFeatureDoubleClick={(id) => setCamera(syncedTerraDrawModeManager.syncedTerraDraw.snapshot.find((f) => f.id === id) ?.properties?.camera)}
-        onFeatureEdit={(id) => syncedTerraDrawModeManager.selectIsolatedEdit(id)}
-      />
-    </details>
+        </div>
+        <div class="filter">
+          <form>
+            <label>
+              Filter:
+              <input name="filter" type="text" bind:value={filterBy} placeholder="Text to filter" />
+              <input style:display={!filterBy ? "none" : ""} type="reset" value="Clear"  />
+            </label>
+          </form>
+        </div>
+        <FeatureList
+          features={filterBy ? syncedTerraDrawModeManager.syncedTerraDraw.snapshot.filter((f) => (f.properties.category.includes(filterBy) || f.properties.tags.some((t) => t.includes(filterBy)) || f.properties.title.includes(filterBy) || f.properties.comment.text.includes(filterBy))) : syncedTerraDrawModeManager.syncedTerraDraw.snapshot}
+          selectedFeature={syncedTerraDrawModeManager.syncedTerraDraw.selected}
+          onFeatureHoverStart={(id) => syncedTerraDrawModeManager.syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
+          onFeatureHoverEnd={(id) => syncedTerraDrawModeManager.syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
+          onFeatureClick={(id) => {
+            if (syncedTerraDrawModeManager.actualMode === ISOLATED_EDIT_MODE_NAME) {
+              syncedTerraDrawModeManager.selectIsolatedEdit(id);
+            } else {
+              syncedTerraDrawModeManager.setUserMode("select");
+              syncedTerraDrawModeManager.syncedTerraDraw.syncedSelectFeature(undefined, id);
+            }
+          }}
+          onFeatureDoubleClick={(id) => setCamera(syncedTerraDrawModeManager.syncedTerraDraw.snapshot.find((f) => f.id === id) ?.properties?.camera)}
+          onFeatureEdit={(id) => syncedTerraDrawModeManager.selectIsolatedEdit(id)}
+        />
+      </details>
 
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -258,7 +260,7 @@
       "main   nav"
       "status status";
     grid-template-rows: 0fr 1fr 0fr;
-    grid-template-columns: auto 0fr;
+    grid-template-columns: 1fr 0fr;
 
     background: black;
     .taskbar {
