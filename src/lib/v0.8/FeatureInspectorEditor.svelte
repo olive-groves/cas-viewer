@@ -209,7 +209,7 @@
             }}
             >
               <option value="">Select a tag</option>
-              {#each [...TAG_MAP.keys()].filter((t) => !properties?.tags.includes(t)) as tag}
+              {#each [...TAG_MAP.keys()].filter((t) => !properties?.tags?.includes(t)) as tag}
                 <option value={tag}>{tag}</option>
               {/each}
             </select>
@@ -256,7 +256,7 @@
 
         </ClickToRevealButton>
       </div>
-      {#if properties.comment.text}
+      {#if properties?.comment?.text}
         <div class="replies">
           <div class="unselectable field-heading">Replies</div>
           {#each properties?.comment?.comments as reply, i (i)}
@@ -266,9 +266,9 @@
               rows={1}
             />
           {/each}
-          {#if (properties?.comment?.comments.length < 1 || properties?.comment?.comments.at(-1).text)}
+          {#if (properties?.comment?.comments?.length < 1 || properties?.comment?.comments.at(-1).text)}
             <div>
-              <button onclick={() => properties?.comment?.comments.push({created: new Date().toISOString()})}>+ Reply</button>
+              <button onclick={() => properties?.comment?.comments?.push({created: new Date().toISOString()})}>+ Reply</button>
             </div>
           {/if}
         </div>

@@ -267,7 +267,7 @@
     justify-self: end;
     z-index: 1;
 
-    width: 50ch;
+    width: 25em;
     display: flex;
     flex-direction: column;
     min-height: 0;

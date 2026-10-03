@@ -69,7 +69,7 @@
           </button>
         </div>
       </div>
-      {#if feature.properties?.tags.length}
+      {#if feature.properties?.tags?.length}
         <div class="details">
           <div class="tags">
             {#each feature.properties?.tags as tag (tag)}
@@ -94,6 +94,9 @@
     > * {
       border: 1px solid transparent;
       border-top-color: color-mix(in oklab, currentColor, transparent 75%);
+      &:last-child {
+        border-bottom-color: color-mix(in oklab, currentColor, transparent 75%);
+      }
       &:hover {
         border: 1px solid color-mix(in oklab, currentColor, transparent 50%);
       }
