@@ -66,7 +66,7 @@ const shadow = "#000";
 const secondary = "#000";
 const fillOpacity = 0.2;
 
-const strokeOpacity = 0.8;
+const strokeOpacity = 0.9;
 const selectedStrokeOpacity = 1.0;
 
 const VIEWBOXSIZE = 256;
