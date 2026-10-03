@@ -257,6 +257,7 @@
       flex: 0 0;
       background-color: color-mix(in srgb, Canvas, CanvasText 10%);
       align-items: baseline;
+      padding: 0 var(--gap);
     }
     .palette {
       align-self: center;
