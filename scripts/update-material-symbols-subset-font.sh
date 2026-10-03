@@ -4,6 +4,7 @@ set -euox pipefail
 icons=()
 
 # Alphabetical order!
+icons+=("arrow_selector_tool")
 icons+=("close")
 icons+=("drag_indicator")
 icons+=("home")
@@ -12,9 +13,12 @@ icons+=("keyboard_arrow_down")
 icons+=("keyboard_arrow_up")
 icons+=("link")
 icons+=("link_off")
+icons+=("pentagon")
 icons+=("select_window")
 icons+=("select_window_off")
 icons+=("settings")
+icons+=("south_west")
+icons+=("timeline")
 icons+=("visibility")
 icons+=("visibility_off")
 

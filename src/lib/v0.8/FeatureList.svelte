@@ -45,6 +45,11 @@
       onclick={() => onFeatureClick?.(featureId)}
       ondblclick={() => onFeatureDoubleClick?.(featureId)}
     >
+      <div class="symbol">
+        <span class={["material-symbols-sharp"]}>
+          {feature.geometry.type === "LineString" ? "timeline" : feature.geometry.type === "Polygon" ? "pentagon" : feature.geometry.type === "Point" ? "south_west" : ""}
+        </span>
+      </div>
       <div class="titlebar">
         <div class="category">
           <span class={{unfilled: !feature.properties.category}}>
@@ -100,11 +105,19 @@
     .feature {
       display: grid;
       grid-template-rows: 1fr 0fr;
-      grid-template-columns: 1fr;
+      grid-template-columns: 0fr 1fr;
       gap: calc(0.5 * var(--gap));
       padding: var(--gap);
-      .titlebar {
+      padding-left: calc(var(--gap) / 2);
+      .symbol {
+        color: color-mix(in oklab, currentColor, transparent 25%);
         grid-column: 1;
+        grid-row: 1;
+        padding-inline-end: calc(var(--gap) / 2);
+        line-height: 1em;
+      }
+      .titlebar {
+        grid-column: 2;
         grid-row: 1;
         display: flex;
         align-items: first baseline;
@@ -114,7 +127,7 @@
         .category {
           font-weight: 500;
           font-size: 1.2rem;
-          line-height: 0;
+          line-height: 1em;
         }
         .title {
           overflow: hidden;
@@ -122,9 +135,12 @@
           text-overflow: ellipsis;
           color: color-mix(in srgb, CanvasText, Canvas 25%);
         }
+        .edit {
+          align-self: start;
+        }
       }
       .details {
-        grid-column: 1;
+        grid-column: 2;
         grid-row: 2;
         display: flex;
         min-width: 0;
