@@ -153,7 +153,7 @@
             "resampling": "nearest",
             "hillshade-illumination-direction": 315,
             "hillshade-exaggeration": 0.5,
-            "hillshade-method": 'igor',
+            "hillshade-method": 'standard',
           } :
           {
             'resampling': 'nearest',
