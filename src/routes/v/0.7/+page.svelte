@@ -125,7 +125,11 @@
 	onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
   onbeforeunload={(e) => {e.preventDefault(); e.returnValue = true; return "Are you sure you want to leave?"}}
 	on:keyup={on_key_up}
-	/>
+/>
+
+<svelte:head>
+	<title>Impasto Viewer (v0.7.0)</title>
+</svelte:head>
 
 
 <div class="main">
