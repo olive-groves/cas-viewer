@@ -27,6 +27,7 @@ const outOfBoundsValidator: Validator = (feature, { updateType }) => {
 }
 
 // Shared state, options
+const defaultPointerDistance = 25;
 const defaultKeyEvents = {
   delete: null,
   rotate: null,
@@ -328,6 +329,7 @@ export const modeFactory: ModeFactory = () => {
     // Default mode that can only select.
     new TerraDrawSelectMode({
       modeName: "select",
+      pointerDistance: defaultPointerDistance,
       flags: selectFlags,
       keyEvents: defaultKeyEvents,
       styles: {
@@ -348,6 +350,7 @@ export const modeFactory: ModeFactory = () => {
     // Its capabilities and styling are derived here.
     new TerraDrawSelectMode({
       modeName: "edit",
+      pointerDistance: defaultPointerDistance,
       flags: editFlags,
       styles: {
         selectedMarkerUrl: editingMarkerUrl,
@@ -406,6 +409,7 @@ export const modeFactory: ModeFactory = () => {
     // Isolated edit mode, identical to edit mode.
     new TerraDrawSelectMode({
       modeName: ISOLATED_EDIT_MODE_NAME,
+      pointerDistance: defaultPointerDistance,
       keyEvents: defaultKeyEvents,
       allowManualSelection: false,
       flags: editFlags,
@@ -428,6 +432,7 @@ export const modeFactory: ModeFactory = () => {
       },
     }),
     new TerraDrawMarkerMode({
+      pointerDistance: defaultPointerDistance,
       validation: outOfBoundsValidator,
       styles: {
         markerUrl: ({properties}) => properties?._currentlyHovering ? selectedMarkerUrl : markerUrl,
@@ -436,6 +441,7 @@ export const modeFactory: ModeFactory = () => {
       },
     }),
     new TerraDrawPolyLineMode({
+      pointerDistance: defaultPointerDistance,
       validation: validator,
       styles: {
         lineStringColor: primary,
