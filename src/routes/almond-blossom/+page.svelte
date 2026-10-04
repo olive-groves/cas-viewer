@@ -157,6 +157,10 @@
   const myUnderzoom = new Underzoom(maplibregl, {extendPan: 1, extendScale: 0.1});
 </script>
 
+<svelte:head>
+	<title>Impasto Viewer (Almond Blossom)</title>
+</svelte:head>
+
 <!-- Add pmtiles:// Protocol globally -->
 <PMTilesProtocol />
 

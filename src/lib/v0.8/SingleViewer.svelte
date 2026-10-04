@@ -219,8 +219,12 @@
     ondata={handleOnData}
     renderWorldCopies={false}
     attributionControl={false}
+    // TODO: Parameterize
+    anisotropicFilterPitch={180}
     transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
     bearingSnap={0}
+    dragRotate={false}
+    touchPitch={false}
     // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
     {zoom}
     {center}
@@ -320,13 +324,13 @@
       {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
       {@const override = syncedLayer?.overrides.get(overrideKey)}
       {@const background = mergeDeep(syncedLayer?.background ?? {}, override?.background ?? {}) }
-      {@const layerVisibility = override?.spec?.layout?.visibility ?? syncedLayer?.spec?.layout?.visibility ?? "none"}
+      {@const layerVisibility = override?.background?.visibility ?? syncedLayer?.background?.visibility ?? false}
       <!-- TODO: Better default (hidden) background handling -->
       <BackgroundLayer
         id={BACKGROUND_PREFIX + overrideKey}
         // beforeId={overrideKey}
-        paint={{"background-color": background?.color ?? "rgb(0, 255, 0)", "background-opacity": background?.opacity ?? 0}}
-        layout={{visibility: layerVisibility}}
+        paint={{"background-color": background?.color ?? "rgb(127, 127, 127)", "background-opacity": background?.opacity ?? 0}}
+        layout={{visibility: layerVisibility ? "visible" : "none"}}
       />
     {/each}
     {#if surface?.overrideKey && surface?.syncedSurfaceKey}

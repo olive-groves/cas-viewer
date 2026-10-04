@@ -6,7 +6,7 @@
   import Select from '$lib/Select.svelte';
   import Viewer from '$lib/Viewer.svelte';
   import { ViewerData } from '$lib/ViewerClasses.svelte';
-  
+
   let n = $state(1);  // n viewers
 
   const MODES = ['Side by side', 'Lens'] as const;
@@ -40,7 +40,7 @@
 		obj.containerX = node.getBoundingClientRect().left;
 		obj.containerY = node.getBoundingClientRect().top;
 	}
-	
+
 	function on_key_up(event) {
 		switch (event.key) {
 			case "'":
@@ -79,7 +79,7 @@
     return viewers
   })
 
-  let loaded_conv = $derived(viewers.map((v) => v.loaded)) 
+  let loaded_conv = $derived(viewers.map((v) => v.loaded))
 
   let all_pmtiles = $derived.by(() => {
     let all_pmtiles = [];
@@ -123,13 +123,18 @@
 
 <svelte:window
 	onpointermove={(event) => {lens.clientX = event.clientX; lens.clientY = event.clientY;}}
-	on:keyup={on_key_up} 
-	/>
+  onbeforeunload={(e) => {e.preventDefault(); e.returnValue = true; return "Are you sure you want to leave?"}}
+	on:keyup={on_key_up}
+/>
+
+<svelte:head>
+	<title>Impasto Viewer (v0.7.0)</title>
+</svelte:head>
 
 
 <div class="main">
   <div
-    class={[((mode === 'Lens') && ( loaded_conv.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]} 
+    class={[((mode === 'Lens') && ( loaded_conv.every((x) => x === true) )) ? "viewers-grid" : "viewers-flex"]}
     use:recordBoundingClientRect={lens}
   >
     {#if loaded_conv.some((x) => x === false)}
@@ -138,7 +143,7 @@
       </div>
     {/if}
     <!-- Index viewers[i] to trigger reactive state -->
-    {#each viewers as viewer, i} 
+    {#each viewers as viewer, i}
       {#if viewer.loaded}
         <Viewer
           --height="100%"
