@@ -219,8 +219,12 @@
     ondata={handleOnData}
     renderWorldCopies={false}
     attributionControl={false}
+    // TODO: Parameterize
+    anisotropicFilterPitch={180}
     transformConstrain={(lngLat, zoom) => ({center: lngLat, zoom: zoom ?? 0})}
     bearingSnap={0}
+    dragRotate={false}
+    touchPitch={false}
     // We can't bind because it causes sync issues in 3D mode. For now update upon onmove.
     {zoom}
     {center}
