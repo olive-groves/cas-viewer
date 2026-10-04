@@ -369,14 +369,41 @@
     {#each layers.order as overrideKey (overrideKey)}
       {@const syncedLayerKey = layers.get(overrideKey)}
       {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+      {@const paint = syncedLayer?.spec.paint}
       {@const override = syncedLayer?.overrides.get(overrideKey)}
       {@const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source}
       {@const source = sourceManager.mapLibreSources.get(sourceKey)}
       {#await source?.source then sourceResolve}
-        <label>
-          <input type="checkbox" checked={syncedLayer?.spec.layout?.visibility === "visible"} onchange={(e) => syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none"} />
-          {sourceResolve?.source.metadata.modality === "rgb" ? "RGB" : sourceResolve?.source.metadata.maskType === "nan-height" ? "NaN" : syncedLayer?.spec.type === "color-relief" ? "Pseudocolor" : "Hillshade"}
-        </label>
+        {#if syncedLayer?.spec.type === "hillshade"}
+          <label>
+            <input type="checkbox" bind:checked={syncedLayer.background.visibility}/>
+            Gray Fill
+          </label>
+        {/if}
+        <div style:display="flex" style:gap="var(--gap)" >
+          <label>
+            <input type="checkbox" checked={syncedLayer?.spec.layout?.visibility === "visible"} onchange={(e) => syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none"} />
+          </label>
+          {#if sourceResolve?.source.metadata.modality === "rgb"}
+            RGB
+          {:else if sourceResolve?.source.metadata.maskType === "nan-height"}
+            NaN (Height)
+          {:else if syncedLayer?.spec.type === "color-relief"}
+            Pseudocolor
+          {:else if syncedLayer?.spec.type === "hillshade"}
+            <details>
+              <summary>Hillshade</summary>
+              <label>
+                <input type="range" min=0 max=360 step=5 bind:value={paint["hillshade-illumination-direction"]} ondblclick={() => paint["hillshade-illumination-direction"] = 335}>
+                Angle ({paint["hillshade-illumination-direction"].toFixed(0).padStart(3, '0')}°)
+              </label>
+              <label>
+                <input type="range" min=0 max=1 step=0.05 bind:value={paint["hillshade-exaggeration"]} ondblclick={() => paint["hillshade-exaggeration"] = 0.5}>
+                Intensity ({paint["hillshade-exaggeration"].toFixed(2)})
+              </label>
+            </details>
+          {/if}
+        </div>
       {/await}
     {/each}
   </div>
@@ -394,6 +421,10 @@
       z-index: 1;
       display: flex;
       flex-direction: column-reverse;
+      details::details-content {
+        display: flex;
+        flex-direction: column;
+      }
     }
   }
 </style>
