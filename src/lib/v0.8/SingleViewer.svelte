@@ -211,10 +211,10 @@
   }
 </script>
 
-<div class=map-container>
+<div class="map-container stack">
   <MapLibre
     bind:map
-    inlineStyle="flex: 1 1;"
+    inlineStyle="place-self: stretch;"
     onload={(e) => updateCamera(e.target)}
     ondata={handleOnData}
     renderWorldCopies={false}
@@ -365,11 +365,35 @@
       {/if}
     {/if}
   </MapLibre>
+  <div class="controls-bottom-left unselectable">
+    {#each layers.order as overrideKey (overrideKey)}
+      {@const syncedLayerKey = layers.get(overrideKey)}
+      {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+      {@const override = syncedLayer?.overrides.get(overrideKey)}
+      {@const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source}
+      {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+      {#await source?.source then sourceResolve}
+        <label>
+          <input type="checkbox" checked={syncedLayer?.spec.layout?.visibility === "visible"} onchange={(e) => syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none"} />
+          {sourceResolve?.source.metadata.modality === "rgb" ? "RGB" : sourceResolve?.source.metadata.maskType === "nan-height" ? "NaN" : syncedLayer?.spec.type === "color-relief" ? "Pseudocolor" : "Hillshade"}
+        </label>
+      {/await}
+    {/each}
+  </div>
 </div>
 
 <style>
   .map-container {
-    display: flex;
     flex: 1;
+    .controls-bottom-left {
+      filter: drop-shadow(0px 0px 2px black) drop-shadow(0px 0px 10px black) drop-shadow(0px 0px 100px black);
+      color: CanvasText;
+      font-size: 1.2rem;
+      align-self: end;
+      justify-self: start;
+      z-index: 1;
+      display: flex;
+      flex-direction: column-reverse;
+    }
   }
 </style>

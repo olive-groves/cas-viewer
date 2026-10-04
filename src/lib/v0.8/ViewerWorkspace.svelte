@@ -28,8 +28,11 @@
   const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
 
   const colorRelief = new ColorRelief();
-  let globalMaximumPossibleBreakpoint = $state(0);
-
+  let globalMaximumPossibleBreakpoint = $state(1000);
+  $effect(() => {
+    colorRelief.setBreakpoints.max = globalMaximumPossibleBreakpoint;
+    colorRelief.setBreakpoints.high = globalMaximumPossibleBreakpoint;
+  })
 
   let maxZoom: number | undefined;
   let metersPerMaxZoomPixel: number | undefined = $state();
@@ -79,8 +82,16 @@
     if (rgbLayer) {
       const view = new SingleView();
       ({syncedLayer, syncedLayerKey, overrideKey} = rgbLayer);
+
       view.layers.add(syncedLayerKey, {key: overrideKey});
       view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
+
+      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+      const name = date ? `RGB ${date.toLocaleDateString()}` : "RGB";
+      view.layout.window.title = name;
+      view.name = name;
+
       multiView.views.add(view);
       rgbView = view;
     }
@@ -94,12 +105,40 @@
       ({syncedLayer, syncedLayerKey, overrideKey} = hillshadeLayer);
       view.layers.add(syncedLayerKey, {key: overrideKey});
 
+      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+      const name = date ? `Height ${date.toLocaleDateString()}` : "Height";
+      view.layout.window.title = name;
+      view.name = name;
+
       view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
       multiView.views.add(view);
       heightView = view;
     }
-    // If hillshade/color-relief, create hillshade/color-relief view
-    // If NaN, add to the views
+
+    const nanLayer = layers.find(({syncedLayer, syncedLayerKey, overrideKey}) => sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source?.source?.metadata?.maskType === "nan-height")
+    if (nanLayer) {
+      ({syncedLayer, syncedLayerKey, overrideKey} = nanLayer);
+
+      if (rgbView)
+        rgbView.layers.add(syncedLayerKey, {key: overrideKey});
+      if (heightView)
+        heightView.layers.add(syncedLayerKey, {key: overrideKey});
+      if (!rgbView && !heightView) {
+        const view = new SingleView();
+        view.layers.add(syncedLayerKey, {key: overrideKey});
+
+        const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+        const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+        const name = date ? `NaN-height ${date.toLocaleDateString()}` : "NaN-height";
+        view.layout.window.title = name;
+        view.name = name;
+
+        view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
+        multiView.views.add(view);
+        heightView = view;
+      }
+    }
 
     // Get all the synced layers to determine which ones raster, hillshade, color-relief, overlay
 
@@ -146,6 +185,12 @@
       if (metadata?.maximum && (metadata.maximum > globalMaximumPossibleBreakpoint))
         globalMaximumPossibleBreakpoint = metadata.maximum;
       const layerSpecTypes = ["color-relief", "hillshade"];
+
+      // ———
+      const initColorRelief = new ColorRelief();
+      initColorRelief.setBreakpoints.max = globalMaximumPossibleBreakpoint;
+      initColorRelief.setBreakpoints.high = globalMaximumPossibleBreakpoint;
+      // ———
       return layerSpecTypes.map((layerSpecType) => {
         const initialPaintSpec =
           layerSpecType === "hillshade" ?
@@ -155,16 +200,17 @@
             "hillshade-exaggeration": 0.5,
             "hillshade-method": 'standard',
           } :
-          {
-            'resampling': 'nearest',
-            'color-relief-color': [
-              'interpolate',
-              ['linear'],
-              ['elevation'],
-              0, 'rgba(0, 0, 0, 1)',
-              metadata?.maximum ?? 5000, 'rgba(0, 255, 0, 1)'
-            ]
-          }
+          $state.snapshot(initColorRelief.paint);
+          // {
+          //   'resampling': 'nearest',
+          //   'color-relief-color': [
+          //     'interpolate',
+          //     ['linear'],
+          //     ['elevation'],
+          //     0, 'rgba(0, 0, 0, 1)',
+          //     metadata?.maximum ?? 5000, 'rgba(0, 255, 0, 1)'
+          //   ]
+          // }
         const initialBackgroundSpec: Background | undefined =
           layerSpecType === "hillshade" ?
           {
@@ -391,9 +437,9 @@
     {/if}
 
     <div class="statistics">
-      <div class="scalebar">
+      <!-- <div class="scalebar">
         <ScaleBar {metersPerPixel} />
-      </div>
+      </div> -->
       <div class="colorbar">
         <Colorbar
           min={colorRelief.setBreakpoints.low * metersPerInteger}
@@ -575,7 +621,7 @@
     align-self: center;
     justify-self: start;
     pointer-events: none;
-    filter: drop-shadow(0 0 5px black);
+    filter: drop-shadow(0 0 5px black) drop-shadow(0px 0px 2px black);
 
     max-height: 500px;
     height: 100%;
