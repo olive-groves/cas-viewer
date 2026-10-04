@@ -477,7 +477,7 @@
                       <div style:display=flex class=unselectable style:overflow-x=auto>
                         {#each view.views.order as childViewKey, i (childViewKey)}
                           {@const childView = view.views.map.get(childViewKey)}
-                          <div style:display=flex style:border="1px solid gray" style:white-space=nowrap style:padding="0 6px">
+                          <div class="view-tab">
                             <label style:display=flex style:gap=2px>
                               {childView.name || `View ${i + 1}`}
                               <input type=checkbox checked={childView.layout.window.state !== "minimized"} onchange={(e) => childView.layout.window.state = e.target.checked ? "normal" : "minimized"}>
@@ -601,31 +601,59 @@
         </div>
       {/each}
     </div>
-    {#if layout.minimap !== "none"}
-      <div class="minimap-control stack">
-        {#if layout.minimap === "visible"}
-          <div class=minimap-container>
-            <SingleViewer
-              {...minimapView}
-              zoom={-1.5}
-            />
-          </div>
-        {/if}
-        <button onclick={() => layout.minimap = layout.minimap === "visible" ? "hidden" : "visible"}>
-          <span>
-            Minimap
-          </span>
-        </button>
-      </div>
-    {/if}
+    <div class="controls-bottom-left">
+      {#if layout.minimap !== "none"}
+        <!-- TODO: Add minimap -->
+        <!-- <div class="minimap-control stack">
+          {#if layout.minimap === "visible"}
+            <div class=minimap-container>
+              <SingleViewer
+                {...minimapView}
+                zoom={-1.5}
+              />
+            </div>
+          {/if}
+          <button onclick={() => layout.minimap = layout.minimap === "visible" ? "hidden" : "visible"}>
+            <span>
+              Minimap
+            </span>
+          </button>
+        </div> -->
+        <div class="zoom-control">
+          <button onclick={() => camera.zoom += 1}>
+            +
+          </button>
+          <button onclick={() => camera.zoom -= 1}>
+            –
+          </button>
+        </div>
+      {/if}
+    </div>
   </div>
 </DropZone>
 
 <style>
-  .minimap-control {
+  .controls-bottom-left {
     z-index: 1;
     justify-self: end;
     align-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: calc(3 * var(--gap));
+    padding: var(--gap);
+  }
+  .zoom-control {
+    display: flex;
+    flex-direction: column;
+    line-height: 0;
+    button {
+      font-size: 2rem;
+      height: 2.2ch;
+      width: 2.2ch;
+    }
+  }
+  .minimap-control {
     pointer-events: none;
     min-width: 0;
     min-height: 0;
@@ -648,7 +676,7 @@
     gap: 1em;
   }
   .add-drag-border {
-    border: 2px dashed white;
+    border: 2px dashed CanvasText;
     padding: 0.5em;
   }
   .add-drag {
@@ -658,7 +686,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 2px dashed white;
+    border: 2px dashed color-mix(in srgb, CanvasText, Canvas 50%);
   }
   .views-notice {
     pointer-events: none;
@@ -727,5 +755,11 @@
     .multi-viewer {
       flex-direction: column;
     }
+  }
+  .view-tab {
+    display: flex;
+    border: 1px solid color-mix(in srgb, CanvasText, transparent 85%);
+    padding: 0 var(--gap);
+    align-items: center;
   }
 </style>
