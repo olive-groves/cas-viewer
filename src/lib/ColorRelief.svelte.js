@@ -26,6 +26,9 @@ export const COLORMAPS = {  // Lowercase key, colors from low to high
   green: [
     "#000000", "#00FF00",
   ],
+  viridis2: [
+    "#440154", "#fde725",
+  ],
 };
 
 export class ColorRelief {

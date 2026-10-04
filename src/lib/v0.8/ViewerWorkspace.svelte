@@ -180,8 +180,8 @@
               'interpolate',
               ['linear'],
               ['elevation'],
-              0, 'rgba(0, 0, 0, 1)',
-              metadata?.maximum, 'rgba(0, 255, 0, 1)'
+              0, "#440154",
+              metadata?.maximum, "#FDE725"
             ]
           }
         const initialBackgroundSpec: Background | undefined =

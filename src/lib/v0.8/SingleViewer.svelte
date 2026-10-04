@@ -216,7 +216,7 @@
   }
 
   let colorRelief = new ColorRelief();
-  colorRelief.colormap = "green";
+  colorRelief.colormap = "viridis2";
   colorRelief.setBreakpoints.high = 1000;
   colorRelief.setBreakpoints.max = 1000;
 
@@ -427,8 +427,8 @@
                     'interpolate',
                     ['linear'],
                     ['elevation'],
-                    low, 'rgba(0, 0, 0, 1)',
-                    high, 'rgba(0, 255, 0, 1)'
+                    low, '#440154',
+                    high, "#FDE725"
                   ];
                   colorRelief.setBreakpoints.low = low;
                 }}
@@ -439,8 +439,8 @@
                     'interpolate',
                     ['linear'],
                     ['elevation'],
-                    low, 'rgba(0, 0, 0, 1)',
-                    high, 'rgba(0, 255, 0, 1)'
+                    low, '#440154',
+                    high, "#FDE725"
                   ];
                   colorRelief.setBreakpoints.high = high;
                 }}
@@ -450,9 +450,9 @@
                 --padding-top=0.5rem
                 --padding-bottom=0.5rem
                 --track-height=0.5rem
-                --track-filled-color="black"
-                --track-filled-gradient-mid-color={"color-mix(in oklab, black, green 50%)"}
-                --track-filled-gradient-end-color={"green"}
+                --track-filled-color="#440154"
+                --track-filled-gradient-mid-color={"color-mix(in oklab, #440154, #fde725 50%)"}
+                --track-filled-gradient-end-color={"#fde725"}
               />
               <div style="display: flex; justify-content: space-between;">
                 <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
