@@ -6,23 +6,26 @@
   let { children } = $props()
 </script>
 
-<nav style:margin="0" style:padding="0.3em">
-  <button onclick={() => {window.location.reload(); window.location.href = '/';}}><h1>PMTiles Multi Viewer</h1></button>
-  <a class=home href="/almond-blossom">Harm Belt's <em>Almond Blossom</em></a>
-  <!-- <a href="{base}/test-openstreetmap">test</a> -->
-  <!-- <button class="restart" onclick={() => {window.location.reload(); window.location.href = `${base}/`;}}>reset</button> -->
+<nav class="unselectable">
+  <h1>Impasto Viewer</h1>
+  <button style:margin-inline-start=auto onclick={() => {window.location.reload(); window.location.href = '/';}}>Latest Version (v0.8-alpha)</button>
+  <button onclick={() => {window.location.reload(); window.location.href = '/v/0.7';}}>v0.7</button>
+  <a href="/almond-blossom">Harm Belt's <cite>Almond Blossom</cite></a>
 </nav>
 
 <style>
   nav {
+    font-size: 1rem;
     display: flex;
-    flex-wrap: nowrap;
-    a, h1, p {
-      font-size: 0.88em;
-      margin: 0.2em;
+    align-items: first baseline;
+    gap: calc(2 * var(--gap));
+    padding: 0 var(--gap);
+    button {
+      padding: 0 var(--gap);
+      border: 1px solid color-mix(in srgb, currentColor, transparent 75%);
     }
-    .home {
-      margin-right: auto;
+    * {
+      font-size: 1rem;
     }
   }
 </style>
