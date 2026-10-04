@@ -13,10 +13,8 @@
   import FeatureInspectorEditor from "./FeatureInspectorEditor.svelte";
   import { SvelteMap } from "svelte/reactivity";
   import FeatureList from "./FeatureList.svelte";
-  import { ColorRelief } from "$lib/ColorRelief.svelte";
-  import Colorbar from "$lib/Colorbar.svelte";
   import { syncedMapLibreLayers } from "$lib/shared.svelte";
-  import ScaleBar from "$lib/ScaleBar.svelte";
+  import { ColorRelief } from "$lib/ColorRelief.svelte";
 
   let {
     multiView,
@@ -26,18 +24,6 @@
 
   const sourceManager = getSourceManagerContext();
   const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
-
-  const colorRelief = new ColorRelief();
-  let globalMaximumPossibleBreakpoint = $state(0);
-
-
-  let maxZoom: number | undefined;
-  let metersPerMaxZoomPixel: number | undefined = $state();
-  let metersPerPixel = $derived(2**(maxZoom - multiView.camera.zoom) * metersPerMaxZoomPixel);
-
-  const METERS_PER_KEYENCE_HEIGHT_QUANTIZATION_STEP = 0.000000250000011874363;
-
-  let metersPerInteger = $state(METERS_PER_KEYENCE_HEIGHT_QUANTIZATION_STEP);
 
   // TODO: Separate handler for adding views
   function handleAddViewsOnChange(e: HTMLInputElement) {
@@ -79,8 +65,16 @@
     if (rgbLayer) {
       const view = new SingleView();
       ({syncedLayer, syncedLayerKey, overrideKey} = rgbLayer);
+
       view.layers.add(syncedLayerKey, {key: overrideKey});
       view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
+
+      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+      const name = date ? `RGB ${date.toLocaleDateString()}` : "RGB";
+      view.layout.window.title = name;
+      view.name = name;
+
       multiView.views.add(view);
       rgbView = view;
     }
@@ -94,12 +88,40 @@
       ({syncedLayer, syncedLayerKey, overrideKey} = hillshadeLayer);
       view.layers.add(syncedLayerKey, {key: overrideKey});
 
+      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+      const name = date ? `Height ${date.toLocaleDateString()}` : "Height";
+      view.layout.window.title = name;
+      view.name = name;
+
       view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
       multiView.views.add(view);
       heightView = view;
     }
-    // If hillshade/color-relief, create hillshade/color-relief view
-    // If NaN, add to the views
+
+    const nanLayer = layers.find(({syncedLayer, syncedLayerKey, overrideKey}) => sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source?.source?.metadata?.maskType === "nan-height")
+    if (nanLayer) {
+      ({syncedLayer, syncedLayerKey, overrideKey} = nanLayer);
+
+      if (rgbView)
+        rgbView.layers.add(syncedLayerKey, {key: overrideKey});
+      if (heightView)
+        heightView.layers.add(syncedLayerKey, {key: overrideKey});
+      if (!rgbView && !heightView) {
+        const view = new SingleView();
+        view.layers.add(syncedLayerKey, {key: overrideKey});
+
+        const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+        const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
+        const name = date ? `NaN-height ${date.toLocaleDateString()}` : "NaN-height";
+        view.layout.window.title = name;
+        view.name = name;
+
+        view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
+        multiView.views.add(view);
+        heightView = view;
+      }
+    }
 
     // Get all the synced layers to determine which ones raster, hillshade, color-relief, overlay
 
@@ -114,14 +136,6 @@
       ...mapLibreSource?.override
     }
     const metadata = mapLibreSource.source.source.format === "pmtiles" ? await mapLibreSource.source.source.metadata : undefined;
-
-    maxZoom = metadata?.maxzoom ?? undefined;
-    const version = metadata.metadataVersion;
-    if (version === "0.4.0") {
-      metersPerMaxZoomPixel = metadata?.spatialResolutionMeters;
-    } else if (version === "0.2.0") {
-      metersPerMaxZoomPixel = metadata?.conversionLengthMeters / metadata?.conversionLengthPixels
-    }
 
     // If raster, create raster layer
     if (sourceSpec.type === "raster" || sourceSpec.type === "image") {
@@ -143,9 +157,13 @@
 
     // If raster-dem, create hillshade AND color-relief
     } else if (sourceSpec.type === "raster-dem") {
-      if (metadata?.maximum && (metadata.maximum > globalMaximumPossibleBreakpoint))
-        globalMaximumPossibleBreakpoint = metadata.maximum;
       const layerSpecTypes = ["color-relief", "hillshade"];
+
+      // ———
+      const initColorRelief = new ColorRelief();
+      initColorRelief.setBreakpoints.max = metadata.maximum;
+      initColorRelief.setBreakpoints.high = metadata.maximum;
+      // ———
       return layerSpecTypes.map((layerSpecType) => {
         const initialPaintSpec =
           layerSpecType === "hillshade" ?
@@ -155,6 +173,7 @@
             "hillshade-exaggeration": 0.5,
             "hillshade-method": 'standard',
           } :
+          // $state.snapshot(initColorRelief.paint);
           {
             'resampling': 'nearest',
             'color-relief-color': [
@@ -162,7 +181,7 @@
               ['linear'],
               ['elevation'],
               0, 'rgba(0, 0, 0, 1)',
-              metadata?.maximum ?? 5000, 'rgba(0, 255, 0, 1)'
+              metadata?.maximum, 'rgba(0, 255, 0, 1)'
             ]
           }
         const initialBackgroundSpec: Background | undefined =
@@ -390,24 +409,6 @@
       </div>
     {/if}
 
-    <div class="statistics">
-      <div class="scalebar">
-        <ScaleBar {metersPerPixel} />
-      </div>
-      <div class="colorbar">
-        <Colorbar
-          min={colorRelief.setBreakpoints.low * metersPerInteger}
-          max={colorRelief.setBreakpoints.high * metersPerInteger}
-          --background-color=transparent
-          --gradient={`linear-gradient(
-            to top,
-            ${colorRelief.colormapArray.join(", ")}
-          )`}
-        />
-      </div>
-    </div>
-
-
   </div>
 
   {#if sidebarExpanded}
@@ -569,24 +570,5 @@
     button {
       padding: 0 calc(2 * var(--gap));
     }
-  }
-  .statistics {
-    z-index: 1;
-    align-self: center;
-    justify-self: start;
-    pointer-events: none;
-    filter: drop-shadow(0 0 5px black);
-
-    max-height: 500px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: calc(3 * var(--gap));
-    .colorbar {
-      display: flex;
-      max-height: 400px;
-      height: 100%;
-    }
-
   }
 </style>

@@ -18,6 +18,11 @@
   const syncedTerraDrawModeManager = getSyncedTerraDrawModeManagerContext();
 
   import { mergeDeep } from '$lib/utils';
+  import { ColorRelief } from '$lib/ColorRelief.svelte';
+  import Colorbar from '$lib/Colorbar.svelte';
+  import DualRangeInput from '$lib/DualRangeInput.svelte';
+  import { untrack } from 'svelte';
+
   let {
     layers,
     surface,
@@ -209,12 +214,33 @@
     roll = map?.getRoll();
     elevation = map?.getCameraTargetElevation();
   }
+
+  let colorRelief = new ColorRelief();
+  colorRelief.colormap = "green";
+  colorRelief.setBreakpoints.high = 1000;
+  colorRelief.setBreakpoints.max = 1000;
+
+  let showColorbar = $derived.by(() => {
+    return layers.order.some((overrideKey) => {
+      const syncedLayerKey = layers.get(overrideKey);
+      const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey);
+      return syncedLayer?.spec.type === "color-relief" && syncedLayer?.spec.layout?.visibility === "visible";
+    })
+  })
+
+  let maxZoom: number | undefined;
+  let metersPerMaxZoomPixel: number | undefined = $state();
+  let metersPerPixel = $derived(2**(maxZoom - zoom) * metersPerMaxZoomPixel);
+
+  const METERS_PER_KEYENCE_HEIGHT_QUANTIZATION_STEP = 0.000000250000011874363;
+
+  let metersPerInteger = $state(METERS_PER_KEYENCE_HEIGHT_QUANTIZATION_STEP);
 </script>
 
-<div class=map-container>
+<div class="map-container stack">
   <MapLibre
     bind:map
-    inlineStyle="flex: 1 1;"
+    inlineStyle="place-self: stretch;"
     onload={(e) => updateCamera(e.target)}
     ondata={handleOnData}
     renderWorldCopies={false}
@@ -365,11 +391,151 @@
       {/if}
     {/if}
   </MapLibre>
+  <div class="controls-bottom-left unselectable">
+    {#each layers.order as overrideKey (overrideKey)}
+      {@const syncedLayerKey = layers.get(overrideKey)}
+      {@const syncedLayer = syncedMapLibreLayers.get(syncedLayerKey)}
+      {@const paint = syncedLayer?.spec.paint}
+      {@const override = syncedLayer?.overrides.get(overrideKey)}
+      {@const sourceKey = syncedLayer?.overrides.get(overrideKey)?.spec?.source ?? syncedLayer?.spec.source}
+      {@const source = sourceManager.mapLibreSources.get(sourceKey)}
+      {#await source?.source then sourceResolve}
+        {#if syncedLayer?.spec.type === "hillshade"}
+          <label>
+            <input type="checkbox" bind:checked={syncedLayer.background.visibility}/>
+            Gray Fill
+          </label>
+        {/if}
+        <div style:display="flex" style:gap="var(--gap)" >
+          <label>
+            <input type="checkbox" checked={syncedLayer?.spec.layout?.visibility === "visible"} onchange={(e) => syncedLayer.spec.layout.visibility = e.target.checked ? "visible" : "none"} />
+          </label>
+          {#if sourceResolve?.source.metadata.modality === "rgb"}
+            RGB
+          {:else if sourceResolve?.source.metadata.maskType === "nan-height"}
+            NaN (Height)
+          {:else if syncedLayer?.spec.type === "color-relief"}
+            <details>
+              <summary>Pseudocolor</summary>
+              <DualRangeInput
+                min={0}
+                max={sourceResolve?.source.metadata.maximum}
+                low={paint["color-relief-color"].at(3)}
+                onLowChange={(low) => {
+                  const high = untrack(() => paint["color-relief-color"][5])
+                  paint["color-relief-color"] = [
+                    'interpolate',
+                    ['linear'],
+                    ['elevation'],
+                    low, 'rgba(0, 0, 0, 1)',
+                    high, 'rgba(0, 255, 0, 1)'
+                  ];
+                  colorRelief.setBreakpoints.low = low;
+                }}
+                high={paint["color-relief-color"].at(5)}
+                onHighChange={(high) => {
+                  const low = untrack(() => paint["color-relief-color"][3])
+                  paint["color-relief-color"] = [
+                    'interpolate',
+                    ['linear'],
+                    ['elevation'],
+                    low, 'rgba(0, 0, 0, 1)',
+                    high, 'rgba(0, 255, 0, 1)'
+                  ];
+                  colorRelief.setBreakpoints.high = high;
+                }}
+
+                step={colorRelief.setBreakpoints.step}
+                --thumb-width=0.2rem
+                --padding-top=0.5rem
+                --padding-bottom=0.5rem
+                --track-height=0.5rem
+                --track-filled-color="black"
+                --track-filled-gradient-mid-color={"color-mix(in oklab, black, green 50%)"}
+                --track-filled-gradient-end-color={"green"}
+              />
+              <div style="display: flex; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
+                  <span>{(colorRelief.setBreakpoints.min * sourceResolve?.source.metadata?.metersPerInteger * 1000).toFixed(0)} mm</span>
+                  <span>{(paint["color-relief-color"][3] * sourceResolve?.source.metadata?.metersPerInteger * 1000).toFixed(2)}</span>
+                </div>
+                <span> – </span>
+                <div style="display: flex; justify-content: space-between; flex: 1 1 0; width: 0;">
+                  <span>{(paint["color-relief-color"][5] * sourceResolve?.source.metadata?.metersPerInteger * 1000).toFixed(2)}</span>
+                  <span>{(sourceResolve?.source.metadata.maximum * sourceResolve?.source.metadata?.metersPerInteger * 1000).toFixed(0)}</span>
+                </div>
+              </div>
+            </details>
+          {:else if syncedLayer?.spec.type === "hillshade"}
+            <details>
+              <summary>Hillshade</summary>
+              <label>
+                <input type="range" min=0 max=360 step=5 bind:value={paint["hillshade-illumination-direction"]} ondblclick={() => paint["hillshade-illumination-direction"] = 335}>
+                Angle ({paint["hillshade-illumination-direction"].toFixed(0).padStart(3, '0')}°)
+              </label>
+              <label>
+                <input type="range" min=0 max=1 step=0.05 bind:value={paint["hillshade-exaggeration"]} ondblclick={() => paint["hillshade-exaggeration"] = 0.5}>
+                Intensity ({paint["hillshade-exaggeration"].toFixed(2)})
+              </label>
+            </details>
+          {/if}
+        </div>
+      {/await}
+    {/each}
+  </div>
+  {#if showColorbar}
+    <div class="controls-center-left">
+      <!-- <div class="scalebar">
+        <ScaleBar {metersPerPixel} />
+      </div> -->
+      <div class="colorbar">
+        <Colorbar
+          min={colorRelief.setBreakpoints.low * metersPerInteger}
+          max={colorRelief.setBreakpoints.high * metersPerInteger}
+          --background-color=transparent
+          --gradient={`linear-gradient(
+            to top,
+            ${colorRelief.colormapArray.join(", ")}
+          )`}
+        />
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
   .map-container {
-    display: flex;
     flex: 1;
+    .controls-bottom-left {
+      filter: drop-shadow(0px 0px 2px black) drop-shadow(0px 0px 10px black) drop-shadow(0px 0px 100px black);
+      color: CanvasText;
+      font-size: 1.2rem;
+      align-self: end;
+      justify-self: start;
+      z-index: 1;
+      display: flex;
+      flex-direction: column-reverse;
+      details::details-content {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+    .controls-center-left {
+      pointer-events: none;
+      filter: drop-shadow(0px 0px 2px black) drop-shadow(0px 0px 10px black) drop-shadow(0px 0px 100px black);
+      color: CanvasText;
+      font-size: 1.2rem;
+      align-self: center;
+      justify-self: start;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      max-height: 400px;
+      height: 100%;
+      .colorbar {
+        display: flex;
+        height: 100%;
+      }
+    }
   }
 </style>
