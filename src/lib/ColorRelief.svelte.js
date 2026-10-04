@@ -22,7 +22,10 @@ export const COLORMAPS = {  // Lowercase key, colors from low to high
 	],
 	dimgray: [  // CET_L2 https://colorcet.com/gallery.html Peter Kovesi. Good Colour Maps: How to Design Them. arXiv:1509.03700 [cs.GR] 2015
 		"#1c1c1c", "#f1f1f1"
-	]
+  ],
+  green: [
+    "#000000", "#00FF00",
+  ],
 };
 
 export class ColorRelief {
@@ -63,7 +66,7 @@ export class ColorRelief {
 		"color-relief-opacity": this.opacity,
 		"color-relief-color": this.#colorReliefColorLayer,
 	});
-	
+
 	layout = $derived({
 		"visibility": this.colorReliefLayerVisibility,  // layout, not paint
 	})

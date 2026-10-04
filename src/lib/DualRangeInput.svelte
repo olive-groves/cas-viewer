@@ -10,13 +10,17 @@
     high = $bindable(75),
     min = $bindable(1),
     max = $bindable(100),
-    step = $bindable(1)
+    step = $bindable(1),
+    onLowChange,
+    onHighChange,
   }: {
     low?: number,
     high?: number,
     min?: number,
     max?: number,
-    step?: number
+    step?: number,
+    onLowChange?: (low: number) => void,
+    onHighChange?: (low: number) => void,
   } = $props();
 
   let dualRangeInput: DualRangeInput;
@@ -40,7 +44,14 @@
     dualRangeInput.update("floor")
   })
 
-  
+  $effect(() => {
+    onLowChange?.(low);
+  })
+  $effect(() => {
+    onHighChange?.(high);
+  })
+
+
 </script>
 
 <div class="dual-range-input">
