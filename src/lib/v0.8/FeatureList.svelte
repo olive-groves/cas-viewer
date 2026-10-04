@@ -4,6 +4,7 @@
     GeoJSONStoreFeatures,
     GeoJSONStoreGeometries,
   } from 'terra-draw';
+  import { TAG_CHROMA_HUE, TAG_MAP } from './feature-utils.svelte';
 
   type FeatureId = string | number;
 
@@ -44,26 +45,41 @@
       onclick={() => onFeatureClick?.(featureId)}
       ondblclick={() => onFeatureDoubleClick?.(featureId)}
     >
-      <div class="category">
-        <span class={{unfilled: !feature.properties.category}}>
-          {feature.properties.category || "uncategorized"}
+      <div class="symbol">
+        <span class={["material-symbols-sharp"]}>
+          {feature.geometry.type === "LineString" ? "timeline" : feature.geometry.type === "Polygon" ? "pentagon" : feature.geometry.type === "Point" ? "south_west" : ""}
         </span>
       </div>
-      <div class="tags">
-        {#each feature.properties?.tags as tag (tag)}
-          {tag}
-        {/each}
+      <div class="titlebar">
+        <div class="category">
+          <span class={{unfilled: !feature.properties.category}}>
+            {feature.properties.category || "uncategorized"}
+          </span>
+        </div>
+        {#if feature.properties.title}
+          <div class="title">
+            <span class={{unfilled: !feature.properties.title}}>
+              {feature.properties.title}
+            </span>
+          </div>
+        {/if}
+        <div class="edit">
+          <button onclick={(e) => {onFeatureEdit?.(featureId); e.stopPropagation();} }>
+            Edit
+          </button>
+        </div>
       </div>
-      <div class="title">
-        <span class={{unfilled: !feature.properties.title}}>
-          {feature.properties.title || `Untitled ${feature.geometry.type ?? ""}`}
-        </span>
-      </div>
-      <div class="edit" style:margin-inline-start=auto>
-        <button onclick={(e) => {onFeatureEdit?.(featureId); e.stopPropagation();} }>
-          Edit
-        </button>
-      </div>
+      {#if feature.properties?.tags?.length}
+        <div class="details">
+          <div class="tags">
+            {#each feature.properties?.tags as tag (tag)}
+              <div title={TAG_MAP.get(tag)?.description} class="tag" style:--chroma={TAG_CHROMA_HUE.get(tag)?.chroma} style:--hue={TAG_CHROMA_HUE.get(tag)?.hue}>
+                {tag}
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   {/each}
 
@@ -74,19 +90,87 @@
     display: flex;
     flex-direction: column;
     overflow: auto;
-
     background-color: color-mix(in srgb, Canvas, transparent 5%);
-
-    .feature {
-      display: flex;
-      gap: var(--gap);
-      padding: var(--gap);
+    > * {
       border: 1px solid transparent;
+      border-top-color: color-mix(in oklab, currentColor, transparent 75%);
+      &:last-child {
+        border-bottom-color: color-mix(in oklab, currentColor, transparent 75%);
+      }
       &:hover {
-        border: 1px solid gray;
+        border: 1px solid color-mix(in oklab, currentColor, transparent 50%);
       }
       &.selected {
-        border: 1px solid white;
+        border: 1px solid;
+      }
+    }
+
+    .feature {
+      display: grid;
+      grid-template-rows: 1fr 0fr;
+      grid-template-columns: 0fr 1fr;
+      gap: calc(0.5 * var(--gap));
+      padding: var(--gap);
+      padding-left: calc(var(--gap) / 2);
+      .symbol {
+        color: color-mix(in oklab, currentColor, transparent 25%);
+        grid-column: 1;
+        grid-row: 1;
+        padding-inline-end: calc(var(--gap) / 2);
+        line-height: 1em;
+      }
+      .titlebar {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        align-items: first baseline;
+        gap: calc(2 * var(--gap));
+        min-width: 0;
+        margin-bottom: calc(-1 * var(--gap));
+        .category {
+          font-weight: 500;
+          font-size: 1.2rem;
+          line-height: 1em;
+        }
+        .title {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          color: color-mix(in srgb, CanvasText, Canvas 25%);
+        }
+        .edit {
+          align-self: start;
+        }
+      }
+      .details {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        min-width: 0;
+        gap: calc(2 * var(--gap));
+        .tags {
+          overflow: auto;
+          display: flex;
+          gap: var(--gap);
+          .tag {
+            white-space: nowrap;
+            --color: oklch(from CanvasText var(--lightness, 0.7) var(--chroma, 0.2) var(--hue, h));
+            font-size: 0.9rem;
+            border: 1px solid var(--color);
+            border-radius: var(--gap);
+            color: color-mix(in oklab, var(--color), CanvasText 80%);
+            background: color-mix(in oklab, var(--color), Canvas 85%);
+            padding-inline: var(--gap);
+          }
+        }
+      }
+      .edit {
+        font-size: 0.85rem;
+        color: color-mix(in oklab, currentColor, transparent 20%);
+        margin-inline-start: auto;
+        button {
+          padding: 0 var(--gap);
+        }
       }
     }
   }

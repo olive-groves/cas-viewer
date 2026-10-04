@@ -38,8 +38,8 @@
           // consider "custom-" prefix?
           created: now.toISOString(),
           modified: now.toISOString(),
-          "created-by": "Author W. Created",
-          "modified-by": "Author W. Modified",
+          "created-by": authorName,
+          "modified-by": authorName,
 
           // annotation text info
           category: "",
@@ -58,13 +58,6 @@
               //   author: "",
               //   comments: [], // NESTED REPLIES NOT SUPPORTED
               // }
-              {
-                text: "Reply 1.",
-                created: now.toISOString(),
-              },
-              {
-                text: "Reply 2."
-              },
             ],
           },
           references: [
@@ -92,10 +85,9 @@
     element?.scrollIntoView({block: "center", behavior: "smooth"});
   })
 
-  let tags = $state([
-    "urgent",
-    "resolved",
-  ])
+  let authorName = $state("");
+  let filterBy = $state("");
+  let sidebarExpanded = $state(true);
 
 </script>
 
@@ -163,6 +155,12 @@
       <div>
         (Actual mode: {modeManager.actualMode})
       </div>
+      <div>
+        <label>
+          Sidebar
+          <input type="checkbox" bind:checked={sidebarExpanded} />
+        </label>
+      </div>
     </div>
 
     {#if syncedTerraDraw.selected !== null}
@@ -177,17 +175,48 @@
           onSelectedCloseClick={() => syncedTerraDraw.syncedDeselectFeature(undefined, null)}
           onEditingCloseClick={() => modeManager.deselectIsolatedEdit(undefined, true)}
           onDrawAnotherClick={() => modeManager.deselectIsolatedEdit(feature?.properties?.mode)}
+          onDeleteClick={() => {
+            const dialog = document.getElementById("dialog-delete-selected");
+            dialog?.showModal();
+          }}
         />
+        <dialog id="dialog-delete-selected">
+          <h2>Delete selected feature?</h2>
+          <p>Are you sure you want to delete the selected feature?</p>
+          <div class="actionbar">
+            <button commandfor="dialog-delete-selected" command="close">Cancel</button>
+            <button
+              onclick={() => {if (modeManager.syncedTerraDraw.selected) {const d = modeManager.syncedTerraDraw.selected; modeManager.deselectIsolatedEdit(); modeManager.syncedTerraDraw.syncedRemoveFeatures(undefined, [d]);}}}
+              commandfor="dialog-delete-selected" command="close">
+              Delete
+            </button>
+          </div>
+        </dialog>
       </div>
     {/if}
   </div>
 
-  <div class=sidebar>
+  <div class=sidebar style:display={!sidebarExpanded ? "none" : ""}>
 
     <details open>
       <summary class="unselectable">Annotations</summary>
+      <div>
+        <label>
+          Author name:
+          <input type="text" bind:value={authorName} placeholder="Enter your author name" />
+        </label>
+      </div>
+      <div class="filter">
+        <form>
+          <label>
+            Filter:
+            <input name="filter" type="text" bind:value={filterBy} placeholder="Text to filter" />
+            <input style:display={!filterBy ? "none" : ""} type="reset" value="Clear"  />
+          </label>
+        </form>
+      </div>
       <FeatureList
-        features={syncedTerraDraw.snapshot}
+        features={filterBy ? syncedTerraDraw.snapshot.filter((f) => (f.properties.category.includes(filterBy) || f.properties.tags.some((t) => t.includes(filterBy)) || f.properties.title.includes(filterBy) || f.properties.comment.text.includes(filterBy))) : syncedTerraDraw.snapshot}
         selectedFeature={syncedTerraDraw.selected}
         onFeatureHoverStart={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: true})}
         onFeatureHoverEnd={(id) => syncedTerraDraw.syncedUpdateFeatureProperties(undefined, id, {_currentlyHovering: undefined})}
@@ -238,13 +267,33 @@
     justify-self: end;
     z-index: 1;
 
-    min-width: 40ch;
-
+    width: 25em;
     display: flex;
     flex-direction: column;
     min-height: 0;
 
     background-color: rgba(0, 0, 0, 25%);
+    details {
+      border: 1px solid transparent;
+      summary {
+        font-size: 1.2rem;
+        font-weight: 500;
+      }
+      &:has(summary:hover) {
+        border-color: color-mix(in srgb, CanvasText, Canvas 50%);
+      }
+    }
+    details::details-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+  }
+  .filter {
+    input[type=text]:not(:placeholder-shown) {
+      border-color: color-mix(in srgb, greenyellow, transparent 25%);
+      outline-color: greenyellow
+    }
   }
 
   .context {
@@ -255,5 +304,23 @@
     width: 100%;
     max-width: 350px;
     overflow-y: auto;
+    filter: drop-shadow(5px 5px 10px black);
+  }
+
+  dialog {
+    border: 1px solid;
+    padding: calc(2* var(--gap));
+    &::backdrop{
+      background-color: color-mix(in srgb, Canvas, transparent 25%);
+    }
+    .actionbar {
+      padding-top: 1lh;
+      display: flex;
+      flex-direction: row-reverse;
+      gap: var(--gap);
+      button {
+        padding: 0 var(--gap);
+      }
+    }
   }
 </style>

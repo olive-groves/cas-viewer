@@ -5,141 +5,33 @@
   } from 'terra-draw';
   import AutogrowTextArea from './AutogrowTextArea.svelte';
   import ClickToRevealButton from './ClickToRevealButton.svelte';
-  import { SvelteMap } from 'svelte/reactivity';
+  import { PROCESSES_AND_TECHNIQUES_AS_EFFECT, TAG_MAP, TAG_CHROMA_HUE } from './feature-utils.svelte';
 
-  // Process/technique terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300229438
-  // Condition/effect terminology... https://www.getty.edu/vow/AATHierarchy?find=chalking&logic=AND&note=&page=1&subjectid=300209168
-  const processes_and_techniques = {
-    "condition changing (processes)": {
-      "surface or structural changes": {
-        "cracking": "Fracturing in a material or object, usually along a single or branched path.",
-        "lifting": " Partial rising of a topcoat such as a paint, solvent, or varnish layer, due to the break in adhesion to the undercoat or surface layer.",
-        "powdering": "The act or process of reducing to powder, pulverization; in conservation science context refers to granular disintegration of stone and pigments.",
-        "blistering": "The process that causes blisters, which are areas bulging out from the main mass or surface, such as paint.",
-      },
-      "color changes": {
-        "discoloration": "Any change in the color of an object.",
-        "fading": "A gradual loss of color or intensity.",
-      },
-      "warping": "Bending or twisting out of shape, such as that caused by drying, dampness, or heat.",
-    },
-    "physicochemical processes": {
-      "saponification": "A process involving hydrolysis of an organic compound especially by alkali with the formation of salts of the fatty acids together with glycerol resulting in soap or soapy deposits.",
-    }
-  }
-  const processes_and_techniques_as_effect = {
-    "condition changing (processes)": {
-      "surface or structural changes": {
-        "crack": "Cracking · Fracturing in a material or object, usually along a single or branched path.",
-        "lift": "Lifting · Partial rising of a topcoat such as a paint, solvent, or varnish layer, due to the break in adhesion to the undercoat or surface layer.",
-        "powder": "Powdering · The act or process of reducing to powder, pulverization; in conservation science context refers to granular disintegration of stone and pigments.",
-        "blister": "Blistering · The process that causes blisters, which are areas bulging out from the main mass or surface, such as paint.",
-      },
-      "color changes": {
-        "discolor": "Discoloration · Any change in the color of an object.",
-        "fade": "Fading · A gradual loss of color or intensity.",
-      },
-      "warp": "Warping · Bending or twisting out of shape, such as that caused by drying, dampness, or heat.",
-    },
-    "physicochemical processes": {
-      "soap": "Saponification · A process involving hydrolysis of an organic compound especially by alkali with the formation of salts of the fatty acids together with glycerol resulting in soap or soapy deposits.",
-    },
-    "Non-Getty Art & Architecture Thesaurus": {
-      "Non-Getty Art & Architecture Thesaurus": {
-        "loss": "Missing original material due to damage, aging, or deterioration.",
-      },
-    },
-  }
-  const tag_map = new SvelteMap([
-    [
-      "priority",
-      {
-        "description": "Requires immediate attention.",
-      },
-    ],
-    [
-      "follow-up",
-      {
-        "description": "Inspect on later date.",
-      },
-    ],
-    [
-      "unresolved",
-      {
-        "description": "Not yet addressed.",
-      },
-    ],
-    [
-      "resolved",
-      {
-        "description": "Addressed.",
-      },
-    ],
-    [
-      "verified",
-      {
-        "description": "Verified by visual inspection, microscope, or other method.",
-      },
-    ],
-  ])
-
-  const tag_ch = new SvelteMap([
-    [
-      "priority",
-      {
-        "chroma": undefined,
-        "hue": 37,
-      }
-    ],
-    [
-      "follow-up",
-      {
-        "chroma": undefined,
-        "hue": 200,
-      }
-    ],
-    [
-      "unresolved",
-      {
-        "chroma": undefined,
-        "hue": 100,
-      }
-      ,
-    ],
-    [
-      "resolved",
-      {
-        "chroma": undefined,
-        "hue": 144,
-      }
-      ,
-    ],
-    [
-      "verified",
-      {
-        "chroma": undefined,
-        "hue": 254,
-      }
-    ],
-  ])
+  // TODO: Add tab capture; see Svelte tutorial example
 
   let {
     mode = "selected",
     properties = $bindable(),
     geometry,
     onEditClick,
+    onZoomToFitClick,
     onSelectedCloseClick,
     onDoneClick,
     onDrawAnotherClick,
+    onDeleteClick,
+    onCaptureView,
     onEditingCloseClick,
   }: {
     mode: "selected" | "editing";
     properties?: GeoJSONStoreFeatures<GeoJSONStoreGeometries>["properties"];
     geometry?: GeoJSONStoreFeatures<GeoJSONStoreGeometries>["geometry"];
     onEditClick?: () => void;
+    onZoomToFitClick?: () => void;
     onSelectedCloseClick?: () => void;
     onDoneClick?: () => void;
     onDrawAnotherClick?: () => void;
+    onDeleteClick?: () => void;
+    onCaptureView?: () => void;
     onEditingCloseClick?: () => void;
   } = $props();
 
@@ -188,8 +80,8 @@
         </span>
       </div>
       <div style:margin-inline-start=auto>
-        <button>
-          Fit to view
+        <button onclick={() => onZoomToFitClick?.()}>
+          Zoom to fit
         </button>
         <button onclick={() => onSelectedCloseClick?.()}>
           ×
@@ -199,7 +91,7 @@
     <div class="content">
       <div class="tags">
         {#each properties?.tags as tag}
-          <div class="tag" style:--chroma={tag_ch.get(tag)?.chroma} style:--hue={tag_ch.get(tag)?.hue}>
+          <div class="tag" style:--chroma={TAG_CHROMA_HUE.get(tag)?.chroma} style:--hue={TAG_CHROMA_HUE.get(tag)?.hue}>
             <div>
               {tag}
             </div>
@@ -213,7 +105,7 @@
 
       <div class="authorship">
         <div class="author">
-          {properties?.["created-by"] ?? "Unknown author"}
+          {properties?.["created-by"] || "Unknown author"}
         </div>
         <time datetime={properties?.created} title={properties?.created}>{getFriendlyLocalDateTime(properties?.created)}</time>
       </div>
@@ -229,7 +121,7 @@
           <p>{properties?.comment?.text}</p>
         </div>
       {/if}
-      {#if properties?.comment?.comments}
+      {#if properties?.comment?.comments.length}
         <div class="replies">
           {#each properties?.comment?.comments as reply, i (i)}
             {#if reply?.text}
@@ -260,7 +152,7 @@
         <div class="unselectable">Category</div>
         <select bind:value={properties.category}>
           <option value="">Select a category</option>
-          {#each Object.values(processes_and_techniques_as_effect) as supervalue (supervalue)}
+          {#each Object.values(PROCESSES_AND_TECHNIQUES_AS_EFFECT) as supervalue (supervalue)}
             {#each Object.entries(supervalue) as [key, value] (key)}
               {#if typeof value === "string"}
                 <option value={key.toLowerCase()} title={value}>
@@ -282,6 +174,9 @@
         </select>
       </label>
       <div style:margin-inline-start=auto>
+        <button onclick={() => onCaptureView?.()}>
+          Capture view
+        </button>
         <button onclick={() => onEditingCloseClick?.()}>
           ×
         </button>
@@ -294,7 +189,7 @@
         </div>
         <div class="tags">
           {#each properties?.tags as tag, i}
-            <div class="tag" style:--chroma={tag_ch.get(tag)?.chroma} style:--hue={tag_ch.get(tag)?.hue}>
+            <div class="tag" style:--chroma={TAG_CHROMA_HUE.get(tag)?.chroma} style:--hue={TAG_CHROMA_HUE.get(tag)?.hue}>
               <div>
                 {tag}
               </div>
@@ -321,7 +216,7 @@
             }}
             >
               <option value="">Select a tag</option>
-              {#each [...tag_map.keys()].filter((t) => !properties?.tags.includes(t)) as tag}
+              {#each [...TAG_MAP.keys()].filter((t) => !properties?.tags?.includes(t)) as tag}
                 <option value={tag}>{tag}</option>
               {/each}
             </select>
@@ -368,13 +263,33 @@
 
         </ClickToRevealButton>
       </div>
+      {#if properties?.comment?.text}
+        <div class="replies">
+          <div class="unselectable field-heading">Replies</div>
+          {#each properties?.comment?.comments as reply, i (i)}
+            <AutogrowTextArea
+              placeholder="Start a reply"
+              bind:value={reply.text}
+              rows={1}
+            />
+          {/each}
+          {#if (properties?.comment?.comments?.length < 1 || properties?.comment?.comments.at(-1).text)}
+            <div>
+              <button onclick={() => properties?.comment?.comments?.push({created: new Date().toISOString()})}>+ Reply</button>
+            </div>
+          {/if}
+        </div>
+      {/if}
     </div>
     <div class="actionbar">
-      <button onclick={() => onDoneClick?.()}>
+      <button class="primary" onclick={() => onDoneClick?.()}>
         Done
       </button>
       <button onclick={() => onDrawAnotherClick?.()}>
-        Done & Draw Another {geometry?.type}
+        Done & Draw Another
+      </button>
+      <button class="severe" onclick={() => onDeleteClick?.()}>
+        Delete
       </button>
     </div>
 
@@ -391,10 +306,27 @@
     padding: var(--gap);
     border: 1px solid color-mix(in srgb, CanvasText, Canvas 80%);
     border-radius: var(--gap);
+    overflow-x: auto;
 
     button {
       text-transform: capitalize;
       padding: 0 calc(2 * var(--gap));
+      &.primary {
+        color: Canvas;
+        background: CanvasText;
+        &:hover {
+          background: color-mix(in srgb, CanvasText, Canvas 10%);
+        }
+      }
+
+      &.severe {
+        color: CanvasText;
+        background-color: Canvas;
+        &:hover {
+          border-color: color-mix(in oklab, CanvasText, red 90%);
+          background: color-mix(in oklab, Canvas, red 25%);
+        }
+      }
     }
     .category {
       span,
@@ -424,6 +356,7 @@
     }
     .actionbar {
       display: flex;
+      flex-wrap: wrap;
       padding-top: calc(2 * var(--gap));
       gap: var(--gap);
     }
@@ -441,14 +374,11 @@
         color: color-mix(in srgb, CanvasText, Canvas 10%);
       }
     }
-    .comment {
-      margin-block-start: calc(-1 * var(--gap));
-    }
     .replies {
       padding: calc(2 * var(--gap)) 0;
       display: flex;
       flex-direction: column;
-      gap: calc(3* var(--gap));
+      gap: calc(2 * var(--gap));
       margin-inline-start: 1em;
     }
     .reply {
@@ -470,14 +400,15 @@
       flex-wrap: wrap;
       gap: calc(var(--gap));
       .tag {
+        align-items: first baseline;
 
         --color: oklch(from CanvasText var(--lightness, 0.7) var(--chroma, 0.2) var(--hue, h));
         display: flex;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         border: 1px solid var(--color);
         border-radius: var(--gap);
-        color: color-mix(in oklch, var(--color), CanvasText 80%);
-        background: color-mix(in oklch, var(--color), Canvas 85%);
+        color: color-mix(in oklab, var(--color), CanvasText 80%);
+        background: color-mix(in oklab, var(--color), Canvas 85%);
         padding-inline: var(--gap);
         button {
           background: transparent;
@@ -488,6 +419,7 @@
     &.editing {
       border: 1px solid color-mix(in srgb, CanvasText, Canvas 0%);
       .tag {
+        font-size: inherit;
         padding-inline: 0;
         padding-inline-start: var(--gap);
       }

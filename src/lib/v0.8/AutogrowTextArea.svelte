@@ -45,11 +45,15 @@
     &::after {
       grid-area: 1 / 1 / -1 / -1;
 
-      border: 1px solid transparent;
+      background: color-mix(in srgb, Canvas, CanvasText 10%);
+      border: 1px solid color-mix(in srgb, currentColor, transparent 75%);
       border-radius: calc(var(--gap) / 2);
       font: inherit;
       /* Cursor is hidden behind thicker selected border, so we pad. */
       padding: 1px;
+      &:focus {
+        outline-color: color-mix(in srgb, currentColor, transparent 20%);
+      }
     }
   }
 </style>

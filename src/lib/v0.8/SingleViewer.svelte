@@ -198,13 +198,24 @@
   })
 
   const center = $derived({lng, lat});
+
+  function updateCamera(map: maplibregl.Map): void {
+    zoom = map?.getZoom();
+    const _center = map?.getCenter();
+    lng = _center?.lng;
+    lat = _center?.lat;
+    bearing = map?.getBearing();
+    pitch = map?.getPitch();
+    roll = map?.getRoll();
+    elevation = map?.getCameraTargetElevation();
+  }
 </script>
 
 <div class=map-container>
   <MapLibre
     bind:map
     inlineStyle="flex: 1 1;"
-    // onload={handleOnData}
+    onload={(e) => updateCamera(e.target)}
     ondata={handleOnData}
     renderWorldCopies={false}
     attributionControl={false}
@@ -223,14 +234,7 @@
           // e.sync is an event prop that we pass if easing or otherwise causing map move,
           // like the auto-pitch when enabling 3D:
           //    map.easeTo({zoom: 2}, {sync: true})
-          zoom = map?.getZoom();
-          const _center = map?.getCenter();
-          lng = _center?.lng;
-          lat = _center?.lat;
-          bearing = map?.getBearing();
-          pitch = map?.getPitch();
-          roll = map?.getRoll();
-          elevation = map?.getCameraTargetElevation();
+          updateCamera(e.target);
         }
       }
     }

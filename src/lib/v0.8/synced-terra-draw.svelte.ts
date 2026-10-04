@@ -39,7 +39,7 @@ export class SyncedTerraDrawModeManager {
 
   constructor(
     syncedTerraDraw: SyncedTerraDraw,
-    { initialUserMode = undefined, isolatedEditOnFinish = true, modeOnDeselect = undefined }: { initialUserMode?: Mode["mode"], isolatedEditOnFinish?: boolean, modeOnDeselect?: Mode["mode"]} = {}
+    { initialUserMode = undefined, isolatedEditOnFinish = true, modeOnDeselect = undefined }: { initialUserMode?: Mode["mode"], isolatedEditOnFinish?: boolean, modeOnDeselect?: Mode["mode"] } = {}
   ) {
     this.syncedTerraDraw = syncedTerraDraw;
     this.isolatedEditOnFinish = isolatedEditOnFinish;
@@ -119,6 +119,7 @@ export class SyncedTerraDrawModeManager {
     // }
     return
   }
+
 }
 
 export class SyncedTerraDraw {
