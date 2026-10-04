@@ -26,11 +26,12 @@
 <div class={["window", {frame: state.frame}]}>
   {#if state.titlebar}
     <div class="titlebar">
-      <div class=drag>
+      <!-- TODO: Implement dragging? -->
+      <!-- <div class=drag>
         <span class="material-symbols-sharp unselectable">
           drag_indicator
         </span>
-      </div>
+      </div> -->
       {#if state.title}
         <div class=title>
           <span>{state.title}</span>
