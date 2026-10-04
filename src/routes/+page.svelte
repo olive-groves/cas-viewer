@@ -238,7 +238,7 @@
 
 </script>
 
-<svelte:window onbeforeunload={() => "Leave site? Changes you made may not be saved."} />
+<svelte:window onbeforeunload={(e) => {e.preventDefault(); e.returnValue = true; return "Are you sure you want to leave?"}} />
 
 <SyncedTerraDrawSetup
   id={syncedTerraDrawModeManager.syncedTerraDraw.id}
