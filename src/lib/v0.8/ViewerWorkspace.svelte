@@ -69,9 +69,9 @@
       view.layers.add(syncedLayerKey, {key: overrideKey});
       view.drawKeys.instanceKey = syncedTerraDrawModeManager.syncedTerraDraw.addInstance().id;
 
-      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const metadata = await sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
       const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
-      const name = date ? `RGB ${date.toLocaleDateString()}` : "RGB";
+      const name = date ? `RGB ${date.toLocaleString()}` : "RGB";
       view.layout.window.title = name;
       view.name = name;
 
@@ -88,9 +88,9 @@
       ({syncedLayer, syncedLayerKey, overrideKey} = hillshadeLayer);
       view.layers.add(syncedLayerKey, {key: overrideKey});
 
-      const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+      const metadata = await sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
       const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
-      const name = date ? `Height ${date.toLocaleDateString()}` : "Height";
+      const name = date ? `Height ${date.toLocaleString()}` : "Height";
       view.layout.window.title = name;
       view.name = name;
 
@@ -111,9 +111,9 @@
         const view = new SingleView();
         view.layers.add(syncedLayerKey, {key: overrideKey});
 
-        const metadata = sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
+        const metadata = await sourceManager.mapLibreSources.get(syncedLayer.spec.source)?.source.source.metadata;
         const date = metadata ? new Date(metadata.instrument.dateTime) : undefined;
-        const name = date ? `NaN-height ${date.toLocaleDateString()}` : "NaN-height";
+        const name = date ? `NaN-height ${date.toLocaleString()}` : "NaN-height";
         view.layout.window.title = name;
         view.name = name;
 

@@ -84,6 +84,7 @@ const pointSize = 2;
 const selectedPointSize = 4;
 const midPointSize = 3;
 const lineWidth = 2;
+const lineOpacity = 0.9;
 const selectedLineWidth = 4;
 const markerArrowRelativeWidth = 5;
 const selectedMarkerArrowRelativeWidth = 4;
@@ -317,6 +318,7 @@ const editingSvgBlob = new Blob([editingSvg], { type: "image/svg+xml" });
 const editingSvgBlobUrl = URL.createObjectURL(editingSvgBlob);
 const editingMarkerUrl = editingSvgBlobUrl;
 
+const markerAnchor = "center";
 const markerWidth = svg.match(`(width.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
 const markerHeight = svg.match(`(height.*?px)`)?.at(0)?.split(`"`)?.at(1)?.split("px")?.at(0);
 
@@ -336,6 +338,7 @@ export const modeFactory: ModeFactory = () => {
         selectedMarkerUrl: selectedMarkerUrl,
         selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
         selectedMarkerHeight: markerHeight ? parseInt(markerHeight) : undefined,
+        selectedMarkerAnchor: markerAnchor,
         selectedLineStringColor: primary,
         selectedPolygonColor: primary,
         selectedPolygonFillOpacity: fillOpacity,
@@ -356,6 +359,7 @@ export const modeFactory: ModeFactory = () => {
         selectedMarkerUrl: editingMarkerUrl,
         selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
         selectedMarkerHeight: markerHeight ? parseInt(markerHeight) : undefined,
+        selectedMarkerAnchor: markerAnchor,
         selectedLineStringColor: primary,
         selectedPolygonColor: primary,
         selectedPolygonFillOpacity: fillOpacity,
@@ -417,6 +421,7 @@ export const modeFactory: ModeFactory = () => {
         selectedMarkerUrl: editingMarkerUrl,
         selectedMarkerWidth: markerWidth ? parseInt(markerWidth) : undefined,
         selectedMarkerHeight: markerHeight ? parseInt(markerHeight) : undefined,
+        selectedMarkerAnchor: markerAnchor,
         selectedLineStringColor: primary,
         selectedPolygonColor: primary,
         selectedPolygonFillOpacity: fillOpacity,
@@ -438,6 +443,7 @@ export const modeFactory: ModeFactory = () => {
         markerUrl: ({properties}) => properties?._currentlyHovering ? selectedMarkerUrl : markerUrl,
         markerWidth: markerWidth ? parseInt(markerWidth) : undefined,
         markerHeight: markerHeight ? parseInt(markerHeight) : undefined,
+        markerAnchor: markerAnchor,
       },
     }),
     new TerraDrawPolyLineMode({
@@ -445,12 +451,12 @@ export const modeFactory: ModeFactory = () => {
       validation: validator,
       styles: {
         lineStringColor: primary,
-        lineStringOpacity: 1 * 0.8,
+        lineStringOpacity: lineOpacity,
         lineStringWidth: ({properties}) => properties?._currentlyHovering ? selectedLineWidth : lineWidth,
         polygonFillColor: primary,
         polygonFillOpacity: ({properties}) => properties?._currentlyHovering ? fillOpacity : (fillOpacity / 2),
         polygonOutlineColor: primary,
-        // polygonOutlineOpacity: ,
+        polygonOutlineOpacity: lineOpacity,
         polygonOutlineWidth: ({properties}) => properties?._currentlyHovering ? selectedLineWidth : lineWidth,
         closingPointColor: primary,
         // closingPointOpacity: ,
