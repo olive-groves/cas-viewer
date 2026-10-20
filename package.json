@@ -31,7 +31,8 @@
 		"svelte-check": "^4.7.5",
 		"svelte-maplibre-gl": "^2.2.0",
 		"typescript": "^5.9.3",
-		"vite": "^8.2.1"
+		"vite": "^8.2.1",
+		"@alenaksu/json-viewer": "^2.1.2"
 	},
   "overrides": {
     "@svelte-maplibre-gl/terradraw": {

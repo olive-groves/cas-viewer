@@ -111,6 +111,10 @@ export class LocalSingleImage extends SingleImage {
   destroy() {
     URL.revokeObjectURL(this.url);
   }
+
+  get filename() {
+    return this.file.name;
+  }
 }
 
 export class PMTilesTileset implements ImageSource, TilesetSource, VectorType {
