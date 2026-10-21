@@ -41,7 +41,7 @@
         <div class=tick style:flex={`${(_flexGrowScale*1/axis.interval)*(i === 0 ? (axis.ticks[i] - axis.min) : axis.interval)} 1 0`}>
           <div class=mark></div>
           <div class=label style:position-anchor={`--tick${i}`}>
-            {displayTick.scientific.toNumber().toFixed(Math.abs(axis.displayInterval.scientific.exponent))} {displayTick.unit.symbol}m
+            {displayTick.scientific.toNumber().toFixed(Math.abs(axis.displayInterval.scientific.exponent))} <span class="units">{displayTick.unit.symbol}m</span>
             <!-- {tick.scientific.significand.toFixed(axis.intervalScientific.exponent >= 0 ? 0 : Math.abs(axis.intervalScientific.exponent))} × 10<sup>{tick.scientific.exponent.toFixed()}</sup> -->
           </div>
         </div>
@@ -71,7 +71,7 @@
       border: var(--scale-border-width) solid white;
       outline: 1px solid black;
       position: relative;
-      width: 16px;
+      width: 12px;
       background: var(
         --gradient,
         linear-gradient(
@@ -103,11 +103,15 @@
           transform: translate(0, -50%);
         }
         .label {
-          font-family: sans-serif;
+          font-size: 1.1rem;
+          font-variant-numeric: tabular-nums;
           margin-left: 5px;
           height: min-content;
           transform: translate(0, -50%);
           filter: drop-shadow(0 0 0.05rem black);
+          .units {
+            font-size: 0.9em;
+          }
         }
       }
     }
